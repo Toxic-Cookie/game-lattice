@@ -13,10 +13,24 @@ namespace Lattice.Rpg;
 /// </summary>
 public sealed class RpgContentValidator : IContentValidator
 {
+    private readonly EffectRegistry? _effects;
+    private readonly ConditionRegistry? _conditions;
+
+    public RpgContentValidator()
+    {
+    }
+
+    /// <summary>Validate against a live module's registries so module-added primitives (e.g. StartQuest) are known.</summary>
+    public RpgContentValidator(EffectRegistry effects, ConditionRegistry conditions)
+    {
+        _effects = effects;
+        _conditions = conditions;
+    }
+
     public void Validate(DefRegistry registry, ContentLoadReport report, IFormulaEngine formulas)
     {
-        var effects = BuiltinEffects.CreateDefault();
-        var conditions = ConditionRegistry.CreateDefault();
+        var effects = _effects ?? BuiltinEffects.CreateDefault();
+        var conditions = _conditions ?? ConditionRegistry.CreateDefault();
         var statKeys = ValidateStats(registry, report, formulas);
         ValidateItems(registry, report, formulas, effects);
         ValidateStatuses(registry, report, formulas, effects);

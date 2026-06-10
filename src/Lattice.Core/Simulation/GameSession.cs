@@ -24,6 +24,7 @@ public sealed class GameSession
     private readonly List<ISimSystem> _systems = [];
     private readonly List<IContentValidator> _contentValidators = [];
     private readonly List<Persistence.ISaveSection> _saveSections = [];
+    private readonly Dictionary<Type, object> _modules = [];
     private readonly ContentLoader _loader;
     private HotReloadManager? _hotReload;
 
@@ -73,6 +74,15 @@ public sealed class GameSession
         => new(services, defTypes ?? DefTypeRegistry.CreateDefault());
 
     public void RegisterContentValidator(IContentValidator validator) => _contentValidators.Add(validator);
+
+    /// <summary>Register an attached module (RPG, Narrative, AI) for cross-module lookup.</summary>
+    public void RegisterModule<TModule>(TModule module)
+        where TModule : class
+        => _modules[typeof(TModule)] = module;
+
+    public TModule? GetModule<TModule>()
+        where TModule : class
+        => _modules.TryGetValue(typeof(TModule), out var module) ? (TModule)module : null;
 
     public void RegisterSaveSection(Persistence.ISaveSection section) => _saveSections.Add(section);
 

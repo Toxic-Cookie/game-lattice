@@ -1,0 +1,29 @@
+[
+  {
+    "id": "entity_chest",
+    "type": "entity",
+    "name": "Old Chest",
+    "tags": ["object"]
+  },
+  {
+    "id": "so_chest",
+    "type": "smartobject",
+    "entity": "entity_chest",
+    "name": "Old Chest",
+    "description": "One-time gold cache; opening is gated on a world flag.",
+    "maxUsers": 1,
+    "interactions": [
+      {
+        "verb": "open",
+        "conditions": [
+          { "type": "Not", "condition": { "type": "FlagEquals", "flag": "chest_looted", "value": true } }
+        ],
+        "effects": [
+          { "type": "GiveItem", "item": "item_gold", "amount": "2d6" },
+          { "type": "SetFlag", "flag": "chest_looted", "value": true },
+          { "type": "PublishEvent", "event": "UI.OpenChest" }
+        ]
+      }
+    ]
+  }
+]

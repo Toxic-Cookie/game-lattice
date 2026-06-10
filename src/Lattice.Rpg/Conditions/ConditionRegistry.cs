@@ -11,12 +11,19 @@ namespace Lattice.Rpg.Conditions;
 /// <summary>Evaluation context for condition primitives.</summary>
 public sealed class ConditionContext
 {
+    private IFormulaContext? _scope;
+
     public required GameSession Session { get; init; }
 
     public required RpgRuntime Rpg { get; init; }
 
     /// <summary>The entity the condition is about (loot context, quest subject, ...). May be null.</summary>
     public Entity? Subject { get; init; }
+
+    /// <summary>Formula scope: subject stats first, then global blackboard flags.</summary>
+    public IFormulaContext Scope => _scope ??= Subject is null
+        ? new BlackboardFormulaContext(Session.Flags)
+        : new CompositeFormulaContext(Subject, new BlackboardFormulaContext(Session.Flags));
 }
 
 /// <summary>A condition primitive — the boolean half of the interpreter vocabulary, shared by loot, quests (M3), and AI preconditions (M4).</summary>
@@ -112,7 +119,7 @@ internal sealed class StatAtLeastCondition : IConditionEvaluator
         var key = ctx.Rpg.Stats.TryGetById(statId, out var def) ? def.Key : statId;
         var sheet = ctx.Rpg.GetSheet(ctx.Subject);
         var current = sheet?.HasStat(key) == true ? sheet.Current(key) : 0;
-        return current >= ctx.Session.Formulas.Evaluate(JsonArgs.GetFormula(args, "value"), ctx.Subject);
+        return current >= ctx.Session.Formulas.Evaluate(JsonArgs.GetFormula(args, "value"), ctx.Scope);
     }
 
     public void Validate(JsonElement args, EffectValidationContext v)
@@ -190,7 +197,7 @@ internal sealed class FormulaTrueCondition : IConditionEvaluator
     public string Type => "FormulaTrue";
 
     public bool Evaluate(ConditionContext ctx, JsonElement args)
-        => ctx.Session.Formulas.Evaluate(JsonArgs.GetFormula(args, "formula"), ctx.Subject) != 0;
+        => ctx.Session.Formulas.Evaluate(JsonArgs.GetFormula(args, "formula"), ctx.Scope) != 0;
 
     public void Validate(JsonElement args, EffectValidationContext v) => v.RequireFormula(args, "formula");
 }

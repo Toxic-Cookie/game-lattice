@@ -12,6 +12,7 @@ never requires recompilation. The data formats are designed to be authorable by 
 |---|---|
 | `src/Lattice.Core` | Core engine seam (netstandard2.1 — Unity/Godot compatible) |
 | `src/Lattice.Rpg` | RPG module: stats, status effects, effect/condition primitives, inventory, loot, trade |
+| `src/Lattice.Narrative` | Narrative module: Yarn + JSON-tree dialogue, quests, smart-object interactions |
 | `src/Lattice.Tooling` | `lattice` CLI: content validation (later: manifest + schema generation) |
 | `samples/Lattice.Demo` | Headless console host / development workbench |
 | `tests/` | xunit test projects |
@@ -29,8 +30,9 @@ dotnet run --project src/Lattice.Tooling -- validate content
 
 ## Status
 
-**M2 (RPG logic) complete:** data-defined stats with modifiers/clamping/derived formulas, status
-effects with periodic logic and stacking, the effect & condition primitive vocabulary (the
-"interpreter" core — a fireball is JSON, not a class), inventory with equip modifiers, weighted
-loot tables with dice amounts, and Charisma-priced trading. Built on M1's registry, event bus,
-formulas, persistence, and hot reload. See `plan/00-overview.md` §4 for the roadmap M0–M7.
+**M3 (narrative & interaction) complete:** YarnSpinner dialogue whose `$variables` are world
+state, a machine-friendly JSON dialogue-tree format on the same runner, a step-based quest engine
+with event-driven counters, and smart-object interactions with reservation — all composed from
+the same effect/condition primitives as M2's stats, statuses, inventory, loot, and trade, on
+M1's registry, event bus, formulas, persistence, and hot reload. See `plan/00-overview.md` §4
+for the roadmap M0–M7.

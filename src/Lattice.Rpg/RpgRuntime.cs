@@ -58,13 +58,14 @@ public sealed class RpgRuntime
         Loot = new LootResolver(this);
         Trade = new TradeService(this);
 
+        session.RegisterModule(this);
         session.World.EntityAdded += AttachEntity;
         session.ContentLoaded += _ => OnContentChanged();
         session.Events.Subscribe("Content.Reloaded", _ => OnContentChanged());
         session.Events.Subscribe("Entity.Died", OnEntityDied);
         session.RegisterSystem(new StatusEffectSystem(this));
         session.RegisterSaveSection(new RpgSaveSection(this));
-        session.RegisterContentValidator(new RpgContentValidator());
+        session.RegisterContentValidator(new RpgContentValidator(Effects, Conditions));
     }
 
     public GameSession Session { get; }

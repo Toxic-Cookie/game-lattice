@@ -1,0 +1,32 @@
+[
+  {
+    "id": "quest_wolves",
+    "type": "quest",
+    "name": "Wolves at the Door",
+    "description": "The innkeeper pays 25 gold for culling three wolves.",
+    "steps": [
+      {
+        "id": "cull",
+        "description": "Cull 3 wolves",
+        "count": {
+          "counter": "wolves_killed",
+          "on": "Entity.Died",
+          "where": { "defId": "entity_wolf" }
+        },
+        "complete": { "type": "FormulaTrue", "formula": "wolves_killed >= 3" }
+      },
+      {
+        "id": "report",
+        "description": "Report back to the innkeeper",
+        "complete": { "type": "FlagEquals", "flag": "reported_to_innkeeper", "value": true },
+        "onComplete": [
+          { "type": "GiveItem", "item": "item_gold", "amount": "25" }
+        ]
+      }
+    ],
+    "onComplete": [
+      { "type": "SetFlag", "flag": "quest_wolves_done", "value": true },
+      { "type": "PublishEvent", "event": "Quest.WolvesDone" }
+    ]
+  }
+]

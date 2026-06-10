@@ -6,6 +6,7 @@ using Lattice.Core.Hosting;
 using Lattice.Core.Hosting.Standalone;
 using Lattice.Core.Persistence;
 using Lattice.Core.Simulation;
+using Lattice.Narrative;
 using Lattice.Rpg;
 using Lattice.Rpg.Defs;
 
@@ -39,8 +40,9 @@ var services = new HostServices
     Physics = new PermissivePhysicsQueryService(),
 };
 
-var session = GameSession.Create(services, LatticeRpg.CreateDefTypes());
+var session = GameSession.Create(services, LatticeNarrative.CreateDefTypes());
 var rpg = LatticeRpg.Attach(session);
+var narrative = LatticeNarrative.Attach(session, rpg);
 var loadReport = session.LoadContent();
 foreach (var error in loadReport.Errors)
 {
@@ -63,6 +65,28 @@ while (true)
     }
 
     var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    // dialogue mode: empty input advances a line, a number picks an option
+    if (narrative.Dialogue.State is DialogueState.Line or DialogueState.Options)
+    {
+        if (parts.Length == 0 && narrative.Dialogue.State == DialogueState.Line)
+        {
+            narrative.Dialogue.Advance();
+            session.Events.DispatchPending();
+            RenderDialogue();
+            continue;
+        }
+
+        if (parts.Length == 1 && int.TryParse(parts[0], out var choice)
+            && narrative.Dialogue.State == DialogueState.Options)
+        {
+            narrative.Dialogue.Choose(narrative.Dialogue.Options[Math.Clamp(choice - 1, 0, narrative.Dialogue.Options.Count - 1)].Id);
+            session.Events.DispatchPending();
+            RenderDialogue();
+            continue;
+        }
+    }
+
     if (parts.Length == 0)
     {
         continue;
@@ -108,9 +132,68 @@ bool RunCommand(string[] parts)
                   shop <shopId> <customerId>   list stock with personalized prices
                   buy <shopId> <customerId> <itemId>
                   sell <shopId> <customerId> <itemId>
+                Narrative:
+                  talk <yarnNode | tree:<treeId>>   start a conversation
+                    (in dialogue: Enter = continue, number = choose option)
+                  quests                            quest log
+                  interact <actorId> <targetId> [verb]
                   quit
                 """);
             return true;
+
+        case "talk":
+        {
+            if (parts.Length < 2)
+            {
+                Console.WriteLine("usage: talk <yarnNode | tree:<treeId>>");
+                return true;
+            }
+
+            var ok = parts[1].StartsWith("tree:", StringComparison.Ordinal)
+                ? narrative.Dialogue.StartTree(parts[1]["tree:".Length..], out var error)
+                : narrative.Dialogue.StartYarn(parts[1], out error);
+            if (!ok)
+            {
+                Console.WriteLine($"error: {error}");
+                return true;
+            }
+
+            session.Events.DispatchPending();
+            RenderDialogue();
+            return true;
+        }
+
+        case "quests":
+        {
+            foreach (var (questId, status, stepIndex) in narrative.Quests.All)
+            {
+                var def = session.Defs.Get<Lattice.Narrative.Defs.QuestDef>(questId);
+                var step = status == QuestStatus.Active && stepIndex < def.Steps.Count
+                    ? $" — step {stepIndex + 1}/{def.Steps.Count}: {def.Steps[stepIndex].Description}"
+                    : "";
+                Console.WriteLine($"  {questId}: {status}{step}");
+            }
+
+            return true;
+        }
+
+        case "interact":
+        {
+            if (parts.Length < 3
+                || !session.World.TryGet(parts[1], out var actor)
+                || !session.World.TryGet(parts[2], out var interactTarget))
+            {
+                Console.WriteLine("usage: interact <actorId> <targetId> [verb]");
+                return true;
+            }
+
+            var verb = parts.Length > 3 ? parts[3] : "interact";
+            Console.WriteLine(narrative.Interactions.TryInteract(actor, interactTarget, verb, out var interactError)
+                ? "done"
+                : $"error: {interactError}");
+            session.Events.DispatchPending();
+            return true;
+        }
 
         case "content":
             foreach (var file in session.Services.Content.EnumerateFiles())
@@ -413,6 +496,28 @@ bool RunCommand(string[] parts)
         default:
             Console.WriteLine($"unknown command '{parts[0]}' — try 'help'");
             return true;
+    }
+}
+
+void RenderDialogue()
+{
+    switch (narrative.Dialogue.State)
+    {
+        case DialogueState.Line:
+            var speaker = narrative.Dialogue.Speaker is { } s ? $"{s}: " : "";
+            Console.WriteLine($"  {speaker}{narrative.Dialogue.Line}");
+            Console.WriteLine("  (Enter to continue)");
+            break;
+        case DialogueState.Options:
+            for (var i = 0; i < narrative.Dialogue.Options.Count; i++)
+            {
+                Console.WriteLine($"  {i + 1}. {narrative.Dialogue.Options[i].Text}");
+            }
+
+            break;
+        case DialogueState.Ended:
+            Console.WriteLine("  (conversation ended)");
+            break;
     }
 }
 

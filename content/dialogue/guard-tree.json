@@ -1,0 +1,27 @@
+{
+  "id": "tree_guard",
+  "type": "dialogue",
+  "description": "JSON dialogue-tree sample (machine-friendly format).",
+  "start": "hello",
+  "nodes": {
+    "hello": {
+      "speaker": "Guard",
+      "line": "Halt. State your business.",
+      "options": [
+        { "text": "Just visiting.", "next": "visit" },
+        {
+          "text": "[Bribe 10 gold]",
+          "conditions": [ { "type": "HasItem", "item": "item_gold", "count": 10 } ],
+          "effects": [ { "type": "RemoveItem", "item": "item_gold", "amount": "10" } ],
+          "next": "bribe"
+        }
+      ]
+    },
+    "visit": { "speaker": "Guard", "line": "Keep your nose clean." },
+    "bribe": {
+      "speaker": "Guard",
+      "line": "I saw nothing.",
+      "effects": [ { "type": "SetFlag", "flag": "guard_bribed", "value": true } ]
+    }
+  }
+}

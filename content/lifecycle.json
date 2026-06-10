@@ -9,6 +9,7 @@
   },
   "spawns": [
     { "entity": "entity_player", "position": [0, 0, 0] },
-    { "entity": "entity_wolf", "count": 2, "position": [10, 0, 5] }
+    { "entity": "entity_wolf", "count": 2, "position": [10, 0, 5] },
+    { "entity": "entity_chest", "position": [2, 0, -3] }
   ]
 }

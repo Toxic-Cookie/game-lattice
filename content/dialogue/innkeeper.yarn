@@ -1,0 +1,31 @@
+title: Innkeeper
+---
+Innkeeper: Welcome to the Wolf's Rest. What can I do for you?
+-> Heard you have a wolf problem.
+    <<if flag_bool("quest_wolves_done")>>
+        Innkeeper: You already cleared them out, friend. Drinks are on me.
+    <<elseif quest_active("quest_wolves")>>
+        <<if flag_number("wolves_killed") >= 3>>
+            Innkeeper: Three wolves down! You've more than earned your pay.
+            <<flag reported_to_innkeeper true>>
+            Innkeeper: Here's the gold, as promised.
+        <<else>>
+            Innkeeper: Still wolves out there. Three of them at least, by my count.
+        <<endif>>
+    <<else>>
+        Innkeeper: Wolves have been at the livestock all month. Cull three of them and I'll pay you 25 gold.
+        -> I'll do it.
+            <<start_quest quest_wolves>>
+            Innkeeper: Good hunting. Watch the fangs — their bite festers.
+        -> Not my problem.
+            Innkeeper: Suit yourself.
+    <<endif>>
+-> Got anything to drink?
+    <<if has_item("item_gold")>>
+        Innkeeper: Ale's two coins. You look good for it.
+    <<else>>
+        Innkeeper: No coin, no ale.
+    <<endif>>
+-> Just passing through.
+    Innkeeper: Safe travels, then.
+===
