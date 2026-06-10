@@ -1,12 +1,15 @@
 {
   "id": "entity_wolf",
   "type": "entity",
-  "description": "A common wolf; the demo quest target.",
+  "description": "A common wolf; bites are poisonous. Drops loot_wolf.",
   "name": "Wolf",
   "tags": ["wolf", "beast"],
   "stats": {
-    "HP": 12,
-    "Str": 4,
-    "Level": 1
-  }
+    "stat_con": 1,
+    "stat_str": 3
+  },
+  "items": {
+    "item_wolf_fang": 1
+  },
+  "lootTable": "loot_wolf"
 }

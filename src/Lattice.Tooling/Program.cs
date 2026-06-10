@@ -2,6 +2,7 @@ using Lattice.Core.Content;
 using Lattice.Core.Formulas;
 using Lattice.Core.Hosting.Standalone;
 using Lattice.Core.Simulation;
+using Lattice.Rpg;
 using Lattice.Tooling;
 
 // M1 scope: `validate` runs the full content pipeline (parse -> def load ->
@@ -44,11 +45,13 @@ if (args[0] == "validate")
 
     using var source = new DirectoryContentSource(args[1], watch: false);
     var registry = new DefRegistry();
-    var loader = new ContentLoader(DefTypeRegistry.CreateDefault());
+    var loader = new ContentLoader(LatticeRpg.CreateDefTypes());
     var report = loader.LoadAll(source, registry);
 
     // formula pre-flight uses a throwaway RNG: TryParse never rolls dice
-    registry.Validate(report, new NCalcFormulaEngine(new LatticeRandom(0)));
+    var formulas = new NCalcFormulaEngine(new LatticeRandom(0));
+    registry.Validate(report, formulas);
+    new RpgContentValidator().Validate(registry, report, formulas);
 
     foreach (var warning in report.Warnings)
     {
@@ -78,7 +81,7 @@ if (args[0] == "schemas")
     Directory.CreateDirectory(outputDir);
 
     var count = 0;
-    foreach (var (typeName, clrType) in DefTypeRegistry.CreateDefault().All)
+    foreach (var (typeName, clrType) in LatticeRpg.CreateDefTypes().All)
     {
         var schema = SchemaGenerator.GenerateSchemaJson(typeName, clrType);
         var path = Path.Combine(outputDir, $"{typeName}.schema.json");

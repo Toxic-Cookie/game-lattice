@@ -22,6 +22,8 @@ public interface ISimSystem
 public sealed class GameSession
 {
     private readonly List<ISimSystem> _systems = [];
+    private readonly List<IContentValidator> _contentValidators = [];
+    private readonly List<Persistence.ISaveSection> _saveSections = [];
     private readonly ContentLoader _loader;
     private HotReloadManager? _hotReload;
 
@@ -61,14 +63,30 @@ public sealed class GameSession
 
     public IReadOnlyList<ISimSystem> Systems => _systems;
 
+    /// <summary>Module-registered save sections, captured/restored alongside the core world delta.</summary>
+    public IReadOnlyList<Persistence.ISaveSection> SaveSections => _saveSections;
+
+    /// <summary>Raised after <see cref="LoadContent"/> completes, so modules can index loaded defs.</summary>
+    public event Action<ContentLoadReport>? ContentLoaded;
+
     public static GameSession Create(HostServices services, DefTypeRegistry? defTypes = null)
         => new(services, defTypes ?? DefTypeRegistry.CreateDefault());
 
-    /// <summary>Load (or reload from scratch) all content and run the link pass.</summary>
+    public void RegisterContentValidator(IContentValidator validator) => _contentValidators.Add(validator);
+
+    public void RegisterSaveSection(Persistence.ISaveSection section) => _saveSections.Add(section);
+
+    /// <summary>Load (or reload from scratch) all content and run the link + validation passes.</summary>
     public ContentLoadReport LoadContent()
     {
         var report = _loader.LoadAll(Services.Content, Defs);
         Defs.Validate(report, Formulas);
+        foreach (var validator in _contentValidators)
+        {
+            validator.Validate(Defs, report, Formulas);
+        }
+
+        ContentLoaded?.Invoke(report);
         return report;
     }
 

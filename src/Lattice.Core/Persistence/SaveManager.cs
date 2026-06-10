@@ -5,6 +5,21 @@ using Lattice.Core.Simulation;
 
 namespace Lattice.Core.Persistence;
 
+/// <summary>
+/// A module-owned slice of the save file. Modules register sections on the
+/// session; capture runs after the core delta, restore runs after entities
+/// exist again (so sections can re-derive component state).
+/// </summary>
+public interface ISaveSection
+{
+    /// <summary>Stable key under <see cref="SaveGame.Sections"/>.</summary>
+    string Key { get; }
+
+    JsonElement Capture(GameSession session);
+
+    void Restore(GameSession session, JsonElement data, ContentLoadReport report);
+}
+
 /// <summary>Serialized world delta: only what diverged from base content (plan/01 §5). Defs are never saved.</summary>
 public sealed class SaveGame
 {
@@ -23,6 +38,9 @@ public sealed class SaveGame
     public Dictionary<string, JsonElement> Flags { get; set; } = [];
 
     public List<SavedEntity> Entities { get; set; } = [];
+
+    /// <summary>Module sections keyed by <see cref="ISaveSection.Key"/> (e.g. "rpg").</summary>
+    public Dictionary<string, JsonElement> Sections { get; set; } = [];
 
     public sealed class SavedEntity
     {
@@ -74,6 +92,11 @@ public static class SaveManager
                 Stats = new Dictionary<string, double>(entity.Stats, StringComparer.Ordinal),
                 Position = [entity.Position.X, entity.Position.Y, entity.Position.Z],
             });
+        }
+
+        foreach (var section in session.SaveSections)
+        {
+            save.Sections[section.Key] = section.Capture(session);
         }
 
         return JsonSerializer.Serialize(save, ContentLoader.JsonOptions);
@@ -151,6 +174,15 @@ public static class SaveManager
             }
 
             session.World.RestoreEntity(entity);
+        }
+
+        // module sections last: entities exist, so sections can rebuild component state
+        foreach (var section in session.SaveSections)
+        {
+            if (save.Sections.TryGetValue(section.Key, out var data))
+            {
+                section.Restore(session, data, report);
+            }
         }
 
         return report;

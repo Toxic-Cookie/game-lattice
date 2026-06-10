@@ -67,6 +67,9 @@ public sealed class NCalcFormulaEngine : IFormulaEngine
         }
     }
 
+    public IReadOnlyCollection<string> GetIdentifiers(string formula)
+        => new Expression(GetParsed(formula)).GetParameterNames();
+
     public bool TryParse(string formula, out string? error)
     {
         try

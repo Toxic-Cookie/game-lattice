@@ -11,6 +11,7 @@ never requires recompilation. The data formats are designed to be authorable by 
 | Path | What |
 |---|---|
 | `src/Lattice.Core` | Core engine seam (netstandard2.1 — Unity/Godot compatible) |
+| `src/Lattice.Rpg` | RPG module: stats, status effects, effect/condition primitives, inventory, loot, trade |
 | `src/Lattice.Tooling` | `lattice` CLI: content validation (later: manifest + schema generation) |
 | `samples/Lattice.Demo` | Headless console host / development workbench |
 | `tests/` | xunit test projects |
@@ -28,6 +29,8 @@ dotnet run --project src/Lattice.Tooling -- validate content
 
 ## Status
 
-**M1 (core engine & data plumbing) complete:** def registry with link-pass validation, string-topic
-event bus, JSON lifecycle boot, NCalc-backed formula engine with deterministic dice, world-delta
-save/load, and live hot reload. See `plan/00-overview.md` §4 for the milestone roadmap M0–M7.
+**M2 (RPG logic) complete:** data-defined stats with modifiers/clamping/derived formulas, status
+effects with periodic logic and stacking, the effect & condition primitive vocabulary (the
+"interpreter" core — a fireball is JSON, not a class), inventory with equip modifiers, weighted
+loot tables with dice amounts, and Charisma-priced trading. Built on M1's registry, event bus,
+formulas, persistence, and hot reload. See `plan/00-overview.md` §4 for the roadmap M0–M7.

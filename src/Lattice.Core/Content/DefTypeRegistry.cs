@@ -12,10 +12,13 @@ public sealed class DefTypeRegistry
 
     public IEnumerable<KeyValuePair<string, Type>> All => _byName;
 
-    public void Register<TDef>(string typeName)
+    /// <param name="typeName">The JSON discriminator value.</param>
+    /// <param name="replace">Allow overriding an existing registration — modules may substitute
+    /// an extended def subclass for a built-in kind (e.g. the RPG entity template).</param>
+    public void Register<TDef>(string typeName, bool replace = false)
         where TDef : Def
     {
-        if (_byName.ContainsKey(typeName))
+        if (!replace && _byName.ContainsKey(typeName))
         {
             throw new InvalidOperationException($"Def type '{typeName}' is already registered.");
         }

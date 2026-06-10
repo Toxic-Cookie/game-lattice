@@ -1,0 +1,14 @@
+[
+  {
+    "id": "status_poison",
+    "type": "status",
+    "name": "Poison",
+    "description": "Deals 2 damage per second for 6 seconds.",
+    "duration": 6.0,
+    "stacking": "refresh",
+    "logic": [
+      { "type": "PeriodicEffect", "interval": 1.0, "effects": [ { "type": "DealDamage", "formula": "2" } ] },
+      { "type": "TagModifier", "addTags": ["poisoned"] }
+    ]
+  }
+]

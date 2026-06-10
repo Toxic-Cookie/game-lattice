@@ -20,6 +20,13 @@ public interface IFormulaEngine
 
     /// <summary>Syntax pre-flight for the validation suite. Returns false with an error message on parse failure.</summary>
     bool TryParse(string formula, out string? error);
+
+    /// <summary>
+    /// The identifiers a formula references — used by validators to build
+    /// dependency graphs (stat cycles, unknown-identifier checks) without
+    /// evaluating. Throws <see cref="FormulaException"/> on parse failure.
+    /// </summary>
+    IReadOnlyCollection<string> GetIdentifiers(string formula);
 }
 
 /// <summary>Raised when a formula fails to parse or evaluate; the message names the formula.</summary>

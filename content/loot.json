@@ -1,0 +1,20 @@
+[
+  {
+    "id": "loot_wolf",
+    "type": "loot",
+    "rolls": 2,
+    "entries": [
+      { "item": "item_gold", "weight": 50, "amount": "1d10+5" },
+      { "item": "item_wolf_pelt", "weight": 40 },
+      { "tableRef": "loot_rare", "weight": 5 },
+      { "weight": 5 }
+    ]
+  },
+  {
+    "id": "loot_rare",
+    "type": "loot",
+    "entries": [
+      { "item": "item_healing_potion", "weight": 1 }
+    ]
+  }
+]

@@ -9,9 +9,12 @@ namespace Lattice.Core.Simulation;
 /// A live entity: mutable instance state referencing an immutable template
 /// def by ID. Stats are copied from the template at spawn so they can change
 /// independently; only instance state is ever saved (world-delta principle).
+/// Optional modules (RPG, AI) attach their per-entity state as components.
 /// </summary>
 public sealed class Entity : IFormulaContext
 {
+    private Dictionary<Type, object>? _components;
+
     public Entity(string instanceId, string defId)
     {
         InstanceId = instanceId;
@@ -26,12 +29,36 @@ public sealed class Entity : IFormulaContext
 
     public HashSet<string> Tags { get; } = new(StringComparer.Ordinal);
 
+    /// <summary>Base stat values. With no <see cref="StatResolver"/> these are also the formula-visible values.</summary>
     public Dictionary<string, double> Stats { get; } = new(StringComparer.Ordinal);
 
     public Vector3 Position { get; set; }
 
+    /// <summary>
+    /// When set (e.g. by the RPG stat sheet), formula identifier resolution
+    /// routes here instead of the raw <see cref="Stats"/> map, so formulas
+    /// see modifier-adjusted current values.
+    /// </summary>
+    public IFormulaContext? StatResolver { get; set; }
+
     /// <summary>Entities act as formula contexts: identifiers resolve to stat values.</summary>
-    public bool TryResolve(string identifier, out double value) => Stats.TryGetValue(identifier, out value);
+    public bool TryResolve(string identifier, out double value)
+    {
+        if (StatResolver is not null)
+        {
+            return StatResolver.TryResolve(identifier, out value);
+        }
+
+        return Stats.TryGetValue(identifier, out value);
+    }
+
+    public T? GetComponent<T>()
+        where T : class
+        => _components is not null && _components.TryGetValue(typeof(T), out var value) ? (T)value : null;
+
+    public void SetComponent<T>(T component)
+        where T : class
+        => (_components ??= [])[typeof(T)] = component;
 }
 
 /// <summary>
@@ -49,6 +76,14 @@ public sealed class World
         _defs = defs;
         _events = events;
     }
+
+    /// <summary>
+    /// Synchronous hook fired when an entity enters the world — at spawn
+    /// (isRestore false) or save-restore (isRestore true). Modules attach
+    /// components here; unlike bus events this runs immediately, so the
+    /// entity is fully equipped before any caller touches it.
+    /// </summary>
+    public event Action<Entity, bool>? EntityAdded;
 
     public int Count => _entities.Count;
 
@@ -79,12 +114,17 @@ public sealed class World
         }
 
         _entities[entity.InstanceId] = entity;
+        EntityAdded?.Invoke(entity, false);
         _events.Publish("Entity.Spawned", EventPayload.Of(("instanceId", entity.InstanceId), ("defId", defId)));
         return entity;
     }
 
     /// <summary>Re-create a saved entity verbatim (no template re-copy, no spawn event).</summary>
-    public void RestoreEntity(Entity entity) => _entities[entity.InstanceId] = entity;
+    public void RestoreEntity(Entity entity)
+    {
+        _entities[entity.InstanceId] = entity;
+        EntityAdded?.Invoke(entity, true);
+    }
 
     public bool Despawn(string instanceId)
     {

@@ -6,6 +6,8 @@ using Lattice.Core.Hosting;
 using Lattice.Core.Hosting.Standalone;
 using Lattice.Core.Persistence;
 using Lattice.Core.Simulation;
+using Lattice.Rpg;
+using Lattice.Rpg.Defs;
 
 const float TickSeconds = 1f / 30f;
 const string DefaultLifecycle = "lifecycle_default";
@@ -37,7 +39,8 @@ var services = new HostServices
     Physics = new PermissivePhysicsQueryService(),
 };
 
-var session = GameSession.Create(services);
+var session = GameSession.Create(services, LatticeRpg.CreateDefTypes());
+var rpg = LatticeRpg.Attach(session);
 var loadReport = session.LoadContent();
 foreach (var error in loadReport.Errors)
 {
@@ -47,6 +50,7 @@ foreach (var error in loadReport.Errors)
 logger.Info($"Content loaded: {loadReport.DefsLoaded} def(s), {loadReport.Errors.Count} error(s).");
 session.EnableHotReload();
 session.Boot(DefaultLifecycle);
+session.Events.DispatchPending();
 
 logger.Info("Lattice demo host ready. Type 'help' for commands.");
 while (true)
@@ -71,7 +75,7 @@ while (true)
             break;
         }
     }
-    catch (Exception ex) when (ex is FormulaException or KeyNotFoundException or InvalidCastException)
+    catch (Exception ex) when (ex is FormulaException or KeyNotFoundException or InvalidCastException or InvalidOperationException)
     {
         Console.WriteLine($"error: {ex.Message}");
     }
@@ -86,22 +90,25 @@ bool RunCommand(string[] parts)
     {
         case "help":
             Console.WriteLine("""
-                Commands:
-                  help                       this help
-                  content                    list loaded content files
-                  defs                       list registered defs
-                  tick [n]                   advance the simulation n ticks (default 1)
-                  time                       tick count and simulation time
-                  spawn <defId> [x y z]      spawn an entity from a template
-                  despawn <instanceId>       remove an entity
-                  entities                   list live entities
-                  inspect <instanceId>       entity details
-                  eval <formula> [entityId]  evaluate a formula (entity stats as identifiers)
-                  set <flag> <value>         write a global flag (bool/number/string)
-                  flags                      list global flags
-                  events                     recent event trace
-                  save [file] / load [file]  persist / restore the world delta
-                  quit                       exit
+                World:
+                  defs | content | entities | flags | events | time
+                  tick [n]                     advance n ticks
+                  spawn <defId> [x y z]        spawn from template
+                  despawn <id>                 remove entity
+                  inspect <id>                 stats (base->current), tags, statuses, inventory
+                  eval <formula> [entityId]    evaluate a formula
+                  set <flag> <value>           write a global flag
+                  save [file] / load [file]    world delta persistence
+                RPG:
+                  give <id> <itemId> [n]       add items to an entity
+                  equip <id> <itemId>          equip from bag
+                  unequip <id> <slotId>        unequip to bag
+                  use <userId> <itemId> [targetId]
+                  loot <tableId> <looterId>    roll a loot table into an inventory
+                  shop <shopId> <customerId>   list stock with personalized prices
+                  buy <shopId> <customerId> <itemId>
+                  sell <shopId> <customerId> <itemId>
+                  quit
                 """);
             return true;
 
@@ -170,6 +177,7 @@ bool RunCommand(string[] parts)
             return true;
 
         case "inspect":
+        {
             if (parts.Length < 2 || !session.World.TryGet(parts[1], out var target))
             {
                 Console.WriteLine("not found");
@@ -178,17 +186,41 @@ bool RunCommand(string[] parts)
 
             Console.WriteLine($"{target.InstanceId} (def {target.DefId}, name {target.Name ?? "-"})");
             Console.WriteLine($"  tags: {(target.Tags.Count > 0 ? string.Join(", ", target.Tags) : "-")}");
+            var sheet = rpg.GetSheet(target);
             foreach (var stat in target.Stats.OrderBy(s => s.Key, StringComparer.Ordinal))
             {
-                Console.WriteLine($"  {stat.Key} = {stat.Value.ToString(CultureInfo.InvariantCulture)}");
+                var current = sheet?.Current(stat.Key) ?? stat.Value;
+                var suffix = current.Equals(stat.Value) ? "" : $"  (base {stat.Value.ToString(CultureInfo.InvariantCulture)})";
+                Console.WriteLine($"  {stat.Key} = {current.ToString(CultureInfo.InvariantCulture)}{suffix}");
+            }
+
+            foreach (var status in rpg.GetStatusEffects(target)?.Active ?? [])
+            {
+                Console.WriteLine($"  status: {status.Def.Id} x{status.Stacks} ({status.Remaining:F1}s left)");
+            }
+
+            var inventory = rpg.GetInventory(target);
+            if (inventory is not null)
+            {
+                foreach (var pair in inventory.Bag.OrderBy(p => p.Key, StringComparer.Ordinal))
+                {
+                    Console.WriteLine($"  bag: {pair.Key} x{pair.Value}");
+                }
+
+                foreach (var pair in inventory.Equipped.OrderBy(p => p.Key, StringComparer.Ordinal))
+                {
+                    Console.WriteLine($"  equipped: {pair.Key} = {pair.Value}");
+                }
             }
 
             return true;
+        }
 
         case "eval":
+        {
             if (parts.Length < 2)
             {
-                Console.WriteLine("usage: eval <formula> [entityId]  (quote-free; last token may be an entity id)");
+                Console.WriteLine("usage: eval <formula> [entityId]");
                 return true;
             }
 
@@ -203,6 +235,7 @@ bool RunCommand(string[] parts)
             var formula = string.Join(" ", formulaParts);
             Console.WriteLine(session.Formulas.Evaluate(formula, ctx).ToString(CultureInfo.InvariantCulture));
             return true;
+        }
 
         case "set":
             if (parts.Length < 3)
@@ -220,7 +253,6 @@ bool RunCommand(string[] parts)
                 Console.WriteLine($"  {key} = {session.Flags.Read(key)}");
             }
 
-            Console.WriteLine($"{session.Flags.Count} flag(s).");
             return true;
 
         case "events":
@@ -231,6 +263,124 @@ bool RunCommand(string[] parts)
             }
 
             return true;
+
+        case "give":
+        {
+            if (parts.Length < 3 || !session.World.TryGet(parts[1], out var entity))
+            {
+                Console.WriteLine("usage: give <entityId> <itemId> [n]");
+                return true;
+            }
+
+            var amount = parts.Length > 3 ? int.Parse(parts[3], CultureInfo.InvariantCulture) : 1;
+            rpg.GiveItem(entity, parts[2], amount);
+            session.Events.DispatchPending();
+            Console.WriteLine($"gave {amount}x {parts[2]}");
+            return true;
+        }
+
+        case "equip":
+        {
+            if (parts.Length < 3 || !session.World.TryGet(parts[1], out var entity))
+            {
+                Console.WriteLine("usage: equip <entityId> <itemId>");
+                return true;
+            }
+
+            Console.WriteLine(rpg.Inventory.TryEquip(entity, parts[2], out var error) ? "equipped" : $"error: {error}");
+            session.Events.DispatchPending();
+            return true;
+        }
+
+        case "unequip":
+        {
+            if (parts.Length < 3 || !session.World.TryGet(parts[1], out var entity))
+            {
+                Console.WriteLine("usage: unequip <entityId> <slotId>");
+                return true;
+            }
+
+            Console.WriteLine(rpg.Inventory.TryUnequip(entity, parts[2], out var error) ? "unequipped" : $"error: {error}");
+            session.Events.DispatchPending();
+            return true;
+        }
+
+        case "use":
+        {
+            if (parts.Length < 3 || !session.World.TryGet(parts[1], out var user))
+            {
+                Console.WriteLine("usage: use <userId> <itemId> [targetId]");
+                return true;
+            }
+
+            Entity? target = null;
+            if (parts.Length > 3)
+            {
+                session.World.TryGet(parts[3], out target!);
+            }
+
+            Console.WriteLine(rpg.Inventory.TryUse(user, parts[2], target, out var error) ? "used" : $"error: {error}");
+            session.Events.DispatchPending();
+            return true;
+        }
+
+        case "loot":
+        {
+            if (parts.Length < 3 || !session.World.TryGet(parts[2], out var looter))
+            {
+                Console.WriteLine("usage: loot <tableId> <looterId>");
+                return true;
+            }
+
+            var drops = rpg.Loot.Roll(parts[1], looter);
+            foreach (var (itemId, amount) in drops)
+            {
+                rpg.GiveItem(looter, itemId, amount);
+                Console.WriteLine($"  {itemId} x{amount}");
+            }
+
+            session.Events.DispatchPending();
+            Console.WriteLine($"{drops.Count} drop(s).");
+            return true;
+        }
+
+        case "shop":
+        {
+            if (parts.Length < 3
+                || !session.Defs.TryGet<ShopDef>(parts[1], out var shop)
+                || !session.World.TryGet(parts[2], out var customer))
+            {
+                Console.WriteLine("usage: shop <shopId> <customerId>");
+                return true;
+            }
+
+            var state = rpg.Trade.GetState(shop);
+            foreach (var pair in state.Stock.OrderBy(p => p.Key, StringComparer.Ordinal))
+            {
+                var item = session.Defs.Get<ItemDef>(pair.Key);
+                Console.WriteLine($"  {pair.Key} x{pair.Value}  buy {rpg.Trade.GetBuyPrice(shop, item, customer)} / sell {rpg.Trade.GetSellPrice(shop, item, customer)}");
+            }
+
+            return true;
+        }
+
+        case "buy" or "sell":
+        {
+            if (parts.Length < 4
+                || !session.Defs.TryGet<ShopDef>(parts[1], out var shop)
+                || !session.World.TryGet(parts[2], out var customer))
+            {
+                Console.WriteLine($"usage: {parts[0]} <shopId> <customerId> <itemId>");
+                return true;
+            }
+
+            var ok = parts[0] == "buy"
+                ? rpg.Trade.TryBuy(shop, customer, parts[3], out var error)
+                : rpg.Trade.TrySell(shop, customer, parts[3], out error);
+            Console.WriteLine(ok ? "done" : $"error: {error}");
+            session.Events.DispatchPending();
+            return true;
+        }
 
         case "save":
             var savePath = parts.Length > 1 ? parts[1] : DefaultSaveFile;

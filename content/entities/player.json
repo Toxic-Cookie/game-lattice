@@ -5,9 +5,13 @@
   "name": "Player",
   "tags": ["player"],
   "stats": {
-    "HP": 30,
-    "Str": 8,
-    "Int": 5,
-    "Level": 1
+    "stat_con": 4,
+    "stat_str": 8,
+    "stat_int": 5,
+    "stat_cha": 10
+  },
+  "items": {
+    "item_gold": 30,
+    "item_iron_sword": 1
   }
 }

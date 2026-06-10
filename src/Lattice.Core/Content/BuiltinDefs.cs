@@ -40,11 +40,11 @@ public sealed class LifecycleDef : Def
 }
 
 /// <summary>
-/// Minimal entity template (M1): name, tags, and a flat numeric stat block.
-/// The full stat system (StatDef, min/max/derived formulas) replaces the
-/// plain stat map in M2; instances copy these values at spawn.
+/// Minimal entity template: name, tags, and a flat numeric stat block;
+/// instances copy these values at spawn. Modules may subclass (the RPG
+/// module's template adds loot/equipment and re-registers the "entity" kind).
 /// </summary>
-public sealed class EntityTemplateDef : Def
+public class EntityTemplateDef : Def
 {
     public string? Name { get; set; }
 

@@ -1,0 +1,4 @@
+[
+  { "id": "slot_main_hand", "type": "slot", "name": "Main Hand" },
+  { "id": "slot_chest", "type": "slot", "name": "Chest" }
+]

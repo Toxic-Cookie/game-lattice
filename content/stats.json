@@ -1,0 +1,26 @@
+[
+  { "id": "stat_con", "type": "stat", "key": "Con", "name": "Constitution", "min": "0", "max": "99", "default": "5" },
+  { "id": "stat_str", "type": "stat", "key": "Str", "name": "Strength", "min": "0", "max": "99" },
+  { "id": "stat_int", "type": "stat", "key": "Int", "name": "Intellect", "min": "0", "max": "99" },
+  { "id": "stat_cha", "type": "stat", "key": "Charisma", "name": "Charisma", "min": "0", "max": "99" },
+  { "id": "stat_level", "type": "stat", "key": "Level", "name": "Level", "min": "1", "max": "100", "default": "1" },
+  {
+    "id": "stat_hp",
+    "type": "stat",
+    "key": "HP",
+    "name": "Health",
+    "min": "0",
+    "max": "Con * 5 + 10",
+    "default": "max",
+    "vital": true,
+    "description": "Vital: reaching 0 kills the entity."
+  },
+  {
+    "id": "stat_carry",
+    "type": "stat",
+    "key": "Carry",
+    "name": "Carry Capacity",
+    "formula": "Str * 10",
+    "description": "Derived from Strength."
+  }
+]

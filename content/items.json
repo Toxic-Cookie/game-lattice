@@ -1,0 +1,55 @@
+[
+  {
+    "id": "item_gold",
+    "type": "item",
+    "name": "Gold",
+    "tags": ["currency"],
+    "stackSize": 99999,
+    "basePrice": 1
+  },
+  {
+    "id": "item_iron_sword",
+    "type": "item",
+    "name": "Iron Sword",
+    "slot": "slot_main_hand",
+    "stackSize": 1,
+    "tags": ["weapon"],
+    "basePrice": 25,
+    "useActions": [
+      { "type": "DealDamage", "formula": "Str * 2 + 4" }
+    ],
+    "equipEffects": [
+      { "type": "FlatModifier", "stat": "stat_str", "amount": 1 }
+    ]
+  },
+  {
+    "id": "item_wolf_fang",
+    "type": "item",
+    "name": "Wolf Fang",
+    "tags": ["weapon", "natural"],
+    "basePrice": 3,
+    "useActions": [
+      { "type": "DealDamage", "formula": "Str * 2" },
+      { "type": "ApplyStatus", "status": "status_poison" }
+    ]
+  },
+  {
+    "id": "item_wolf_pelt",
+    "type": "item",
+    "name": "Wolf Pelt",
+    "tags": ["material"],
+    "basePrice": 8
+  },
+  {
+    "id": "item_healing_potion",
+    "type": "item",
+    "name": "Healing Potion",
+    "tags": ["consumable"],
+    "basePrice": 12,
+    "consumeOnUse": true,
+    "useActions": [
+      { "type": "Heal", "formula": "10" },
+      { "type": "RemoveStatus", "status": "status_poison" }
+    ]
+  }
+]
