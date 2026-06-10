@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-test-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build
+        run: dotnet build game-lattice.slnx -c Release
+
+      - name: Test
+        run: dotnet test game-lattice.slnx -c Release --no-build --verbosity normal
+
+      - name: Validate content
+        run: dotnet run --project src/Lattice.Tooling -c Release --no-build -- validate content
