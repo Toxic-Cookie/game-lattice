@@ -1,9 +1,12 @@
-using System.Text.Json;
+using Lattice.Core.Content;
+using Lattice.Core.Formulas;
 using Lattice.Core.Hosting.Standalone;
+using Lattice.Core.Simulation;
+using Lattice.Tooling;
 
-// M0 scope: `lattice validate <dir>` checks every JSON content file parses.
-// The full rule registry (schemas, ID references, formulas, ...) accretes
-// per-milestone; see plan/06-llm-modding.md §3.
+// M1 scope: `validate` runs the full content pipeline (parse -> def load ->
+// link pass -> formula pre-flight); `schemas` emits per-def-kind JSON schema
+// groundwork. The rule registry grows per milestone (plan/06 §3).
 
 if (args.Length == 0 || args[0] is "--help" or "-h" or "help")
 {
@@ -11,8 +14,9 @@ if (args.Length == 0 || args[0] is "--help" or "-h" or "help")
         lattice — Game Lattice content tooling
 
         Usage:
-          lattice validate <contentDir>   validate content JSON (M0: well-formedness)
-          lattice --version               print version
+          lattice validate <contentDir>     full content validation (parse, refs, formulas)
+          lattice schemas -o <outputDir>    emit .schema.json per def kind
+          lattice --version                 print version
         """);
     return args.Length == 0 ? 1 : 0;
 }
@@ -39,27 +43,52 @@ if (args[0] == "validate")
     }
 
     using var source = new DirectoryContentSource(args[1], watch: false);
-    var errorCount = 0;
-    var fileCount = 0;
+    var registry = new DefRegistry();
+    var loader = new ContentLoader(DefTypeRegistry.CreateDefault());
+    var report = loader.LoadAll(source, registry);
 
-    foreach (var file in source.EnumerateFiles())
+    // formula pre-flight uses a throwaway RNG: TryParse never rolls dice
+    registry.Validate(report, new NCalcFormulaEngine(new LatticeRandom(0)));
+
+    foreach (var warning in report.Warnings)
     {
-        fileCount++;
-        try
-        {
-            using var _ = JsonDocument.Parse(
-                source.ReadAllText(file),
-                new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true });
-        }
-        catch (JsonException ex)
-        {
-            errorCount++;
-            Console.Error.WriteLine($"error: {file.RelativePath}: {ex.Message}");
-        }
+        Console.WriteLine($"warning: {warning}");
     }
 
-    Console.WriteLine($"validate: {fileCount} file(s) checked, {errorCount} error(s).");
-    return errorCount == 0 ? 0 : 1;
+    foreach (var error in report.Errors)
+    {
+        Console.Error.WriteLine($"error: {error}");
+    }
+
+    Console.WriteLine($"validate: {report.DefsLoaded} def(s) in {source.EnumerateFiles().Count()} file(s), " +
+                      $"{report.Errors.Count} error(s), {report.Warnings.Count} warning(s).");
+    return report.Ok ? 0 : 1;
+}
+
+if (args[0] == "schemas")
+{
+    var outIndex = Array.IndexOf(args, "-o");
+    if (outIndex < 0 || outIndex + 1 >= args.Length)
+    {
+        Console.Error.WriteLine("error: schemas requires -o <outputDir>");
+        return 2;
+    }
+
+    var outputDir = args[outIndex + 1];
+    Directory.CreateDirectory(outputDir);
+
+    var count = 0;
+    foreach (var (typeName, clrType) in DefTypeRegistry.CreateDefault().All)
+    {
+        var schema = SchemaGenerator.GenerateSchemaJson(typeName, clrType);
+        var path = Path.Combine(outputDir, $"{typeName}.schema.json");
+        File.WriteAllText(path, schema);
+        Console.WriteLine($"wrote {path}");
+        count++;
+    }
+
+    Console.WriteLine($"schemas: {count} def kind(s).");
+    return 0;
 }
 
 Console.Error.WriteLine($"error: unknown command '{args[0]}' — try 'lattice --help'");

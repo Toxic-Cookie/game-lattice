@@ -28,4 +28,6 @@ dotnet run --project src/Lattice.Tooling -- validate content
 
 ## Status
 
-**M0 (scaffolding) complete.** See `plan/00-overview.md` §4 for the milestone roadmap M0–M7.
+**M1 (core engine & data plumbing) complete:** def registry with link-pass validation, string-topic
+event bus, JSON lifecycle boot, NCalc-backed formula engine with deterministic dice, world-delta
+save/load, and live hot reload. See `plan/00-overview.md` §4 for the milestone roadmap M0–M7.

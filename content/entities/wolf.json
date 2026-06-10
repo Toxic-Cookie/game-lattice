@@ -1,0 +1,12 @@
+{
+  "id": "entity_wolf",
+  "type": "entity",
+  "description": "A common wolf; the demo quest target.",
+  "name": "Wolf",
+  "tags": ["wolf", "beast"],
+  "stats": {
+    "HP": 12,
+    "Str": 4,
+    "Level": 1
+  }
+}

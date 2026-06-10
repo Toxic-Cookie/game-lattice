@@ -1,0 +1,13 @@
+{
+  "id": "entity_player",
+  "type": "entity",
+  "description": "The player avatar.",
+  "name": "Player",
+  "tags": ["player"],
+  "stats": {
+    "HP": 30,
+    "Str": 8,
+    "Int": 5,
+    "Level": 1
+  }
+}

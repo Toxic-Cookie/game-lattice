@@ -1,5 +1,0 @@
-{
-  "id": "content_bootstrap",
-  "type": "marker",
-  "description": "Placeholder content file so the M0 host shell and `lattice validate` have something to load. Replaced by real defs in M1."
-}

@@ -1,0 +1,14 @@
+{
+  "id": "lifecycle_default",
+  "type": "lifecycle",
+  "description": "Default boot: a player and two wolves in the test scene.",
+  "initialScene": "scene_test",
+  "globalFlags": {
+    "tutorial_done": false,
+    "wolves_killed": 0
+  },
+  "spawns": [
+    { "entity": "entity_player", "position": [0, 0, 0] },
+    { "entity": "entity_wolf", "count": 2, "position": [10, 0, 5] }
+  ]
+}
