@@ -1,0 +1,15 @@
+00-index.md — Master index with a technique-selection flowchart, vocabulary glossary, how-to-use guide, and the universal principle statement. Cross-links to all case studies and chapters.
+
+ch01-foundations.md — Theory of emergence: the three requirements, the three modes (reactive/structural/incidental), the technique lineage from FSM → HFSM → BT → GOAP → HTN, the "no agent knows another exists" principle with a sequence diagram showing exclusion-as-coordination, and the emergence vs. predictability trade-off spectrum.
+
+ch02-fsm.md — FSM how-to covering all four variants: simple FSM (with a full agent implementation), stack FSM (with push/pop patterns and lifecycle hooks), HFSM (with region transitions), and the Half-Life conditions + tasks + schedules pattern with full pseudocode for all three components and the feedback loop diagram.
+
+ch03-goap.md — GOAP how-to covering world state design, action/goal class implementations, the full A* planner with node expansion pseudocode, the 3-state execution FSM, smart objects with auto-discovery, all three validation mechanisms, goal priority function design, action cost tuning, action subset assignment, and performance budgeting.
+
+ch04-htn-and-hierarchies.md — HTN + hierarchy how-to covering primitive vs. compound tasks, method decomposition, the recursive HTN planner with backtracking, blackboard implementation (with pub/sub and staleness), the full three-tier agent hierarchy (Individual / Group / Collective) with complete pseudocode, role slot limits as structural emergence, and the combined HTN + hierarchy update sequence.
+
+ch05-supporting-systems.md — Supporting systems: rich sensors with information packets, per-class sensor implementations (visual with FoV + occlusion + concealment, auditory, smell, proximity), sensor → world model integration, context-dependent nav mesh with multi-tier architecture and node reservation, utility functions with the HZD attack-interest implementation and The Sims need-scoring pattern, behavior trees (all node types with implementations), and animation integration with the wind-up/finish attack pattern.
+
+ch06-ultimate-system.md — The combined architecture: full 5-layer diagram (Perception → World Model → Decision → Execution → Coordination), contribution table from each case study, complete UltimateAgent pseudocode integrating every technique, emergent behavior mapped to layer interactions, a scaling guide (small/medium/large scope), per-layer inclusion decision table, initialization order, tiered update frequency, and a comprehensive emergence design checklist.
+
+ch07-debugging.md — Debugging and anti-patterns: the rat problem anatomy and fix, FSM transition explosion with escalation path, per-technique debug tooling (FSM state logging, GOAP decision dump, HTN decomposition trace, blackboard inspector, role inspector), five performance anti-patterns with before/after code, four design anti-patterns (scripting vs. emerging, too much information, hive mind, meaningless emergence), the AI uncanny valley table, and a final design principles mindmap.
