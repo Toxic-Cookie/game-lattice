@@ -3,12 +3,14 @@
     <Project Path="samples/Lattice.Demo/Lattice.Demo.csproj" />
   </Folder>
   <Folder Name="/src/">
+    <Project Path="src/Lattice.Ai/Lattice.Ai.csproj" />
     <Project Path="src/Lattice.Core/Lattice.Core.csproj" />
     <Project Path="src/Lattice.Narrative/Lattice.Narrative.csproj" />
     <Project Path="src/Lattice.Rpg/Lattice.Rpg.csproj" />
     <Project Path="src/Lattice.Tooling/Lattice.Tooling.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Lattice.Ai.Tests/Lattice.Ai.Tests.csproj" />
     <Project Path="tests/Lattice.Core.Tests/Lattice.Core.Tests.csproj" />
     <Project Path="tests/Lattice.Narrative.Tests/Lattice.Narrative.Tests.csproj" />
     <Project Path="tests/Lattice.Rpg.Tests/Lattice.Rpg.Tests.csproj" />

@@ -4,6 +4,8 @@ using Lattice.Core.Content;
 using Lattice.Core.Formulas;
 using Lattice.Core.Hosting;
 using Lattice.Core.Hosting.Standalone;
+using Lattice.Ai;
+using Lattice.Core.Events;
 using Lattice.Core.Persistence;
 using Lattice.Core.Simulation;
 using Lattice.Narrative;
@@ -40,9 +42,10 @@ var services = new HostServices
     Physics = new PermissivePhysicsQueryService(),
 };
 
-var session = GameSession.Create(services, LatticeNarrative.CreateDefTypes());
+var session = GameSession.Create(services, LatticeAi.CreateDefTypes());
 var rpg = LatticeRpg.Attach(session);
 var narrative = LatticeNarrative.Attach(session, rpg);
+var ai = LatticeAi.Attach(session, rpg, narrative);
 var loadReport = session.LoadContent();
 foreach (var error in loadReport.Errors)
 {
@@ -137,9 +140,85 @@ bool RunCommand(string[] parts)
                     (in dialogue: Enter = continue, number = choose option)
                   quests                            quest log
                   interact <actorId> <targetId> [verb]
+                AI:
+                  agent <id>                  brain state, conditions, trace
+                  senses <id>                 beliefs + set conditions
+                  noise <x> <y> <z> [loud]    emit a sound stimulus
+                  move <id> <x> <y> <z>       teleport an entity (provoke sensors)
                   quit
                 """);
             return true;
+
+        case "agent":
+        {
+            if (parts.Length < 2 || !session.World.TryGet(parts[1], out var entity) || ai.GetAgent(entity) is not { } agent)
+            {
+                Console.WriteLine("no agent on that entity");
+                return true;
+            }
+
+            Console.WriteLine($"{entity.InstanceId} profile={agent.Profile.Id} meta={agent.Meta} {agent.Brain.Describe()}");
+            Console.WriteLine($"  conditions: {string.Join(", ", agent.Conditions.SetNames(agent.Catalog).DefaultIfEmpty("-"))}");
+            Console.WriteLine($"  moving: {(agent.IsMoving ? $"-> {agent.Path[^1]}" : "no")}  facing: ({agent.Facing.X:F1}, {agent.Facing.Z:F1})");
+            foreach (var line in agent.Trace.TakeLast(10))
+            {
+                Console.WriteLine($"  {line}");
+            }
+
+            return true;
+        }
+
+        case "senses":
+        {
+            if (parts.Length < 2 || !session.World.TryGet(parts[1], out var entity) || ai.GetAgent(entity) is not { } agent)
+            {
+                Console.WriteLine("no agent on that entity");
+                return true;
+            }
+
+            Console.WriteLine($"  conditions: {string.Join(", ", agent.Conditions.SetNames(agent.Catalog).DefaultIfEmpty("-"))}");
+            foreach (var fact in agent.Beliefs.Facts.OrderBy(f => f.Key, StringComparer.Ordinal))
+            {
+                Console.WriteLine($"  {fact.Key} = {fact.Value}");
+            }
+
+            return true;
+        }
+
+        case "noise":
+        {
+            if (parts.Length < 4)
+            {
+                Console.WriteLine("usage: noise <x> <y> <z> [loudness]");
+                return true;
+            }
+
+            var loudness = parts.Length > 4 ? double.Parse(parts[4], CultureInfo.InvariantCulture) : 1.0;
+            session.Events.Publish("Stimulus.Sound", EventPayload.Of(
+                ("x", double.Parse(parts[1], CultureInfo.InvariantCulture)),
+                ("y", double.Parse(parts[2], CultureInfo.InvariantCulture)),
+                ("z", double.Parse(parts[3], CultureInfo.InvariantCulture)),
+                ("loudness", loudness)));
+            session.Events.DispatchPending();
+            Console.WriteLine("noise emitted");
+            return true;
+        }
+
+        case "move":
+        {
+            if (parts.Length < 5 || !session.World.TryGet(parts[1], out var entity))
+            {
+                Console.WriteLine("usage: move <id> <x> <y> <z>");
+                return true;
+            }
+
+            entity.Position = new Vector3(
+                float.Parse(parts[2], CultureInfo.InvariantCulture),
+                float.Parse(parts[3], CultureInfo.InvariantCulture),
+                float.Parse(parts[4], CultureInfo.InvariantCulture));
+            Console.WriteLine($"moved to ({entity.Position.X:F1}, {entity.Position.Y:F1}, {entity.Position.Z:F1})");
+            return true;
+        }
 
         case "talk":
         {

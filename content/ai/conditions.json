@@ -1,0 +1,13 @@
+{
+  "id": "conditions_default",
+  "type": "conditions",
+  "description": "Default condition catalog (max 32 names; bit = declaration order).",
+  "names": [
+    "CAN_SEE_ENEMY",
+    "THREAT_KNOWN",
+    "HEAR_SOUND",
+    "SMELL_DETECTED",
+    "CONTACT",
+    "DAMAGED"
+  ]
+}

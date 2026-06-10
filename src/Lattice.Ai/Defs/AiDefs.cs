@@ -1,0 +1,140 @@
+using System.Text.Json;
+using Lattice.Core.Content;
+
+namespace Lattice.Ai.Defs;
+
+/// <summary>
+/// The data-declared condition catalog: names map to bit positions in
+/// declaration order. One catalog per profile (default: conditions_default);
+/// at most 32 names (validation enforces).
+/// </summary>
+public sealed class ConditionCatalogDef : Def
+{
+    public List<string> Names { get; set; } = [];
+}
+
+/// <summary>
+/// An agent profile is the whole personality of an NPC type (plan/04 §11):
+/// brain tier, sensor calibration, behavior content, movement. Tiered
+/// brains are the governing rule (the F.E.A.R. rat problem, ch07 §7.1):
+/// "fsm" for simple agents, "schedules" for deliberative ones; M4b–M4d add
+/// "bt", "goap", and "htn".
+/// </summary>
+public sealed class AgentProfileDef : Def
+{
+    /// <summary>Entity template IDs this profile attaches to.</summary>
+    public List<string> Entities { get; set; } = [];
+
+    /// <summary>Brain tier: "fsm" or "schedules" (M4a).</summary>
+    public string Brain { get; set; } = "fsm";
+
+    /// <summary>FSM brain def (brain = "fsm").</summary>
+    public string? FsmBrain { get; set; }
+
+    /// <summary>Schedule def IDs in priority order, highest first (brain = "schedules").</summary>
+    public List<string>? Schedules { get; set; }
+
+    public List<SensorSpec>? Sensors { get; set; }
+
+    /// <summary>Condition catalog def ID.</summary>
+    public string Conditions { get; set; } = "conditions_default";
+
+    /// <summary>Tags that mark entities as threats to this agent.</summary>
+    public List<string>? HostileTags { get; set; }
+
+    public double WalkSpeed { get; set; } = 2.0;
+
+    public double RunSpeed { get; set; } = 4.0;
+
+    /// <summary>Seconds without threat before Alert decays back to Idle.</summary>
+    public double AlertDecaySeconds { get; set; } = 5.0;
+
+    /// <summary>Patrol route waypoints ([x,y,z] each) for the patrol_point move target.</summary>
+    public List<float[]>? PatrolPoints { get; set; }
+
+    public override IEnumerable<DefReference> GetReferences()
+    {
+        foreach (var entity in Entities)
+        {
+            yield return new DefReference(entity, $"{Id}.entities");
+        }
+
+        if (FsmBrain is not null)
+        {
+            yield return new DefReference(FsmBrain, $"{Id}.fsmBrain");
+        }
+
+        foreach (var schedule in Schedules ?? [])
+        {
+            yield return new DefReference(schedule, $"{Id}.schedules");
+        }
+
+        yield return new DefReference(Conditions, $"{Id}.conditions");
+    }
+
+    public sealed class SensorSpec
+    {
+        /// <summary>"visual", "auditory", "smell", or "proximity".</summary>
+        public string Kind { get; set; } = "visual";
+
+        public double Range { get; set; } = 10.0;
+
+        /// <summary>0–1; gates perceived detail: ≥0.8 full, ≥0.4 partial, else minimal (ch05 §5.2).</summary>
+        public double Sensitivity { get; set; } = 1.0;
+
+        /// <summary>Field of view in degrees (visual only; 360 = no cone).</summary>
+        public double Fov { get; set; } = 360.0;
+    }
+}
+
+/// <summary>
+/// Data-driven simple FSM brain — the rat tier (ch07 §7.1): states pair a
+/// steering primitive with condition-gated transitions. ~10 lines of JSON
+/// per critter, zero planner overhead.
+/// </summary>
+public sealed class FsmBrainDef : Def
+{
+    public string Initial { get; set; } = "";
+
+    public Dictionary<string, BrainState> States { get; set; } = new(StringComparer.Ordinal);
+
+    public sealed class BrainState
+    {
+        /// <summary>Steering primitive payload ({"type":"Wander","speed":1} etc.).</summary>
+        public JsonElement? Steering { get; set; }
+
+        public List<Transition>? Transitions { get; set; }
+    }
+
+    public sealed class Transition
+    {
+        public string To { get; set; } = "";
+
+        /// <summary>Condition primitives (subject = the agent entity); all must hold.</summary>
+        public List<JsonElement>? When { get; set; }
+    }
+}
+
+/// <summary>
+/// A Half-Life schedule (ch02 §2.5): a condition-gated macro-behavior.
+/// Selection requires all <see cref="Require"/> conditions; any
+/// <see cref="Interrupt"/> condition invalidates it mid-run. The
+/// invalidation feedback loop is the reactivity — no event handlers.
+/// </summary>
+public sealed class ScheduleDef : Def
+{
+    /// <summary>Selection priority; higher wins among selectable schedules.</summary>
+    public double Priority { get; set; }
+
+    /// <summary>Meta states ("Idle", "Alert") in which this schedule is selectable; empty = any.</summary>
+    public List<string>? MetaStates { get; set; }
+
+    /// <summary>Condition names that must all be set to select this schedule.</summary>
+    public List<string>? Require { get; set; }
+
+    /// <summary>Condition names whose appearance invalidates the running schedule.</summary>
+    public List<string>? Interrupt { get; set; }
+
+    /// <summary>Ordered task payloads ({"task":"MoveTo",...}).</summary>
+    public List<JsonElement> Tasks { get; set; } = [];
+}

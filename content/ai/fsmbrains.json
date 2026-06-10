@@ -1,0 +1,38 @@
+[
+  {
+    "id": "fsmbrain_rat",
+    "type": "fsmbrain",
+    "description": "Wander until something threatening appears; flee until it's gone.",
+    "initial": "wander",
+    "states": {
+      "wander": {
+        "steering": { "type": "Wander", "speed": 1.2, "radius": 4, "interval": 1.5 },
+        "transitions": [
+          {
+            "to": "flee",
+            "when": [
+              { "type": "Any", "conditions": [
+                { "type": "AgentCondition", "condition": "THREAT_KNOWN" },
+                { "type": "AgentCondition", "condition": "CAN_SEE_ENEMY" }
+              ] }
+            ]
+          }
+        ]
+      },
+      "flee": {
+        "steering": { "type": "FleeFrom", "speed": 3.5, "distance": 6 },
+        "transitions": [
+          {
+            "to": "wander",
+            "when": [
+              { "type": "Not", "condition": { "type": "Any", "conditions": [
+                { "type": "AgentCondition", "condition": "THREAT_KNOWN" },
+                { "type": "AgentCondition", "condition": "CAN_SEE_ENEMY" }
+              ] } }
+            ]
+          }
+        ]
+      }
+    }
+  }
+]

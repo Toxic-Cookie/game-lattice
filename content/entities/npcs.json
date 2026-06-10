@@ -1,0 +1,18 @@
+[
+  {
+    "id": "entity_guard",
+    "type": "entity",
+    "description": "Patrolling guard (profile_guard: schedule brain).",
+    "name": "Guard",
+    "tags": ["guard", "npc"],
+    "stats": { "stat_con": 5, "stat_str": 6 }
+  },
+  {
+    "id": "entity_rat",
+    "type": "entity",
+    "description": "Skittish rat (profile_rat: two-state FSM brain).",
+    "name": "Rat",
+    "tags": ["rat", "critter"],
+    "stats": { "stat_con": 1 }
+  }
+]

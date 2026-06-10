@@ -1,0 +1,60 @@
+[
+  {
+    "id": "schedule_patrol",
+    "type": "schedule",
+    "description": "Default beat: walk the route, look around, repeat.",
+    "priority": 10,
+    "metaStates": ["Idle"],
+    "interrupt": ["CAN_SEE_ENEMY", "THREAT_KNOWN", "HEAR_SOUND", "DAMAGED"],
+    "tasks": [
+      { "task": "MoveTo", "target": "patrol_point", "speed": "walk" },
+      { "task": "PlayAnimation", "anim": "look_around" },
+      { "task": "Wait", "seconds": 0.5 },
+      { "task": "NextPatrolPoint" },
+      { "task": "SelectNewSchedule" }
+    ]
+  },
+  {
+    "id": "schedule_investigate",
+    "type": "schedule",
+    "description": "Heard something: run to the sound and look around.",
+    "priority": 50,
+    "require": ["HEAR_SOUND"],
+    "interrupt": ["CAN_SEE_ENEMY", "DAMAGED"],
+    "tasks": [
+      { "task": "FaceEntity", "target": "sound" },
+      { "task": "MoveTo", "target": "sound", "speed": "run" },
+      { "task": "PlayAnimation", "anim": "look_around" },
+      { "task": "Wait", "seconds": 1.0 },
+      { "task": "SelectNewSchedule" }
+    ]
+  },
+  {
+    "id": "schedule_combat",
+    "type": "schedule",
+    "description": "Enemy visible: close in and attack.",
+    "priority": 100,
+    "require": ["CAN_SEE_ENEMY"],
+    "interrupt": [],
+    "tasks": [
+      { "task": "FaceEntity", "target": "enemy" },
+      { "task": "MoveTo", "target": "enemy", "speed": "run" },
+      { "task": "PlayAnimation", "anim": "attack", "blocking": true },
+      { "task": "SelectNewSchedule" }
+    ]
+  },
+  {
+    "id": "schedule_search",
+    "type": "schedule",
+    "description": "Lost the enemy: sweep their last known position.",
+    "priority": 20,
+    "metaStates": ["Alert"],
+    "interrupt": ["CAN_SEE_ENEMY", "HEAR_SOUND"],
+    "tasks": [
+      { "task": "MoveTo", "target": "last_enemy", "speed": "run" },
+      { "task": "PlayAnimation", "anim": "look_around" },
+      { "task": "Wait", "seconds": 1.0 },
+      { "task": "SelectNewSchedule" }
+    ]
+  }
+]

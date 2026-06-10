@@ -1,0 +1,36 @@
+[
+  {
+    "id": "profile_guard",
+    "type": "agent",
+    "description": "Deliberative guard: Half-Life schedules, sharp eyes, decent ears.",
+    "entities": ["entity_guard"],
+    "brain": "schedules",
+    "schedules": ["schedule_combat", "schedule_investigate", "schedule_search", "schedule_patrol"],
+    "conditions": "conditions_default",
+    "hostileTags": ["player"],
+    "sensors": [
+      { "kind": "visual", "range": 12, "fov": 140, "sensitivity": 0.9 },
+      { "kind": "auditory", "range": 10 }
+    ],
+    "walkSpeed": 2.0,
+    "runSpeed": 4.5,
+    "alertDecaySeconds": 4.0,
+    "patrolPoints": [[6, 0, 6], [6, 0, -6], [-6, 0, -6], [-6, 0, 6]]
+  },
+  {
+    "id": "profile_rat",
+    "type": "agent",
+    "description": "Rat-tier critter: two-state FSM, dim eyes, zero planner overhead (the F.E.A.R. lesson).",
+    "entities": ["entity_rat"],
+    "brain": "fsm",
+    "fsmBrain": "fsmbrain_rat",
+    "conditions": "conditions_default",
+    "hostileTags": ["player", "guard"],
+    "sensors": [
+      { "kind": "visual", "range": 6, "sensitivity": 0.5 }
+    ],
+    "walkSpeed": 1.2,
+    "runSpeed": 3.5,
+    "alertDecaySeconds": 2.0
+  }
+]

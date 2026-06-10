@@ -10,6 +10,7 @@
     <ProjectReference Include="..\..\src\Lattice.Core\Lattice.Core.csproj" />
     <ProjectReference Include="..\..\src\Lattice.Rpg\Lattice.Rpg.csproj" />
     <ProjectReference Include="..\..\src\Lattice.Narrative\Lattice.Narrative.csproj" />
+    <ProjectReference Include="..\..\src\Lattice.Ai\Lattice.Ai.csproj" />
   </ItemGroup>
 
 </Project>

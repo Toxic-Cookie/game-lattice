@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <RootNamespace>Lattice.Ai</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PolySharp" Version="1.16.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Lattice.Core\Lattice.Core.csproj" />
+    <ProjectReference Include="..\Lattice.Rpg\Lattice.Rpg.csproj" />
+    <ProjectReference Include="..\Lattice.Narrative\Lattice.Narrative.csproj" />
+  </ItemGroup>
+
+</Project>

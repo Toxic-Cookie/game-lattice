@@ -1,0 +1,328 @@
+using System.Numerics;
+using System.Text.Json;
+using Lattice.Ai.Agents;
+using Lattice.Ai.Defs;
+using Lattice.Ai.Perception;
+using Lattice.Ai.Tasks;
+using Lattice.Core.Content;
+using Lattice.Core.Events;
+using Lattice.Core.Hosting;
+using Lattice.Core.Hosting.Standalone;
+using Lattice.Core.Simulation;
+using Lattice.Narrative;
+using Lattice.Rpg;
+using Lattice.Rpg.Conditions;
+using Lattice.Rpg.Effects;
+
+namespace Lattice.Ai;
+
+/// <summary>
+/// The AI module (plan/04, M4a): per-agent world models, sensors, and the
+/// FSM/schedule brain tiers. Attach after RPG (and optionally Narrative),
+/// before LoadContent. Agent runtime state is deliberately not saved —
+/// brains re-perceive and re-decide after load.
+/// </summary>
+public sealed class AiRuntime
+{
+    private readonly Dictionary<string, AgentProfileDef> _profileByEntityDef = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, ConditionCatalog> _catalogs = new(StringComparer.Ordinal);
+    private readonly List<(StimulusPacket Packet, double ExpiresAt)> _stimuli = [];
+
+    internal AiRuntime(GameSession session, RpgRuntime rpg, NarrativeRuntime? narrative)
+    {
+        Session = session;
+        Rpg = rpg;
+        Narrative = narrative;
+        Tasks = TaskRegistry.CreateDefault();
+
+        session.RegisterModule(this);
+        rpg.Conditions.Register(new AgentConditionEvaluator(this));
+        session.World.EntityAdded += AttachAgent;
+        session.ContentLoaded += _ => RebuildIndexes();
+        session.Events.Subscribe("Content.Reloaded", _ => RebuildIndexes());
+        session.Events.Subscribe("Stimulus.Sound", e => OnStimulusEvent(e, StimulusType.Sound));
+        session.Events.Subscribe("Stimulus.Scent", e => OnStimulusEvent(e, StimulusType.Scent));
+        session.Events.Subscribe("Entity.Damaged", OnEntityDamaged);
+        session.RegisterSystem(new AgentSystem(this));
+        session.RegisterContentValidator(new AiContentValidator(rpg.Conditions, Tasks));
+    }
+
+    public GameSession Session { get; }
+
+    public RpgRuntime Rpg { get; }
+
+    public NarrativeRuntime? Narrative { get; }
+
+    public TaskRegistry Tasks { get; }
+
+    /// <summary>Live transient stimuli (sounds/scents) for sensor evaluation.</summary>
+    public IReadOnlyList<StimulusPacket> TransientStimuli { get; private set; } = [];
+
+    public AgentComponent? GetAgent(Entity entity) => entity.GetComponent<AgentComponent>();
+
+    /// <summary>Emit a transient sound stimulus (also reachable by publishing "Stimulus.Sound").</summary>
+    public void EmitSound(Vector3 position, double loudness = 1.0, string? sourceId = null, double lifetimeSeconds = 0.6)
+        => _stimuli.Add((new StimulusPacket
+        {
+            Type = StimulusType.Sound,
+            Position = position,
+            Loudness = loudness,
+            SourceId = sourceId,
+        }, Session.SimTimeSeconds + lifetimeSeconds));
+
+    /// <summary>Perceivable entities within range of an agent (spatial query first — ch07 anti-pattern 2).</summary>
+    public IEnumerable<Entity> QueryEntitiesNear(Entity self, double range)
+    {
+        var ids = new List<string>();
+        Session.Services.Physics.QueryEntityIdsInRadius(self.Position, (float)range, ids);
+        foreach (var id in ids)
+        {
+            if (id != self.InstanceId && Session.World.TryGet(id, out var entity))
+            {
+                yield return entity;
+            }
+        }
+    }
+
+    /// <summary>Path an agent to a destination through the navigation seam; returns false when unreachable.</summary>
+    public bool RequestPath(AgentContext ctx, Vector3 destination, double speed)
+    {
+        var waypoints = new List<Vector3>();
+        var navContext = new NavQueryContext
+        {
+            AgentProfileId = ctx.Agent.Profile.Id,
+            BehaviorState = ctx.Agent.Meta.ToString().ToLowerInvariant(),
+        };
+        if (!Session.Services.Navigation.TryFindPath(ctx.Entity.Position, destination, navContext, waypoints))
+        {
+            return false;
+        }
+
+        ctx.Agent.SetPath(waypoints, speed);
+        return true;
+    }
+
+    internal ConditionCatalog GetCatalog(string catalogId)
+        => _catalogs.TryGetValue(catalogId, out var catalog) ? catalog : ConditionCatalog.Empty;
+
+    private void RebuildIndexes()
+    {
+        _profileByEntityDef.Clear();
+        foreach (var profile in Session.Defs.All<AgentProfileDef>())
+        {
+            foreach (var entityDef in profile.Entities)
+            {
+                _profileByEntityDef[entityDef] = profile;
+            }
+        }
+
+        _catalogs.Clear();
+        foreach (var catalogDef in Session.Defs.All<ConditionCatalogDef>())
+        {
+            if (catalogDef.Names.Count <= 32)
+            {
+                _catalogs[catalogDef.Id] = new ConditionCatalog(catalogDef.Names);
+            }
+        }
+    }
+
+    private void AttachAgent(Entity entity, bool isRestore)
+    {
+        if (!_profileByEntityDef.TryGetValue(entity.DefId, out var profile))
+        {
+            return;
+        }
+
+        var catalog = GetCatalog(profile.Conditions);
+        IBrain brain = profile.Brain switch
+        {
+            "fsm" when profile.FsmBrain is not null && Session.Defs.TryGet<FsmBrainDef>(profile.FsmBrain, out var fsmDef) =>
+                new DataFsmBrain(fsmDef),
+            "schedules" => new ScheduleBrain(),
+            _ => new NullBrain(profile.Brain),
+        };
+
+        var agent = new AgentComponent(profile, catalog, brain);
+        agent.Beliefs.Set("spawn_position", entity.Position);
+        entity.SetComponent(agent);
+    }
+
+    private void OnStimulusEvent(GameEvent evt, StimulusType type)
+    {
+        var x = evt.Payload.TryGetValue("x", out var xv) && xv is double xd ? xd : 0;
+        var y = evt.Payload.TryGetValue("y", out var yv) && yv is double yd ? yd : 0;
+        var z = evt.Payload.TryGetValue("z", out var zv) && zv is double zd ? zd : 0;
+        var loudness = evt.Payload.TryGetValue("loudness", out var lv) && lv is double ld ? ld : 1.0;
+        _stimuli.Add((new StimulusPacket
+        {
+            Type = type,
+            Position = new Vector3((float)x, (float)y, (float)z),
+            Loudness = loudness,
+            SourceId = evt.Payload.TryGetValue("sourceId", out var s) ? s as string : null,
+        }, Session.SimTimeSeconds + 0.6));
+    }
+
+    private void OnEntityDamaged(GameEvent evt)
+    {
+        if (evt.Payload.TryGetValue("instanceId", out var id)
+            && id is string instanceId
+            && Session.World.TryGet(instanceId, out var entity)
+            && GetAgent(entity) is { } agent)
+        {
+            agent.LastDamagedAt = Session.SimTimeSeconds;
+        }
+    }
+
+    /// <summary>Per-tick agent pipeline: perceive → meta-state → decide (brain) → move.</summary>
+    private sealed class AgentSystem(AiRuntime ai) : ISimSystem
+    {
+        public string Name => "ai.agents";
+
+        public void Tick(GameSession session, float dt)
+        {
+            var now = session.SimTimeSeconds;
+
+            // standalone hosts: mirror entity positions into the permissive spatial index
+            if (session.Services.Physics is PermissivePhysicsQueryService permissive)
+            {
+                foreach (var entity in session.World.All)
+                {
+                    permissive.SetEntityPosition(entity.InstanceId, entity.Position);
+                }
+            }
+
+            ai._stimuli.RemoveAll(s => s.ExpiresAt <= now);
+            ai.TransientStimuli = ai._stimuli.Select(s => s.Packet).ToList();
+
+            foreach (var entity in session.World.All.ToList())
+            {
+                if (ai.GetAgent(entity) is not { } agent)
+                {
+                    continue;
+                }
+
+                var ctx = new AgentContext { Ai = ai, Entity = entity, Agent = agent };
+
+                SensorPipeline.Update(ctx, ai.TransientStimuli, now);
+                UpdateMetaState(ctx, now);
+                agent.Brain.Tick(ctx, dt);
+                Move(ctx, dt);
+            }
+        }
+
+        private static void UpdateMetaState(AgentContext ctx, double now)
+        {
+            var agent = ctx.Agent;
+            var threatMask = agent.Catalog.MaskOf([
+                SensorPipeline.CanSeeEnemy, SensorPipeline.ThreatKnown, SensorPipeline.HearSound, SensorPipeline.Damaged,
+            ]);
+
+            if (agent.Conditions.HasAnyOf(threatMask))
+            {
+                if (agent.Meta != MetaState.Alert)
+                {
+                    agent.Meta = MetaState.Alert;
+                    agent.AddTrace(ctx.Session.Tick, "meta Idle -> Alert");
+                }
+            }
+            else if (agent.Meta == MetaState.Alert && now - agent.LastThreatAt > agent.Profile.AlertDecaySeconds)
+            {
+                agent.Meta = MetaState.Idle;
+                agent.AddTrace(ctx.Session.Tick, "meta Alert -> Idle");
+            }
+        }
+
+        private static void Move(AgentContext ctx, float dt)
+        {
+            var agent = ctx.Agent;
+            var entity = ctx.Entity;
+            var remaining = (float)(agent.MoveSpeed * dt);
+
+            // spend the full step budget across waypoints (paths begin at the
+            // agent's own position; zero-length legs must not eat a tick)
+            while (agent.IsMoving && remaining > 0)
+            {
+                var target = agent.Path[agent.PathIndex];
+                var toTarget = target - entity.Position;
+                var distance = toTarget.Length();
+
+                if (distance <= remaining || distance < 0.01f)
+                {
+                    entity.Position = target;
+                    remaining -= distance;
+                    agent.PathIndex++;
+                    if (!agent.IsMoving)
+                    {
+                        agent.HasArrived = true;
+                        agent.StopMoving();
+                    }
+                }
+                else
+                {
+                    var direction = toTarget / distance;
+                    entity.Position += direction * remaining;
+                    agent.Facing = direction;
+                    remaining = 0;
+                }
+            }
+        }
+    }
+
+    private sealed class NullBrain(string requestedKind) : IBrain
+    {
+        public string Kind => "null";
+
+        public void Tick(AgentContext ctx, float dt)
+        {
+        }
+
+        public string Describe() => $"null (unknown brain '{requestedKind}')";
+    }
+}
+
+/// <summary>
+/// Condition primitive reading an agent's condition bitmask:
+/// {"type":"AgentCondition","condition":"CAN_SEE_ENEMY"}. Constructible
+/// without a runtime for validation-only use (tooling).
+/// </summary>
+public sealed class AgentConditionEvaluator(AiRuntime? ai = null) : IConditionEvaluator
+{
+    public string Type => "AgentCondition";
+
+    public bool Evaluate(ConditionContext ctx, JsonElement args)
+    {
+        if (ai is null || ctx.Subject is null || ai.GetAgent(ctx.Subject) is not { } agent)
+        {
+            return false;
+        }
+
+        return agent.Conditions.IsSet(agent.Catalog, JsonArgs.GetString(args, "condition"));
+    }
+
+    public void Validate(JsonElement args, EffectValidationContext v)
+    {
+        if (!JsonArgs.TryGetString(args, "condition", out _))
+        {
+            v.Error("AgentCondition requires 'condition'.");
+        }
+    }
+}
+
+/// <summary>Entry points for wiring the AI module into a session.</summary>
+public static class LatticeAi
+{
+    /// <summary>Narrative def kinds plus the AI vocabulary.</summary>
+    public static DefTypeRegistry CreateDefTypes()
+    {
+        var types = LatticeNarrative.CreateDefTypes();
+        types.Register<ConditionCatalogDef>("conditions");
+        types.Register<AgentProfileDef>("agent");
+        types.Register<FsmBrainDef>("fsmbrain");
+        types.Register<ScheduleDef>("schedule");
+        return types;
+    }
+
+    /// <summary>Attach the AI module. Call after RPG (and Narrative, if used), before LoadContent.</summary>
+    public static AiRuntime Attach(GameSession session, RpgRuntime rpg, NarrativeRuntime? narrative = null)
+        => new(session, rpg, narrative);
+}
