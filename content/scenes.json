@@ -28,5 +28,16 @@
       { "entity": "entity_trap", "position": [2, 0, 2] },
       { "entity": "entity_boss", "position": [-14, 0, -10] }
     ]
+  },
+  {
+    "id": "lifecycle_quest",
+    "type": "lifecycle",
+    "description": "Demo scene 3 — The Quest-Giver (plan/07 §3): the quest_wolves chain end-to-end over the event bus, with mid-quest save/load.",
+    "initialScene": "scene_quest",
+    "spawns": [
+      { "entity": "entity_player", "position": [0, 0, 0] },
+      { "entity": "entity_innkeeper", "position": [4, 0, 4] },
+      { "entity": "entity_wolf", "count": 3, "position": [14, 0, 10] }
+    ]
   }
 ]
