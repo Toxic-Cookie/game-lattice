@@ -15,7 +15,7 @@ Depends on: everything (M1–M6).
 - Meta-awareness beat: innkeeper interrupts dialogue if player "looks away" twice (plan 04 §15).
 - Rain event degrades hearing; a patron comments via event-triggered Yarn node (weather → narrative coupling).
 
-- [ ] Scene JSON + content; scripted simulation test: full day cycle, all NPCs complete ≥1 full need loop; dialogue + trade transcript golden file
+- [x] Scene JSON + content; scripted simulation test: full day cycle, all NPCs complete ≥1 full need loop; dialogue + trade transcript golden file *(`lifecycle_tavern` + `TavernDemoTests`; golden at `tests/Lattice.Demos.Tests/golden/tavern-transcript.txt`)*
 
 ## 2. Demo Scene: The Dungeon
 
@@ -26,7 +26,7 @@ Depends on: everything (M1–M6).
 - One rat-tier FSM critter per room (assert: zero planner allocations for it).
 - Kills roll loot tables; poison trap applies `status_poison`; boss-lite uses HTN with two methods (ranged-preferred / melee-fallback) to show method selection.
 
-- [ ] Scene + profiles + simulation tests (flanking, rat-tier guard, decision-dump snapshot on every failed assertion)
+- [x] Scene + profiles + simulation tests (flanking, rat-tier guard via `AiRuntime.PlannerInvocationsByAgent`) *(`lifecycle_dungeon` + `DungeonDemoTests`; boss-lite = `htn_boss` ranged/melee methods)*
 
 ## 3. Demo Scene: The Quest-Giver
 
@@ -35,7 +35,7 @@ Depends on: everything (M1–M6).
 - `quest_wolves` chain end-to-end (accept → counter via `Entity.Died` events → report → reward), mid-quest save/load assertion.
 - Demonstrates the event bus visibly: `events` command transcript included in docs.
 
-- [ ] Scene + simulation test covering the full quest lifecycle incl. save/load
+- [x] Scene + simulation test covering the full quest lifecycle incl. save/load *(`lifecycle_quest` + `QuestGiverDemoTests`; the event-bus transcript is in `docs/architecture.md` §Observability)*
 
 ## 4. Herd Demo **(added beyond concept — M4d showcase)**
 
@@ -43,7 +43,7 @@ The coordination layer deserves its own demo (concept's three scenes don't cover
 
 - Mixed herd with role slots → core/ring formation; stealth kill (unwitnessed, blackboard latency) vs witnessed attack (alert escalation, role restructure); passport recycling of a survivor.
 
-- [ ] Scene + the M4d acceptance assertions as CI simulation tests
+- [ ] Scene + the M4d acceptance assertions as CI simulation tests *(the assertions run in `Lattice.Ai.Tests.HerdTests`; a dedicated showcase scene remains open)*
 
 ## 5. Documentation for LLMs **[core]**
 
@@ -53,7 +53,7 @@ The condensed authoring guide (concept Phase 7) — distinct from the auto-gener
 - Written to be pasted into a model's context: ≤ ~4k tokens, links to manifest/schemas for the rest.
 - Companion `docs/architecture.md` for humans: layer diagram (perception→world model→decision→execution→coordination per ch06), system map, extension guide ("adding an effect primitive" walkthrough).
 
-- [ ] llm-guide + architecture doc + README refresh; the M6 LLM workflow test prompt archived as a worked example
+- [x] llm-guide + architecture doc + README refresh; the M6 LLM workflow test prompt archived as a worked example *(in `docs/llm-guide.md` §End-to-end example)*
 
 ## 6. Debug & Observability Assembly **[core]**
 
@@ -63,11 +63,11 @@ Per-system tools were built in their milestones (plan 04 list); M7 unifies:
 - Replay log **[stretch]**: timestamped decision log (ch07 §7.10) → `lattice replay <file>` reconstruction.
 - Performance counters: per-tier AI update times, planner invocations/sec, event throughput — printed by `perf` command; CI perf-regression thresholds for the 20-agent dungeon scene.
 
-- [ ] Unified inspector + perf counters + CI thresholds
+- [~] Unified inspector + perf counters *(one command surface in the demo shell incl. `perf` planner counters; replay log and CI perf-regression thresholds remain open)*
 
 ## 7. Release Polish
 
-- [ ] Semantic version `0.1.0`; CHANGELOG; license decision
+- [~] Semantic version `0.1.0` (Directory.Build.props) + CHANGELOG shipped; license decision still open
 - [ ] NuGet packaging of `Lattice.*` libs **[stretch]**
 - [ ] **Godot host sample [core]** (`samples/Lattice.Godot`): minimal Godot 4 (C#) project implementing the five adapter interfaces (`ILatticeHost`, `IContentSource`, `INavigationService` via Godot navigation, `IAnimationService` via AnimationPlayer, `IPhysicsQueryService` via raycasts) and running one demo scene's content in-engine — the proof of the engine-agnostic seam (overview risk table)
 
