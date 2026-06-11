@@ -82,6 +82,9 @@ public sealed class ShopDef : Def
     /// <summary>Event topic that resets stock to this def (e.g. "Time.DayStarted", live in M5).</summary>
     public string? RestockOn { get; set; }
 
+    /// <summary>Condition primitives (subject = the customer) gating trade — shop hours live here.</summary>
+    public List<System.Text.Json.JsonElement>? OpenWhen { get; set; }
+
     public override IEnumerable<DefReference> GetReferences()
     {
         yield return new DefReference(Currency, $"{Id}.currency");

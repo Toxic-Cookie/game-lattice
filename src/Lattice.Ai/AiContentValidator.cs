@@ -386,6 +386,15 @@ public sealed class AiContentValidator(ConditionRegistry conditions, TaskRegistr
                     $"Agent profile '{profile.Id}' htnInterrupt condition '{condition}' missing from catalog '{catalog.Id}'.");
             }
         }
+
+        foreach (var condition in (profile.FlagConditions ?? new Dictionary<string, string>()).Keys)
+        {
+            if (!names.Contains(condition))
+            {
+                report.Errors.Add(
+                    $"Agent profile '{profile.Id}' flagConditions condition '{condition}' missing from catalog '{catalog.Id}'.");
+            }
+        }
     }
 
     private void ValidateGoapAction(GoapActionDef action, DefRegistry registry, ContentLoadReport report, IFormulaEngine formulas)

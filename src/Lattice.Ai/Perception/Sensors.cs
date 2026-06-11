@@ -79,12 +79,18 @@ public static class SensorPipeline
         agent.Beliefs.Remove("sound_position");
         agent.Beliefs.Remove("scent_position");
 
+        // environmental degradation (plan/05 §3): weather/world systems write
+        // these global multipliers; rain dulling hearing is data, not code
+        var visualMult = ctx.Session.Flags.ReadNumber("sense_visual_mult", 1.0);
+        var auditoryMult = ctx.Session.Flags.ReadNumber("sense_auditory_mult", 1.0);
+        var smellMult = ctx.Session.Flags.ReadNumber("sense_smell_mult", 1.0);
+
         foreach (var sensor in agent.Profile.Sensors ?? [])
         {
             switch (sensor.Kind)
             {
                 case "visual":
-                    foreach (var other in ctx.Ai.QueryEntitiesNear(ctx.Entity, sensor.Range))
+                    foreach (var other in ctx.Ai.QueryEntitiesNear(ctx.Entity, sensor.Range * Math.Max(0, visualMult)))
                     {
                         SenseVisual(ctx, sensor, other);
                     }
@@ -113,6 +119,7 @@ public static class SensorPipeline
                 case "auditory":
                 case "smell":
                     var wanted = sensor.Kind == "smell" ? StimulusType.Scent : StimulusType.Sound;
+                    var environmentMult = Math.Max(0, sensor.Kind == "smell" ? smellMult : auditoryMult);
                     foreach (var stimulus in transientStimuli)
                     {
                         if (stimulus.Type != wanted)
@@ -120,7 +127,7 @@ public static class SensorPipeline
                             continue;
                         }
 
-                        var effectiveRange = sensor.Range * Math.Max(0.01, stimulus.Loudness);
+                        var effectiveRange = sensor.Range * environmentMult * Math.Max(0.01, stimulus.Loudness);
                         if (Vector3.DistanceSquared(ctx.Entity.Position, stimulus.Position) <= effectiveRange * effectiveRange)
                         {
                             Integrate(ctx, new Perception
@@ -140,6 +147,23 @@ public static class SensorPipeline
         if (now - agent.LastDamagedAt <= 0.5)
         {
             agent.Conditions.Set(agent.Catalog, Damaged);
+        }
+
+        // world-state bridge (plan/05 §2): truthy global flags become
+        // condition bits, so schedules can require IS_NIGHT straight from data
+        foreach (var pair in agent.Profile.FlagConditions ?? new Dictionary<string, string>())
+        {
+            var truthy = ctx.Session.Flags.Read(pair.Value) switch
+            {
+                bool b => b,
+                double d => d != 0,
+                string s => s.Length > 0,
+                _ => false,
+            };
+            if (truthy)
+            {
+                agent.Conditions.Set(agent.Catalog, pair.Key);
+            }
         }
 
         agent.Conditions.Or(agent.ManualConditions);

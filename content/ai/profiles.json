@@ -5,9 +5,10 @@
     "description": "Deliberative guard: Half-Life schedules, sharp eyes, decent ears.",
     "entities": ["entity_guard"],
     "brain": "schedules",
-    "schedules": ["schedule_scold", "schedule_combat", "schedule_investigate", "schedule_search", "schedule_patrol"],
+    "schedules": ["schedule_scold", "schedule_combat", "schedule_investigate", "schedule_search", "schedule_sleep", "schedule_patrol"],
     "conditions": "conditions_default",
     "metaSensors": ["metasensor_poke"],
+    "flagConditions": { "IS_NIGHT": "is_night" },
     "hostileTags": ["player"],
     "sensors": [
       { "kind": "visual", "range": 12, "fov": 140, "sensitivity": 0.9 },

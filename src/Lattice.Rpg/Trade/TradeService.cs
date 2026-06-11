@@ -48,10 +48,25 @@ public sealed class TradeService
     public int GetSellPrice(ShopDef shop, ItemDef item, Entity customer)
         => EvaluatePrice(shop.SellPriceFormula, item, customer);
 
+    /// <summary>Whether the shop currently trades with this customer (openWhen conditions; empty = always open).</summary>
+    public bool IsOpen(ShopDef shop, Entity customer)
+        => _rpg.Conditions.EvaluateAll(shop.OpenWhen, new Conditions.ConditionContext
+        {
+            Session = _rpg.Session,
+            Rpg = _rpg,
+            Subject = customer,
+        });
+
     /// <summary>Customer buys one unit from the shop.</summary>
     public bool TryBuy(ShopDef shop, Entity customer, string itemId, out string? error)
     {
         error = null;
+        if (!IsOpen(shop, customer))
+        {
+            error = "the shop is closed";
+            return false;
+        }
+
         if (!_rpg.Session.Defs.TryGet<ItemDef>(itemId, out var item))
         {
             error = $"unknown item '{itemId}'";
@@ -83,6 +98,12 @@ public sealed class TradeService
     public bool TrySell(ShopDef shop, Entity customer, string itemId, out string? error)
     {
         error = null;
+        if (!IsOpen(shop, customer))
+        {
+            error = "the shop is closed";
+            return false;
+        }
+
         if (!_rpg.Session.Defs.TryGet<ItemDef>(itemId, out var item))
         {
             error = $"unknown item '{itemId}'";

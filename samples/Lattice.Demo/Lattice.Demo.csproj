@@ -11,6 +11,7 @@
     <ProjectReference Include="..\..\src\Lattice.Rpg\Lattice.Rpg.csproj" />
     <ProjectReference Include="..\..\src\Lattice.Narrative\Lattice.Narrative.csproj" />
     <ProjectReference Include="..\..\src\Lattice.Ai\Lattice.Ai.csproj" />
+    <ProjectReference Include="..\..\src\Lattice.World\Lattice.World.csproj" />
   </ItemGroup>
 
 </Project>

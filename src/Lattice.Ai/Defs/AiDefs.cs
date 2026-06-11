@@ -76,6 +76,9 @@ public sealed class AgentProfileDef : Def
     /// <summary>Meta-sensor def IDs watching player behavior patterns on behalf of this agent.</summary>
     public List<string>? MetaSensors { get; set; }
 
+    /// <summary>Condition name → global flag key: truthy flags set the bit each update ("IS_NIGHT": "is_night").</summary>
+    public Dictionary<string, string>? FlagConditions { get; set; }
+
     public List<SensorSpec>? Sensors { get; set; }
 
     /// <summary>Condition catalog def ID.</summary>

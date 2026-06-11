@@ -7,6 +7,9 @@
     "buyPriceFormula": "BasePrice * (2.0 - Charisma * 0.01)",
     "sellPriceFormula": "BasePrice * (0.4 + Charisma * 0.01)",
     "restockOn": "Time.DayStarted",
+    "openWhen": [
+      { "type": "Not", "condition": { "type": "FlagEquals", "flag": "is_night", "value": true } }
+    ],
     "stock": [
       { "item": "item_iron_sword", "count": 2 },
       { "item": "item_healing_potion", "count": 5 }

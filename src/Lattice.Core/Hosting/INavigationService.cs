@@ -9,6 +9,9 @@ namespace Lattice.Core.Hosting;
 /// </summary>
 public sealed class NavQueryContext
 {
+    /// <summary>Agent instance ID (lets pathing recognize the agent's own node reservations). Null = anonymous.</summary>
+    public string? AgentId { get; init; }
+
     /// <summary>Agent profile ID (resolves to a nav profile in content). Null = default profile.</summary>
     public string? AgentProfileId { get; init; }
 

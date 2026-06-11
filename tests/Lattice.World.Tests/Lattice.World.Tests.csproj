@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -19,7 +19,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Lattice.Ai\Lattice.Ai.csproj" />
     <ProjectReference Include="..\..\src\Lattice.World\Lattice.World.csproj" />
   </ItemGroup>
 

@@ -12,6 +12,7 @@ public sealed class DefRegistry
 {
     private readonly Dictionary<string, Def> _byId = new(StringComparer.Ordinal);
     private readonly Dictionary<string, HashSet<string>> _idsBySourceFile = new(StringComparer.Ordinal);
+    private Dictionary<string, string>? _redirects;
 
     public int Count => _byId.Count;
 
@@ -19,10 +20,27 @@ public sealed class DefRegistry
 
     public bool Contains(string id) => _byId.ContainsKey(id);
 
+    /// <summary>
+    /// Activate an overlay of ID redirects (seasons, mod packs — plan/05 §4,
+    /// plan/06): typed lookups resolve through the overlay first, single hop.
+    /// Replaces any previous overlay; null clears it. Defs themselves never
+    /// change — the overlay only changes what an ID resolves to.
+    /// </summary>
+    public void SetRedirects(IReadOnlyDictionary<string, string>? redirects)
+        => _redirects = redirects is null || redirects.Count == 0
+            ? null
+            : new Dictionary<string, string>(redirects, StringComparer.Ordinal);
+
+    /// <summary>The currently active redirect overlay, if any.</summary>
+    public IReadOnlyDictionary<string, string>? Redirects => _redirects;
+
+    private string Resolve(string id)
+        => _redirects is not null && _redirects.TryGetValue(id, out var target) ? target : id;
+
     public bool TryGet<TDef>(string id, out TDef def)
         where TDef : Def
     {
-        if (_byId.TryGetValue(id, out var found) && found is TDef typed)
+        if (_byId.TryGetValue(Resolve(id), out var found) && found is TDef typed)
         {
             def = typed;
             return true;
@@ -35,7 +53,7 @@ public sealed class DefRegistry
     public TDef Get<TDef>(string id)
         where TDef : Def
     {
-        if (!_byId.TryGetValue(id, out var found))
+        if (!_byId.TryGetValue(Resolve(id), out var found))
         {
             throw new KeyNotFoundException($"No def with ID '{id}' is registered.");
         }

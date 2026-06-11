@@ -10,6 +10,7 @@ using Lattice.Rpg;
 using Lattice.Rpg.Conditions;
 using Lattice.Rpg.Effects;
 using Lattice.Tooling;
+using Lattice.World;
 using Yarn.Compiler;
 
 // M1 scope: `validate` runs the full content pipeline (parse -> def load ->
@@ -52,7 +53,7 @@ if (args[0] == "validate")
 
     using var source = new DirectoryContentSource(args[1], watch: false);
     var registry = new DefRegistry();
-    var loader = new ContentLoader(LatticeAi.CreateDefTypes());
+    var loader = new ContentLoader(LatticeWorld.AddDefTypes(LatticeAi.CreateDefTypes()));
     var report = loader.LoadAll(source, registry);
 
     // formula pre-flight uses a throwaway RNG: TryParse never rolls dice
@@ -69,6 +70,7 @@ if (args[0] == "validate")
     new RpgContentValidator(effects, conditions).Validate(registry, report, formulas);
     new NarrativeContentValidator(effects, conditions).Validate(registry, report, formulas);
     new AiContentValidator(conditions, TaskRegistry.CreateDefault(), effects).Validate(registry, report, formulas);
+    new WorldContentValidator(effects).Validate(registry, report, formulas);
 
     // Yarn scripts compile-check (same function library the runtime registers)
     var yarnFiles = source.EnumerateFiles("*.yarn").Select(f => f.AbsolutePath).ToArray();
@@ -117,7 +119,7 @@ if (args[0] == "schemas")
     Directory.CreateDirectory(outputDir);
 
     var count = 0;
-    foreach (var (typeName, clrType) in LatticeAi.CreateDefTypes().All)
+    foreach (var (typeName, clrType) in LatticeWorld.AddDefTypes(LatticeAi.CreateDefTypes()).All)
     {
         var schema = SchemaGenerator.GenerateSchemaJson(typeName, clrType);
         var path = Path.Combine(outputDir, $"{typeName}.schema.json");

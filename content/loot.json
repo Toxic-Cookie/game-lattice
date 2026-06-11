@@ -11,6 +11,18 @@
     ]
   },
   {
+    "id": "loot_wolf_winter",
+    "type": "loot",
+    "description": "Winter overlay target: season_winter redirects loot_wolf here (thicker pelts, leaner purses).",
+    "rolls": 2,
+    "entries": [
+      { "item": "item_gold", "weight": 30, "amount": "1d6" },
+      { "item": "item_wolf_pelt", "weight": 60, "amount": "2" },
+      { "tableRef": "loot_rare", "weight": 5 },
+      { "weight": 5 }
+    ]
+  },
+  {
     "id": "loot_rare",
     "type": "loot",
     "entries": [

@@ -3,6 +3,7 @@ using Lattice.Core.Hosting.Standalone;
 using Lattice.Core.Simulation;
 using Lattice.Narrative;
 using Lattice.Rpg;
+using Lattice.World;
 
 namespace Lattice.Ai.Tests;
 
@@ -108,14 +109,15 @@ internal sealed class AiTestHost : IDisposable
         WriteContent("conditions.json", """
             { "id": "conditions_default", "type": "conditions",
               "names": ["CAN_SEE_ENEMY", "THREAT_KNOWN", "HEAR_SOUND", "SMELL_DETECTED", "CONTACT", "DAMAGED",
-                        "CUSTOM_FLAG", "GROUP_ALERT", "ROLE_WATCHER", "ANNOYED"] }
+                        "CUSTOM_FLAG", "GROUP_ALERT", "ROLE_WATCHER", "ANNOYED", "IS_NIGHT"] }
             """);
         WriteContent("profiles.json", """
             [
               { "id": "profile_guard", "type": "agent", "entities": ["entity_guard"],
                 "brain": "schedules",
-                "schedules": ["schedule_combat", "schedule_investigate", "schedule_search", "schedule_patrol"],
+                "schedules": ["schedule_combat", "schedule_investigate", "schedule_search", "schedule_sleep", "schedule_patrol"],
                 "metaSensors": ["metasensor_poke"],
+                "flagConditions": { "IS_NIGHT": "is_night" },
                 "hostileTags": ["player"],
                 "sensors": [ { "kind": "visual", "range": 10, "fov": 360, "sensitivity": 0.9 },
                              { "kind": "auditory", "range": 12 } ],
@@ -206,6 +208,12 @@ internal sealed class AiTestHost : IDisposable
                 "interrupt": ["CAN_SEE_ENEMY", "HEAR_SOUND"],
                 "tasks": [ { "task": "MoveTo", "target": "last_enemy", "speed": "run" },
                            { "task": "Wait", "seconds": 0.5 },
+                           { "task": "SelectNewSchedule" } ] },
+              { "id": "schedule_sleep", "type": "schedule", "priority": 15, "metaStates": ["Idle"],
+                "require": ["IS_NIGHT"],
+                "interrupt": ["CAN_SEE_ENEMY", "THREAT_KNOWN", "HEAR_SOUND", "DAMAGED"],
+                "tasks": [ { "task": "PlayAnimation", "anim": "sleep" },
+                           { "task": "Wait", "seconds": 1.0 },
                            { "task": "SelectNewSchedule" } ] }
             ]
             """);
@@ -309,10 +317,11 @@ internal sealed class AiTestHost : IDisposable
 
     public (GameSession Session, RpgRuntime Rpg, AiRuntime Ai) CreateLoadedSession()
     {
-        var session = GameSession.Create(Services, LatticeAi.CreateDefTypes());
+        var session = GameSession.Create(Services, LatticeWorld.AddDefTypes(LatticeAi.CreateDefTypes()));
         var rpg = LatticeRpg.Attach(session);
         var narrative = LatticeNarrative.Attach(session, rpg);
         var ai = LatticeAi.Attach(session, rpg, narrative);
+        LatticeWorld.Attach(session, rpg); // inert without time defs; M5 tests write them
         var report = session.LoadContent();
         Assert.True(report.Ok, string.Join("; ", report.Errors));
         session.Boot("lifecycle_test");

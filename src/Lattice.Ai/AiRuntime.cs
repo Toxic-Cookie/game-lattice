@@ -114,6 +114,7 @@ public sealed class AiRuntime
         var waypoints = new List<Vector3>();
         var navContext = new NavQueryContext
         {
+            AgentId = ctx.Entity.InstanceId,
             AgentProfileId = ctx.Agent.Profile.Id,
             BehaviorState = ctx.Agent.Meta.ToString().ToLowerInvariant(),
         };

@@ -12,6 +12,8 @@ using Lattice.Core.Simulation;
 using Lattice.Narrative;
 using Lattice.Rpg;
 using Lattice.Rpg.Defs;
+using Lattice.World;
+using Lattice.World.Navigation;
 
 const float TickSeconds = 1f / 30f;
 const string DefaultLifecycle = "lifecycle_default";
@@ -38,15 +40,16 @@ var services = new HostServices
 {
     Host = host,
     Content = content,
-    Navigation = new StraightLineNavigationService(),
+    Navigation = new GridNavigationService(), // straight-line fallback off-grid
     Animation = animation,
     Physics = new PermissivePhysicsQueryService(),
 };
 
-var session = GameSession.Create(services, LatticeAi.CreateDefTypes());
+var session = GameSession.Create(services, LatticeWorld.AddDefTypes(LatticeAi.CreateDefTypes()));
 var rpg = LatticeRpg.Attach(session);
 var narrative = LatticeNarrative.Attach(session, rpg);
 var ai = LatticeAi.Attach(session, rpg, narrative);
+var world = LatticeWorld.Attach(session, rpg);
 var loadReport = session.LoadContent();
 foreach (var error in loadReport.Errors)
 {
@@ -153,6 +156,8 @@ bool RunCommand(string[] parts)
                   bb <groupId>                group blackboard with entry ages
                   roles <groupId>             role assignments
                   poke <id>                   annoy an NPC (meta-sensor demo)
+                  path <id>                   remaining waypoints of a moving agent
+                  (time also shows clock, phase, season, weather)
                   noise <x> <y> <z> [loud]    emit a sound stimulus
                   move <id> <x> <y> <z>       teleport an entity (provoke sensors)
                   quit
@@ -485,7 +490,32 @@ bool RunCommand(string[] parts)
 
         case "time":
             Console.WriteLine($"tick {session.Tick}, t={session.SimTimeSeconds:F2}s, wall={session.Services.Host.WallClockSeconds:F1}s");
+            Console.WriteLine($"  day {world.Day}, {(int)world.Hour:00}:{(int)(world.Hour % 1 * 60):00}  "
+                              + $"phase={world.PhaseName ?? "-"} (light {world.AmbientLight:F2})  "
+                              + $"season={world.SeasonId ?? "-"}  weather={world.WeatherId ?? "-"}");
             return true;
+
+        case "path":
+        {
+            if (parts.Length < 2 || !session.World.TryGet(parts[1], out var entity) || ai.GetAgent(entity) is not { } agent)
+            {
+                Console.WriteLine("no agent on that entity");
+                return true;
+            }
+
+            if (!agent.IsMoving)
+            {
+                Console.WriteLine("not moving");
+                return true;
+            }
+
+            for (var i = agent.PathIndex; i < agent.Path.Count; i++)
+            {
+                Console.WriteLine($"  [{i}] ({agent.Path[i].X:F1}, {agent.Path[i].Z:F1})");
+            }
+
+            return true;
+        }
 
         case "spawn":
             if (parts.Length < 2)

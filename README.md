@@ -14,6 +14,7 @@ never requires recompilation. The data formats are designed to be authorable by 
 | `src/Lattice.Rpg` | RPG module: stats, status effects, effect/condition primitives, inventory, loot, trade |
 | `src/Lattice.Narrative` | Narrative module: Yarn + JSON-tree dialogue, quests, smart-object interactions |
 | `src/Lattice.Ai` | AI module: sensors, condition bitmask world model, FSM/schedule/BT/GOAP/HTN brain tiers, utility needs, groups & collective |
+| `src/Lattice.World` | World simulation: clock & calendar, day phases, Markov weather, season overlays, grid A* navigation |
 | `src/Lattice.Tooling` | `lattice` CLI: content validation (later: manifest + schema generation) |
 | `samples/Lattice.Demo` | Headless console host / development workbench |
 | `tests/` | xunit test projects |
@@ -31,7 +32,14 @@ dotnet run --project src/Lattice.Tooling -- validate content
 
 ## Status
 
-**M4 (the full AI suite) complete.** Five data-driven brain tiers sharing one task/condition/
+**M5 (world & environment) complete:** a persisted, deterministic game clock and calendar
+publishing `Time.*` events and `Hour`/`Day`/`Season` formula identifiers; day phases that set
+`is_night`-style flags (guards sleep, shops close — all data); Markov weather whose states hold
+global flags (rain halves auditory range, so stealth weather emerges from a number) and run
+tag-scoped effect primitives at boundaries; seasons as registry-redirect overlays (winter swaps
+loot tables) that also bias weather; and a deterministic grid A* navigation service with
+context-dependent costs (tall grass impassable on patrol, crossable when alert) and
+node-reservation splitting. Earlier: **M4 (the full AI suite) complete.** Five data-driven brain tiers sharing one task/condition/
 action vocabulary: two-state FSMs, Half-Life condition-gated schedules, behavior trees with
 reactive preemption, GOAP (budgeted A*, cost-profile personalities, flanking from smart-object
 reservation), and HTN (ordered methods, backtracking decomposition, traced). Above the

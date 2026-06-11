@@ -1,0 +1,59 @@
+[
+  {
+    "id": "time_default",
+    "type": "time",
+    "description": "Demo clock: a game day every 12 real minutes; 2-day seasons for fast demos.",
+    "minutesPerGameDay": 12,
+    "daysPerSeason": 2,
+    "seasons": ["season_summer", "season_winter"],
+    "startHour": 8
+  },
+  {
+    "id": "dayphases_default",
+    "type": "dayphases",
+    "phases": [
+      { "name": "dawn",  "fromHour": 5,  "toHour": 7,  "light": 0.4 },
+      { "name": "day",   "fromHour": 7,  "toHour": 20, "light": 1.0 },
+      { "name": "dusk",  "fromHour": 20, "toHour": 22, "light": 0.5 },
+      { "name": "night", "fromHour": 22, "toHour": 5,  "light": 0.15 }
+    ]
+  },
+  {
+    "id": "weather_clear",
+    "type": "weather",
+    "transitions": { "weather_clear": 7, "weather_rain": 3 },
+    "minHours": 2,
+    "maxHours": 4
+  },
+  {
+    "id": "weather_rain",
+    "type": "weather",
+    "description": "Rain dulls hearing and sight — stealth weather, straight from data.",
+    "flags": { "sense_auditory_mult": 0.5, "sense_visual_mult": 0.8 },
+    "transitions": { "weather_clear": 6, "weather_rain": 4 },
+    "minHours": 1,
+    "maxHours": 3
+  },
+  {
+    "id": "season_summer",
+    "type": "season",
+    "weatherBias": { "weather_rain": 0.5 }
+  },
+  {
+    "id": "season_winter",
+    "type": "season",
+    "description": "The overlay season: wolves drop winter loot, rain doubles.",
+    "redirects": { "loot_wolf": "loot_wolf_winter" },
+    "weatherBias": { "weather_rain": 2.0 },
+    "prefabHints": { "ground": "snow" }
+  },
+  {
+    "id": "navprofile_guard",
+    "type": "navprofile",
+    "description": "Guards keep off the tall grass on routine patrol but wade through when alert (HZD stealth pattern).",
+    "agentProfiles": ["profile_guard"],
+    "costs": {
+      "stealth_vegetation": { "idle": "impassable", "alert": 1.5 }
+    }
+  }
+]

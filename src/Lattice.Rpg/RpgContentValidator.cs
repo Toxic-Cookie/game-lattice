@@ -35,7 +35,7 @@ public sealed class RpgContentValidator : IContentValidator
         ValidateItems(registry, report, formulas, effects);
         ValidateStatuses(registry, report, formulas, effects);
         ValidateLoot(registry, report, formulas, conditions);
-        ValidateShops(registry, report, formulas, statKeys);
+        ValidateShops(registry, report, formulas, statKeys, conditions);
         ValidateTemplates(registry, report);
     }
 
@@ -174,7 +174,7 @@ public sealed class RpgContentValidator : IContentValidator
             report);
     }
 
-    private static void ValidateShops(DefRegistry registry, ContentLoadReport report, IFormulaEngine formulas, HashSet<string> statKeys)
+    private static void ValidateShops(DefRegistry registry, ContentLoadReport report, IFormulaEngine formulas, HashSet<string> statKeys, ConditionRegistry conditions)
     {
         foreach (var shop in registry.All<ShopDef>())
         {
@@ -182,6 +182,8 @@ public sealed class RpgContentValidator : IContentValidator
             {
                 report.Errors.Add($"Shop '{shop.Id}' currency '{shop.Currency}' is not an item def.");
             }
+
+            conditions.ValidateList(shop.OpenWhen, $"{shop.Id}.openWhen", registry, formulas, report);
 
             foreach (var formula in new[] { shop.BuyPriceFormula, shop.SellPriceFormula })
             {
