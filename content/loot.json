@@ -23,6 +23,25 @@
     ]
   },
   {
+    "id": "loot_soldier",
+    "type": "loot",
+    "description": "Kills roll loot tables (plan/07 §2): a soldier always carries pay.",
+    "rolls": 2,
+    "entries": [
+      { "item": "item_gold", "weight": 80, "amount": "1d8 + 2" },
+      { "item": "item_healing_potion", "weight": 20 }
+    ]
+  },
+  {
+    "id": "loot_boss",
+    "type": "loot",
+    "rolls": 3,
+    "entries": [
+      { "item": "item_gold", "weight": 70, "amount": "2d10 + 10" },
+      { "item": "item_iron_sword", "weight": 30 }
+    ]
+  },
+  {
     "id": "loot_rare",
     "type": "loot",
     "entries": [

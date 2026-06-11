@@ -30,6 +30,7 @@ public sealed class AiRuntime
     private readonly Dictionary<string, AgentProfileDef> _profileByEntityDef = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ConditionCatalog> _catalogs = new(StringComparer.Ordinal);
     private readonly List<(StimulusPacket Packet, double ExpiresAt)> _stimuli = [];
+    private readonly Dictionary<string, long> _plannerInvocationsByAgent = new(StringComparer.Ordinal);
 
     internal AiRuntime(GameSession session, RpgRuntime rpg, NarrativeRuntime? narrative)
     {
@@ -83,6 +84,22 @@ public sealed class AiRuntime
     public IReadOnlyList<StimulusPacket> TransientStimuli { get; private set; } = [];
 
     public AgentComponent? GetAgent(Entity entity) => entity.GetComponent<AgentComponent>();
+
+    /// <summary>Total GOAP/HTN planner runs this session (perf observability, plan/07 §6).</summary>
+    public long PlannerInvocations { get; private set; }
+
+    /// <summary>
+    /// Planner runs per agent instance — the rat-problem audit (ch03): a
+    /// rat-tier agent must never appear in this map.
+    /// </summary>
+    public IReadOnlyDictionary<string, long> PlannerInvocationsByAgent => _plannerInvocationsByAgent;
+
+    internal void CountPlannerInvocation(string agentInstanceId)
+    {
+        PlannerInvocations++;
+        _plannerInvocationsByAgent[agentInstanceId] =
+            _plannerInvocationsByAgent.TryGetValue(agentInstanceId, out var count) ? count + 1 : 1;
+    }
 
     /// <summary>Emit a transient sound stimulus (also reachable by publishing "Stimulus.Sound").</summary>
     public void EmitSound(Vector3 position, double loudness = 1.0, string? sourceId = null, double lifetimeSeconds = 0.6)

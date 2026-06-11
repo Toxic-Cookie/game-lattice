@@ -1,0 +1,27 @@
+[
+  {
+    "id": "entity_delver",
+    "type": "entity",
+    "inherits": "entity_player",
+    "description": "The dungeon-delving player: the base player blueprint plus the 'intruder' tag the soldiers hunt and enough Constitution to survive the crossfire.",
+    "name": "Delver",
+    "tags": { "$append": ["intruder"] },
+    "stats": { "stat_con": 20 }
+  },
+  {
+    "id": "entity_boss",
+    "type": "entity",
+    "description": "Boss-lite (profile_boss: HTN with ranged-preferred / melee-fallback methods).",
+    "name": "Bone Warden",
+    "tags": ["boss", "npc"],
+    "stats": { "stat_con": 12, "stat_str": 8 },
+    "lootTable": "loot_boss"
+  },
+  {
+    "id": "entity_trap",
+    "type": "entity",
+    "description": "Floor plate bound to so_poison_trap.",
+    "name": "Suspicious Floor Plate",
+    "tags": ["object", "trap"]
+  }
+]

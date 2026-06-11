@@ -5,7 +5,8 @@
     "description": "GOAP soldier (profile_soldier): plans attack-position use, fire, reload, retreat.",
     "name": "Soldier",
     "tags": ["soldier", "npc"],
-    "stats": { "stat_con": 6, "stat_str": 7 }
+    "stats": { "stat_con": 6, "stat_str": 7 },
+    "lootTable": "loot_soldier"
   },
   {
     "id": "entity_dummy",

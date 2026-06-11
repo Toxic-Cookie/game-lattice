@@ -18,6 +18,23 @@
     "aiEffects": { "in_attack_position": true }
   },
   {
+    "id": "so_poison_trap",
+    "type": "smartobject",
+    "entity": "entity_trap",
+    "name": "Poison Trap",
+    "description": "Stepping on the plate envenoms the actor — statuses, interactions, and events composing (plan/07 §2).",
+    "maxUsers": 99,
+    "interactions": [
+      {
+        "verb": "step",
+        "effects": [
+          { "type": "ApplyStatus", "status": "status_poison" },
+          { "type": "PublishEvent", "event": "Trap.Triggered" }
+        ]
+      }
+    ]
+  },
+  {
     "id": "so_chest",
     "type": "smartobject",
     "entity": "entity_chest",

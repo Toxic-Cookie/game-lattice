@@ -1,0 +1,69 @@
+[
+  {
+    "id": "action_shoot_bow",
+    "type": "goapaction",
+    "description": "Loose the last arrow: only plannable while has_arrows holds, and shooting spends it.",
+    "preconditions": { "has_arrows": true },
+    "effects": { "has_arrows": false },
+    "cost": "1",
+    "animation": "shoot_bow",
+    "animationBlocking": true,
+    "runEffects": [ { "type": "DealDamage", "formula": "1d6 + 2" } ]
+  },
+  {
+    "id": "action_charge",
+    "type": "goapaction",
+    "description": "Close the distance to the perceived enemy.",
+    "effects": { "in_melee": true },
+    "cost": "1",
+    "moveTo": "enemy",
+    "speed": "run"
+  },
+  {
+    "id": "action_claw",
+    "type": "goapaction",
+    "preconditions": { "in_melee": true },
+    "effects": { "in_melee": false },
+    "cost": "1",
+    "animation": "claw",
+    "animationBlocking": true,
+    "runEffects": [ { "type": "DealDamage", "formula": "1d8 + 3" } ]
+  },
+  {
+    "id": "action_lurk",
+    "type": "goapaction",
+    "description": "Idle filler so the root compound always decomposes to something.",
+    "effects": { "lurked": true },
+    "cost": "1",
+    "animation": "growl"
+  },
+  {
+    "id": "htn_boss",
+    "type": "htncompound",
+    "description": "Method order is the doctrine (plan/07 §2): shoot while arrows last, fall back to melee, otherwise lurk in the dark.",
+    "methods": [
+      { "name": "ranged", "preconditions": { "CAN_SEE_ENEMY": true, "has_arrows": true }, "subtasks": ["action_shoot_bow"] },
+      { "name": "melee", "preconditions": { "CAN_SEE_ENEMY": true }, "subtasks": ["action_charge", "action_claw"] },
+      { "name": "lurk", "subtasks": ["action_lurk"] }
+    ]
+  },
+  {
+    "id": "profile_boss",
+    "type": "agent",
+    "description": "Boss-lite: HTN method selection is visible in the decomposition trace — ranged while arrows last, melee after.",
+    "entities": ["entity_boss"],
+    "brain": "htn",
+    "rootTask": "htn_boss",
+    "htnInterrupt": ["DAMAGED"],
+    "conditions": "conditions_default",
+    "initialBeliefs": { "has_arrows": true },
+    "hostileTags": ["player"],
+    "sensors": [
+      { "kind": "visual", "range": 12, "fov": 360, "sensitivity": 0.9 }
+    ],
+    "walkSpeed": 2.0,
+    "runSpeed": 4.2,
+    "alertDecaySeconds": 4.0,
+    "replanCooldown": 0.3
+  }
+]

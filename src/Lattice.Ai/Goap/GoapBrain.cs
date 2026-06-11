@@ -182,6 +182,7 @@ public sealed class GoapBrain : IBrain
         _lastCandidates = candidates;
         _nextPlanAt = ctx.Session.SimTimeSeconds + ctx.Agent.Profile.ReplanCooldown;
 
+        ctx.Ai.CountPlannerInvocation(ctx.Entity.InstanceId);
         var plan = GoapPlanner.Plan(candidates, state, desired);
         if (plan is null)
         {

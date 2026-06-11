@@ -12,5 +12,21 @@
       { "entity": "entity_innkeeper", "position": [4, 0, 4] },
       { "entity": "entity_patron", "count": 3, "position": [1, 0, -2] }
     ]
+  },
+  {
+    "id": "lifecycle_dungeon",
+    "type": "lifecycle",
+    "description": "Demo scene 2 — The Dungeon (plan/07 §2): GOAP combat with flanking from smart-object reservation, rat-tier FSM critters, loot on kill, a poison trap, and an HTN boss.",
+    "initialScene": "scene_dungeon",
+    "spawns": [
+      { "entity": "entity_delver", "position": [0, 0, 0] },
+      { "entity": "entity_soldier", "count": 3, "position": [10, 0, 0] },
+      { "entity": "entity_attack_node", "position": [6, 0, 3] },
+      { "entity": "entity_attack_node", "position": [6, 0, -3] },
+      { "entity": "entity_attack_node", "position": [8, 0, 0] },
+      { "entity": "entity_rat", "count": 2, "position": [-5, 0, 3] },
+      { "entity": "entity_trap", "position": [2, 0, 2] },
+      { "entity": "entity_boss", "position": [-14, 0, -10] }
+    ]
   }
 ]

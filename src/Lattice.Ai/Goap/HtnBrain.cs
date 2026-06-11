@@ -85,6 +85,7 @@ public sealed class HtnBrain : IBrain
             ? costProfile.Overrides
             : null;
 
+        ctx.Ai.CountPlannerInvocation(ctx.Entity.InstanceId);
         var trace = new List<string>();
         var plan = HtnPlanner.Decompose(
             _root!, state, ctx.Session.Defs,
