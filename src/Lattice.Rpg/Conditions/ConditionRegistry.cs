@@ -43,6 +43,9 @@ public sealed class ConditionRegistry
 
     public void Register(IConditionEvaluator evaluator) => _byType[evaluator.Type] = evaluator;
 
+    /// <summary>Every registered evaluator, ordered by type (manifest exporter).</summary>
+    public IEnumerable<IConditionEvaluator> All => _byType.Values.OrderBy(e => e.Type, StringComparer.Ordinal);
+
     /// <summary>True when every condition in the list holds (empty/null list = true).</summary>
     public bool EvaluateAll(IEnumerable<JsonElement>? conditions, ConditionContext context)
     {
@@ -104,6 +107,9 @@ public sealed class ConditionRegistry
     }
 }
 
+[PrimitiveDoc("True when the subject's current stat meets a rolled threshold.",
+    "stat: stat def id; value: threshold formula",
+    """{"type":"StatAtLeast","stat":"stat_str","value":"5"}""")]
 internal sealed class StatAtLeastCondition : IConditionEvaluator
 {
     public string Type => "StatAtLeast";
@@ -129,6 +135,9 @@ internal sealed class StatAtLeastCondition : IConditionEvaluator
     }
 }
 
+[PrimitiveDoc("True when the subject carries at least N of an item.",
+    "item: item def id; count?: minimum (default 1)",
+    """{"type":"HasItem","item":"item_key","count":1}""")]
 internal sealed class HasItemCondition : IConditionEvaluator
 {
     public string Type => "HasItem";
@@ -147,6 +156,9 @@ internal sealed class HasItemCondition : IConditionEvaluator
     public void Validate(JsonElement args, EffectValidationContext v) => v.RequireDef<ItemDef>(args, "item");
 }
 
+[PrimitiveDoc("True when the subject entity carries a tag.",
+    "tag: tag string",
+    """{"type":"HasTag","tag":"undead"}""")]
 internal sealed class HasTagCondition : IConditionEvaluator
 {
     public string Type => "HasTag";
@@ -163,6 +175,9 @@ internal sealed class HasTagCondition : IConditionEvaluator
     }
 }
 
+[PrimitiveDoc("True when a global blackboard flag equals a scalar value.",
+    "flag: flag key; value: bool | number | string",
+    """{"type":"FlagEquals","flag":"is_night","value":true}""")]
 internal sealed class FlagEqualsCondition : IConditionEvaluator
 {
     public string Type => "FlagEquals";
@@ -192,6 +207,9 @@ internal sealed class FlagEqualsCondition : IConditionEvaluator
     }
 }
 
+[PrimitiveDoc("True when a formula evaluates non-zero (subject stats + global flags in scope).",
+    "formula: expression (e.g. \"Hour >= 20\")",
+    """{"type":"FormulaTrue","formula":"Str * 2 > Con"}""")]
 internal sealed class FormulaTrueCondition : IConditionEvaluator
 {
     public string Type => "FormulaTrue";
@@ -202,6 +220,9 @@ internal sealed class FormulaTrueCondition : IConditionEvaluator
     public void Validate(JsonElement args, EffectValidationContext v) => v.RequireFormula(args, "formula");
 }
 
+[PrimitiveDoc("True when every nested condition holds.",
+    "conditions: array of condition payloads",
+    """{"type":"All","conditions":[{"type":"HasTag","tag":"npc"}]}""")]
 internal sealed class AllCondition(ConditionRegistry registry) : IConditionEvaluator
 {
     public string Type => "All";
@@ -218,6 +239,9 @@ internal sealed class AllCondition(ConditionRegistry registry) : IConditionEvalu
             : [];
 }
 
+[PrimitiveDoc("True when at least one nested condition holds.",
+    "conditions: array of condition payloads",
+    """{"type":"Any","conditions":[{"type":"HasTag","tag":"wolf"},{"type":"HasTag","tag":"bear"}]}""")]
 internal sealed class AnyCondition(ConditionRegistry registry) : IConditionEvaluator
 {
     public string Type => "Any";
@@ -229,6 +253,9 @@ internal sealed class AnyCondition(ConditionRegistry registry) : IConditionEvalu
         => registry.ValidateList(AllCondition.GetList(args), v.Owner, v.Registry, v.Formulas, v.Report);
 }
 
+[PrimitiveDoc("Inverts a nested condition.",
+    "condition: a condition payload",
+    """{"type":"Not","condition":{"type":"FlagEquals","flag":"is_night","value":true}}""")]
 internal sealed class NotCondition(ConditionRegistry registry) : IConditionEvaluator
 {
     public string Type => "Not";

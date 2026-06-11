@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lattice.dev/schemas/shop.schema.json",
+  "title": "ShopDef",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Globally unique def ID."
+    },
+    "type": {
+      "const": "shop"
+    },
+    "description": {
+      "type": "string",
+      "description": "One line for humans and LLMs (surfaced by the manifest)."
+    },
+    "inherits": {
+      "type": "string",
+      "description": "Parent def ID (same kind); objects deep-merge, scalars override, arrays replace or take {\u0022$append\u0022/\u0022$remove\u0022} patches.",
+      "x-lattice-ref": "shop"
+    },
+    "name": {
+      "type": "string"
+    },
+    "currency": {
+      "type": "string",
+      "x-lattice-ref": "item"
+    },
+    "buyPriceFormula": {
+      "type": "string"
+    },
+    "sellPriceFormula": {
+      "type": "string"
+    },
+    "stock": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "restockOn": {
+      "type": "string"
+    },
+    "openWhen": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "x-lattice-union": "condition",
+        "description": "A condition primitive payload; see the manifest for arg signatures.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "AgentCondition",
+              "AgentMeta",
+              "All",
+              "Any",
+              "BeliefEquals",
+              "FlagEquals",
+              "FormulaTrue",
+              "HasItem",
+              "HasTag",
+              "NeedBelow",
+              "Not",
+              "StatAtLeast",
+              "UtilityAtLeast"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    }
+  },
+  "required": [
+    "id",
+    "type"
+  ]
+}

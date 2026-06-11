@@ -1,12 +1,16 @@
 using System.Numerics;
 using System.Text.Json;
 using Lattice.Ai.Agents;
+using Lattice.Core.Content;
 using Lattice.Core.Events;
 using Lattice.Rpg.Effects;
 
 namespace Lattice.Ai.Tasks;
 
 /// <summary>Navigate to a symbolic or literal target; completes on arrival.</summary>
+[PrimitiveDoc("Walk/run to a target; completes on arrival, fails when unreachable.",
+    "target: \"patrol_point\"|\"enemy\"|\"threat\"|\"sound\"|\"scent\"|\"last_enemy\"|\"spawn\"|\"post\"|\"group_threat\"|[x,y,z]; speed?: \"walk\"|\"run\"|number",
+    """{"task":"MoveTo","target":"enemy","speed":"run"}""")]
 internal sealed class MoveToTask : ITaskExecutor
 {
     private static readonly object FailedMarker = new();
@@ -57,6 +61,9 @@ internal sealed class MoveToTask : ITaskExecutor
 }
 
 /// <summary>Wait a fixed number of simulation seconds.</summary>
+[PrimitiveDoc("Stand still for a number of simulated seconds.",
+    "seconds: duration (default 1)",
+    """{"task":"Wait","seconds":2.5}""")]
 internal sealed class WaitTask : ITaskExecutor
 {
     public string Type => "Wait";
@@ -80,6 +87,9 @@ internal sealed class WaitTask : ITaskExecutor
 }
 
 /// <summary>Play an animation through the host seam; completes when the host reports completion.</summary>
+[PrimitiveDoc("Play an animation; completes when the host reports it finished. blocking animations suppress replanning.",
+    "anim: animation id; blocking?: bool (default true = non-interruptible)",
+    """{"task":"PlayAnimation","anim":"attack"}""")]
 internal sealed class PlayAnimationTask : ITaskExecutor
 {
     public string Type => "PlayAnimation";
@@ -110,6 +120,9 @@ internal sealed class PlayAnimationTask : ITaskExecutor
 }
 
 /// <summary>Turn to face a symbolic target; instant.</summary>
+[PrimitiveDoc("Turn to face a target instantly.",
+    "target: same specs as MoveTo",
+    """{"task":"FaceEntity","target":"enemy"}""")]
 internal sealed class FaceEntityTask : ITaskExecutor
 {
     public string Type => "FaceEntity";
@@ -140,6 +153,9 @@ internal sealed class FaceEntityTask : ITaskExecutor
 }
 
 /// <summary>Perform a verb on the nearest smart object within range (requires the Narrative module).</summary>
+[PrimitiveDoc("Perform a verb on the nearest smart object within range.",
+    "verb?: interaction verb (default \"interact\"); range?: world units (default 2)",
+    """{"task":"UseSmartObject","verb":"open","range":2}""")]
 internal sealed class UseSmartObjectTask : ITaskExecutor
 {
     public string Type => "UseSmartObject";
@@ -172,6 +188,9 @@ internal sealed class UseSmartObjectTask : ITaskExecutor
 }
 
 /// <summary>Publish a bus event (scalar payload entries + agentId).</summary>
+[PrimitiveDoc("Publish a bus event carrying the agent's instance id.",
+    "event: topic",
+    """{"task":"PublishEvent","event":"Npc.Waved"}""")]
 internal sealed class PublishEventTask : ITaskExecutor
 {
     public string Type => "PublishEvent";
@@ -197,6 +216,9 @@ internal sealed class PublishEventTask : ITaskExecutor
 }
 
 /// <summary>Set a sticky manual condition bit (survives the per-frame sensor refresh).</summary>
+[PrimitiveDoc("Set a sticky condition bit on the agent (survives sensor refresh; clear with ClearCondition).",
+    "condition: catalog condition name",
+    """{"task":"SetCondition","condition":"CUSTOM_FLAG"}""")]
 internal sealed class SetConditionTask : ITaskExecutor
 {
     public string Type => "SetCondition";
@@ -221,6 +243,9 @@ internal sealed class SetConditionTask : ITaskExecutor
 }
 
 /// <summary>Clear a sticky manual condition bit.</summary>
+[PrimitiveDoc("Clear a sticky condition bit set by SetCondition.",
+    "condition: catalog condition name",
+    """{"task":"ClearCondition","condition":"CUSTOM_FLAG"}""")]
 internal sealed class ClearConditionTask : ITaskExecutor
 {
     public string Type => "ClearCondition";
@@ -244,6 +269,9 @@ internal sealed class ClearConditionTask : ITaskExecutor
 }
 
 /// <summary>Advance the agent's patrol-route index.</summary>
+[PrimitiveDoc("Advance to the next patrol waypoint (wraps around the profile's patrolPoints).",
+    "(no args)",
+    """{"task":"NextPatrolPoint"}""")]
 internal sealed class NextPatrolPointTask : ITaskExecutor
 {
     public string Type => "NextPatrolPoint";
@@ -267,6 +295,9 @@ internal sealed class NextPatrolPointTask : ITaskExecutor
 }
 
 /// <summary>Ends the schedule so the brain re-selects (the Half-Life loop-closer).</summary>
+[PrimitiveDoc("End the current schedule so the brain re-selects (put it last in looping schedules).",
+    "(no args)",
+    """{"task":"SelectNewSchedule"}""")]
 internal sealed class SelectNewScheduleTask : ITaskExecutor
 {
     public string Type => "SelectNewSchedule";

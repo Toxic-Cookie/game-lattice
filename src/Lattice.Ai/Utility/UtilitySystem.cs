@@ -2,6 +2,7 @@ using System.Text.Json;
 using Lattice.Ai.Agents;
 using Lattice.Ai.Defs;
 using Lattice.Ai.Tasks;
+using Lattice.Core.Content;
 using Lattice.Core.Formulas;
 using Lattice.Core.Simulation;
 using Lattice.Rpg.Conditions;
@@ -123,6 +124,9 @@ public static class UtilityScoring
 /// {"type":"UtilityAtLeast","evaluator":"utility_x","threshold":0.6}.
 /// Constructible without a runtime for validation-only use (tooling).
 /// </summary>
+[PrimitiveDoc("True when a utility evaluator's weighted score (0-1) meets the threshold (agent subjects only).",
+    "evaluator: utility def id; threshold?: 0-1 (default 0.5)",
+    """{"type":"UtilityAtLeast","evaluator":"utility_motivation","threshold":0.4}""")]
 public sealed class UtilityAtLeastCondition(AiRuntime? ai = null) : IConditionEvaluator
 {
     public string Type => "UtilityAtLeast";
@@ -146,6 +150,9 @@ public sealed class UtilityAtLeastCondition(AiRuntime? ai = null) : IConditionEv
 }
 
 /// <summary>Need urgency gate: {"type":"NeedBelow","need":"need_thirst","threshold":0.4}. False when the agent lacks the need.</summary>
+[PrimitiveDoc("True when the agent's need value (1 = satisfied) is below the threshold.",
+    "need: need def id; threshold?: 0-1 (default 0.5)",
+    """{"type":"NeedBelow","need":"need_thirst","threshold":0.3}""")]
 public sealed class NeedBelowCondition(AiRuntime? ai = null) : IConditionEvaluator
 {
     public string Type => "NeedBelow";
@@ -167,6 +174,9 @@ public sealed class NeedBelowCondition(AiRuntime? ai = null) : IConditionEvaluat
 /// schedule), and apply the need restoration on completion. Fails when
 /// nothing is worth doing — a BT selector can then fall through to idling.
 /// </summary>
+[PrimitiveDoc("Run the need-based utility selector, commit to the best activity from the profile, and execute its task list.",
+    "(no args; candidates come from the profile's activities)",
+    """{"task":"PerformActivity"}""")]
 public sealed class PerformActivityTask : ITaskExecutor
 {
     public string Type => "PerformActivity";

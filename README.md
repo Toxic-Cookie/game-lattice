@@ -15,7 +15,9 @@ never requires recompilation. The data formats are designed to be authorable by 
 | `src/Lattice.Narrative` | Narrative module: Yarn + JSON-tree dialogue, quests, smart-object interactions |
 | `src/Lattice.Ai` | AI module: sensors, condition bitmask world model, FSM/schedule/BT/GOAP/HTN brain tiers, utility needs, groups & collective |
 | `src/Lattice.World` | World simulation: clock & calendar, day phases, Markov weather, season overlays, grid A* navigation |
-| `src/Lattice.Tooling` | `lattice` CLI: content validation (later: manifest + schema generation) |
+| `src/Lattice.Tooling` | `lattice` CLI: validate, manifest, schemas |
+| `schemas/` | Generated JSON schemas (CI fails on drift) |
+| `docs/manifest.md` | Generated content manifest — the dictionary LLMs read before authoring |
 | `samples/Lattice.Demo` | Headless console host / development workbench |
 | `tests/` | xunit test projects |
 | `content/` | Game content JSON |
@@ -32,6 +34,17 @@ dotnet run --project src/Lattice.Tooling -- validate content
 
 ## Status
 
+**M6 (LLM & modding integration) complete:** blueprint inheritance (`"inherits"` with
+deep-merge + explicit `$append`/`$remove` array operators, cross-file chains, cycle/kind
+checks); content packs (`pack.json` directories overlay the base content in
+priority/dependency order); the `lattice manifest` exporter (every def + the full primitive
+vocabularies sourced from `[PrimitiveDoc]` on the executors + catalogs + formula scope, in
+markdown or `--json`); matured schemas (`x-lattice-ref` link annotations, primitive-union
+discriminators with registered names, `$schema`-header wrapper files, CI drift gate);
+rat-problem and GOAP-reachability validation warnings; and path-string UI binding
+(`Player.stats.stat_hp`, event-driven, never polled) rendered as console gauges. The
+acceptance is literal: LLM-shaped JSON — a spell, a blueprint NPC, a 2-step quest — hot-loads
+into a running session and functions, no C# changes, no restart. Earlier:
 **M5 (world & environment) complete:** a persisted, deterministic game clock and calendar
 publishing `Time.*` events and `Hour`/`Day`/`Season` formula identifiers; day phases that set
 `is_night`-style flags (guards sleep, shops close — all data); Markov weather whose states hold

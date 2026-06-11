@@ -23,36 +23,45 @@ public sealed class ConditionCatalogDef : Def
 public sealed class AgentProfileDef : Def
 {
     /// <summary>Entity template IDs this profile attaches to.</summary>
+    [LatticeRef("entity")]
     public List<string> Entities { get; set; } = [];
 
     /// <summary>Brain tier: "fsm" or "schedules" (M4a), "bt" (M4b), "goap" (M4c).</summary>
     public string Brain { get; set; } = "fsm";
 
     /// <summary>FSM brain def (brain = "fsm").</summary>
+    [LatticeRef("fsmbrain")]
     public string? FsmBrain { get; set; }
 
     /// <summary>Schedule def IDs in priority order, highest first (brain = "schedules").</summary>
+    [LatticeRef("schedule")]
     public List<string>? Schedules { get; set; }
 
     /// <summary>Behavior tree def (brain = "bt").</summary>
+    [LatticeRef("btree")]
     public string? BehaviorTree { get; set; }
 
     /// <summary>Seconds between brain ticks; 0 = think every simulation tick (ch06 §6.9 tick-rate decoupling).</summary>
     public double ThinkInterval { get; set; }
 
     /// <summary>Need def IDs this agent tracks (decayed per tick; drive the utility selector).</summary>
+    [LatticeRef("need")]
     public List<string>? Needs { get; set; }
 
     /// <summary>Activity def IDs the PerformActivity task chooses among.</summary>
+    [LatticeRef("activity")]
     public List<string>? Activities { get; set; }
 
     /// <summary>GOAP goal def IDs (brain = "goap").</summary>
+    [LatticeRef("goapgoal")]
     public List<string>? Goals { get; set; }
 
     /// <summary>GOAP action def IDs — the F.E.A.R. action-subset pattern (brain = "goap").</summary>
+    [LatticeRef("goapaction")]
     public List<string>? Actions { get; set; }
 
     /// <summary>Cost profile def ID overriding action costs (personality as data).</summary>
+    [LatticeRef("costprofile")]
     public string? CostProfile { get; set; }
 
     /// <summary>Beliefs seeded at spawn (e.g. {"weapon_loaded": true}).</summary>
@@ -65,6 +74,7 @@ public sealed class AgentProfileDef : Def
     public double ReplanCooldown { get; set; } = 0.5;
 
     /// <summary>Root HTN task ID, compound or primitive (brain = "htn").</summary>
+    [LatticeRef("htncompound|goapaction")]
     public string? RootTask { get; set; }
 
     /// <summary>Condition names whose appearance forces an HTN re-decomposition.</summary>
@@ -74,6 +84,7 @@ public sealed class AgentProfileDef : Def
     public string? Passport { get; set; }
 
     /// <summary>Meta-sensor def IDs watching player behavior patterns on behalf of this agent.</summary>
+    [LatticeRef("metasensor")]
     public List<string>? MetaSensors { get; set; }
 
     /// <summary>Condition name → global flag key: truthy flags set the bit each update ("IS_NIGHT": "is_night").</summary>
@@ -82,6 +93,7 @@ public sealed class AgentProfileDef : Def
     public List<SensorSpec>? Sensors { get; set; }
 
     /// <summary>Condition catalog def ID.</summary>
+    [LatticeRef("conditions")]
     public string Conditions { get; set; } = "conditions_default";
 
     /// <summary>Tags that mark entities as threats to this agent.</summary>
@@ -196,6 +208,7 @@ public sealed class FsmBrainDef : Def
         public string To { get; set; } = "";
 
         /// <summary>Condition primitives (subject = the agent entity); all must hold.</summary>
+        [LatticeUnion("condition")]
         public List<JsonElement>? When { get; set; }
     }
 }
@@ -221,5 +234,6 @@ public sealed class ScheduleDef : Def
     public List<string>? Interrupt { get; set; }
 
     /// <summary>Ordered task payloads ({"task":"MoveTo",...}).</summary>
+    [LatticeUnion("task")]
     public List<JsonElement> Tasks { get; set; } = [];
 }

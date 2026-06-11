@@ -186,6 +186,9 @@ public sealed class QuestService
 }
 
 /// <summary>Effect primitive starting a quest — usable from dialogue, items, or interactions.</summary>
+[Lattice.Core.Content.PrimitiveDoc("Start a quest for the player (no-op if already active or completed).",
+    "quest: quest def id",
+    """{"type":"StartQuest","quest":"quest_wolves"}""")]
 public sealed class StartQuestEffect : IEffectExecutor
 {
     public string Type => "StartQuest";

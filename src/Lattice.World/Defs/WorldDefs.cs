@@ -15,6 +15,7 @@ public sealed class TimeDef : Def
     public int DaysPerSeason { get; set; } = 7;
 
     /// <summary>Season def IDs in calendar order.</summary>
+    [LatticeRef("season")]
     public List<string> Seasons { get; set; } = [];
 
     /// <summary>Starting hour of day 1 (0–24).</summary>
@@ -148,6 +149,7 @@ public sealed class NavGridDef : Def
 public sealed class NavProfileDef : Def
 {
     /// <summary>Agent profile IDs using these costs.</summary>
+    [LatticeRef("agent")]
     public List<string> AgentProfiles { get; set; } = [];
 
     /// <summary>cell tag → (behavior state or "default") → cost multiplier or "impassable".</summary>

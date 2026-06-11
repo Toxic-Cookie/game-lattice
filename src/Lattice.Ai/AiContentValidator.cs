@@ -260,6 +260,47 @@ public sealed class AiContentValidator(ConditionRegistry conditions, TaskRegistr
             report.Errors.Add($"Agent profile '{profile.Id}' uses brain 'htn' but declares no 'rootTask'.");
         }
 
+        // the rat problem (ch07 §7.1): a planner brain over a trivial behavior set is waste
+        if (profile.Brain is "goap" && (profile.Actions?.Count ?? 0) <= 2)
+        {
+            report.Warnings.Add(
+                $"Agent profile '{profile.Id}' runs GOAP over only {profile.Actions?.Count ?? 0} action(s) — "
+                + "a cheaper brain tier (fsm/schedules/bt) likely suffices (the F.E.A.R. rat problem).");
+        }
+
+        // GOAP reachability (ch03 checklist): every desired predicate should be
+        // establishable by some action in this profile's subset (smart objects
+        // can also provide effects at runtime, hence a warning, not an error)
+        if (profile.Brain == "goap")
+        {
+            var establishable = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var actionId in profile.Actions ?? [])
+            {
+                if (registry.TryGet<GoapActionDef>(actionId, out var action))
+                {
+                    foreach (var effect in action.Effects.Keys)
+                    {
+                        establishable.Add(effect);
+                    }
+                }
+            }
+
+            foreach (var goalId in profile.Goals ?? [])
+            {
+                if (!registry.TryGet<GoapGoalDef>(goalId, out var goal))
+                {
+                    continue;
+                }
+
+                foreach (var desired in goal.Desired.Keys.Where(k => !establishable.Contains(k)))
+                {
+                    report.Warnings.Add(
+                        $"GOAP goal '{goal.Id}' (profile '{profile.Id}') desires '{desired}', which no action in the "
+                        + "profile's subset establishes — only smart-object aiEffects could satisfy it at runtime.");
+                }
+            }
+        }
+
         if (profile.RootTask is { } rootTask
             && registry.Contains(rootTask)
             && !registry.TryGet<HtnCompoundDef>(rootTask, out _)

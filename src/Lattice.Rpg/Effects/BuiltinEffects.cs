@@ -43,6 +43,9 @@ public static class BuiltinEffects
     }
 }
 
+[PrimitiveDoc("Subtract a rolled amount from the target's vital stat (death fires Entity.Died).",
+    "formula: damage amount (dice ok); stat?: stat def id (default stat_hp)",
+    """{"type":"DealDamage","formula":"2d6 + Str"}""")]
 internal sealed class DealDamageEffect : IEffectExecutor
 {
     public string Type => "DealDamage";
@@ -71,6 +74,9 @@ internal sealed class DealDamageEffect : IEffectExecutor
     }
 }
 
+[PrimitiveDoc("Restore a rolled amount of the target's vital stat (clamped to max).",
+    "formula: heal amount (dice ok); stat?: stat def id (default stat_hp)",
+    """{"type":"Heal","formula":"1d8 + 2"}""")]
 internal sealed class HealEffect : IEffectExecutor
 {
     public string Type => "Heal";
@@ -93,6 +99,9 @@ internal sealed class HealEffect : IEffectExecutor
     }
 }
 
+[PrimitiveDoc("Permanently shift the target's base stat by a rolled delta.",
+    "stat: stat def id; formula: signed delta",
+    """{"type":"ModifyStat","stat":"stat_str","formula":"1"}""")]
 internal sealed class ModifyStatEffect : IEffectExecutor
 {
     public string Type => "ModifyStat";
@@ -115,6 +124,9 @@ internal sealed class ModifyStatEffect : IEffectExecutor
     }
 }
 
+[PrimitiveDoc("Apply a status effect (duration/stacking per its def) to the target.",
+    "status: status def id",
+    """{"type":"ApplyStatus","status":"status_poison"}""")]
 internal sealed class ApplyStatusEffect : IEffectExecutor
 {
     public string Type => "ApplyStatus";
@@ -136,6 +148,9 @@ internal sealed class ApplyStatusEffect : IEffectExecutor
     public void Validate(JsonElement args, EffectValidationContext v) => v.RequireDef<StatusEffectDef>(args, "status");
 }
 
+[PrimitiveDoc("Remove a status effect from the target.",
+    "status: status def id",
+    """{"type":"RemoveStatus","status":"status_poison"}""")]
 internal sealed class RemoveStatusEffect : IEffectExecutor
 {
     public string Type => "RemoveStatus";
@@ -153,6 +168,9 @@ internal sealed class RemoveStatusEffect : IEffectExecutor
     public void Validate(JsonElement args, EffectValidationContext v) => v.RequireDef<StatusEffectDef>(args, "status");
 }
 
+[PrimitiveDoc("Add items to the target's inventory.",
+    "item: item def id; amount?: count formula (default 1, dice ok)",
+    """{"type":"GiveItem","item":"item_gold","amount":"2d6"}""")]
 internal sealed class GiveItemEffect : IEffectExecutor
 {
     public string Type => "GiveItem";
@@ -175,6 +193,9 @@ internal sealed class GiveItemEffect : IEffectExecutor
     }
 }
 
+[PrimitiveDoc("Remove items from the target's inventory (no-op past zero).",
+    "item: item def id; amount?: count formula (default 1)",
+    """{"type":"RemoveItem","item":"item_gold","amount":"10"}""")]
 internal sealed class RemoveItemEffect : IEffectExecutor
 {
     public string Type => "RemoveItem";
@@ -197,6 +218,9 @@ internal sealed class RemoveItemEffect : IEffectExecutor
     }
 }
 
+[PrimitiveDoc("Write a global blackboard flag (bool, number, or string).",
+    "flag: flag key; value: bool | number | string",
+    """{"type":"SetFlag","flag":"chest_looted","value":true}""")]
 internal sealed class SetFlagEffect : IEffectExecutor
 {
     public string Type => "SetFlag";
@@ -224,6 +248,9 @@ internal sealed class SetFlagEffect : IEffectExecutor
     }
 }
 
+[PrimitiveDoc("Publish a bus event with optional scalar payload entries.",
+    "event: topic; payload?: object of scalars",
+    """{"type":"PublishEvent","event":"Door.Opened","payload":{"door":"front"}}""")]
 internal sealed class PublishEventEffect : IEffectExecutor
 {
     public string Type => "PublishEvent";
@@ -255,6 +282,9 @@ internal sealed class PublishEventEffect : IEffectExecutor
     }
 }
 
+[PrimitiveDoc("Spawn an entity from a template at a position (default: the target's).",
+    "entity: entity def id; position?: [x, y, z]",
+    """{"type":"SpawnEntity","entity":"entity_wolf","position":[4, 0, 2]}""")]
 internal sealed class SpawnEntityEffect : IEffectExecutor
 {
     public string Type => "SpawnEntity";
@@ -274,6 +304,9 @@ internal sealed class SpawnEntityEffect : IEffectExecutor
     public void Validate(JsonElement args, EffectValidationContext v) => v.RequireDef<EntityTemplateDef>(args, "entity");
 }
 
+[PrimitiveDoc("Move the target instantly to a position.",
+    "position: [x, y, z]",
+    """{"type":"Teleport","position":[0, 0, 0]}""")]
 internal sealed class TeleportEffect : IEffectExecutor
 {
     public string Type => "Teleport";
@@ -301,6 +334,9 @@ internal sealed class TeleportEffect : IEffectExecutor
     }
 }
 
+[PrimitiveDoc("Deal rolled damage to every entity within a radius of the target.",
+    "formula: damage amount (dice ok); radius?: world units (default 5); stat?: stat def id",
+    """{"type":"AreaDamage","formula":"3d6","radius":4}""")]
 internal sealed class AreaDamageEffect : IEffectExecutor
 {
     public string Type => "AreaDamage";

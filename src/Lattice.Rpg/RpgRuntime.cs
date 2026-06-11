@@ -57,6 +57,7 @@ public sealed class RpgRuntime
         Inventory = new InventoryManager(this);
         Loot = new LootResolver(this);
         Trade = new TradeService(this);
+        Bindings = new Ui.BindingService(this);
 
         session.RegisterModule(this);
         session.World.EntityAdded += AttachEntity;
@@ -81,6 +82,9 @@ public sealed class RpgRuntime
     public LootResolver Loot { get; }
 
     public TradeService Trade { get; }
+
+    /// <summary>Path-string UI data binding (plan/06 §6).</summary>
+    public Ui.BindingService Bindings { get; }
 
     public StatSheet? GetSheet(Entity entity) => entity.GetComponent<StatSheet>();
 

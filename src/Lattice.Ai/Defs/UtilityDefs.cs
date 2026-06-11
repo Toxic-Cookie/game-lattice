@@ -55,9 +55,11 @@ public sealed class ActivityDef : Def
     public string Cost { get; set; } = "1";
 
     /// <summary>Condition primitives gating candidacy (subject = the agent).</summary>
+    [LatticeUnion("condition")]
     public List<JsonElement>? Conditions { get; set; }
 
     /// <summary>Ordered task payloads executed when this activity is chosen.</summary>
+    [LatticeUnion("task")]
     public List<JsonElement> Tasks { get; set; } = [];
 
     public override IEnumerable<DefReference> GetReferences()

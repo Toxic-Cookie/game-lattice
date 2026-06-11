@@ -38,6 +38,9 @@ public sealed class TaskRegistry
 
     public void Register(ITaskExecutor executor) => _byType[executor.Type] = executor;
 
+    /// <summary>Every registered executor, ordered by type (manifest exporter).</summary>
+    public IEnumerable<ITaskExecutor> All => _byType.Values.OrderBy(e => e.Type, StringComparer.Ordinal);
+
     public bool TryGet(JsonElement taskElement, out ITaskExecutor executor, out string taskType)
     {
         taskType = JsonArgs.TryGetString(taskElement, "task", out var t) ? t : "?";

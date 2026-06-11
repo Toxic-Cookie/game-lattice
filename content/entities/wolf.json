@@ -1,15 +1,28 @@
-{
-  "id": "entity_wolf",
-  "type": "entity",
-  "description": "A common wolf; bites are poisonous. Drops loot_wolf.",
-  "name": "Wolf",
-  "tags": ["wolf", "beast"],
-  "stats": {
-    "stat_con": 1,
-    "stat_str": 3
+[
+  {
+    "id": "entity_wolf",
+    "type": "entity",
+    "description": "A common wolf; bites are poisonous. Drops loot_wolf.",
+    "name": "Wolf",
+    "tags": ["wolf", "beast"],
+    "stats": {
+      "stat_con": 1,
+      "stat_str": 3
+    },
+    "items": {
+      "item_wolf_fang": 1
+    },
+    "lootTable": "loot_wolf"
   },
-  "items": {
-    "item_wolf_fang": 1
-  },
-  "lootTable": "loot_wolf"
-}
+  {
+    "id": "entity_wolf_alpha",
+    "type": "entity",
+    "inherits": "entity_wolf",
+    "description": "Blueprint demo (plan/06 §4): the base wolf plus overrides and an array patch.",
+    "name": "Alpha Wolf",
+    "stats": {
+      "stat_con": 3
+    },
+    "tags": { "$append": ["alpha"] }
+  }
+]

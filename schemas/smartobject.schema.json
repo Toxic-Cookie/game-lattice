@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lattice.dev/schemas/smartobject.schema.json",
+  "title": "SmartObjectDef",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Globally unique def ID."
+    },
+    "type": {
+      "const": "smartobject"
+    },
+    "description": {
+      "type": "string",
+      "description": "One line for humans and LLMs (surfaced by the manifest)."
+    },
+    "inherits": {
+      "type": "string",
+      "description": "Parent def ID (same kind); objects deep-merge, scalars override, arrays replace or take {\u0022$append\u0022/\u0022$remove\u0022} patches.",
+      "x-lattice-ref": "smartobject"
+    },
+    "name": {
+      "type": "string"
+    },
+    "entity": {
+      "type": "string"
+    },
+    "maxUsers": {
+      "type": "number"
+    },
+    "interactions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "verb": {
+            "type": "string"
+          },
+          "conditions": {
+            "type": "array",
+            "items": {}
+          },
+          "effects": {
+            "type": "array",
+            "items": {}
+          }
+        }
+      }
+    },
+    "approachOffset": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
+    "animation": {
+      "type": "string"
+    },
+    "preconditions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "boolean"
+      }
+    },
+    "aiEffects": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "boolean"
+      }
+    }
+  },
+  "required": [
+    "id",
+    "type"
+  ]
+}

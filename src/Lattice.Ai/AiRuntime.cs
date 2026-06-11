@@ -371,6 +371,9 @@ public sealed class AiRuntime
 /// {"type":"AgentCondition","condition":"CAN_SEE_ENEMY"}. Constructible
 /// without a runtime for validation-only use (tooling).
 /// </summary>
+[PrimitiveDoc("True when the named condition bit is set on the subject agent (sensor-fed or manual).",
+    "condition: catalog condition name",
+    """{"type":"AgentCondition","condition":"CAN_SEE_ENEMY"}""")]
 public sealed class AgentConditionEvaluator(AiRuntime? ai = null) : IConditionEvaluator
 {
     public string Type => "AgentCondition";
@@ -400,6 +403,9 @@ public sealed class AgentConditionEvaluator(AiRuntime? ai = null) : IConditionEv
 /// this smooths the per-tick flicker of instantaneous sensor conditions —
 /// the BT analog of the schedule brain's metaStates filter.
 /// </summary>
+[PrimitiveDoc("True when the subject agent's meta state matches (persists via alertDecaySeconds — smoother than raw sensor bits).",
+    "is: \"Idle\" | \"Alert\"",
+    """{"type":"AgentMeta","is":"Alert"}""")]
 public sealed class AgentMetaCondition(AiRuntime? ai = null) : IConditionEvaluator
 {
     public string Type => "AgentMeta";
@@ -424,6 +430,9 @@ public sealed class AgentMetaCondition(AiRuntime? ai = null) : IConditionEvaluat
 /// The bridge that lets FSM transitions and BT gates branch on group role
 /// assignments and other belief facts.
 /// </summary>
+[PrimitiveDoc("True when a scalar belief on the subject agent equals a value (e.g. group role assignments).",
+    "key: belief key; value: bool | number | string",
+    """{"type":"BeliefEquals","key":"role","value":"role_watcher"}""")]
 public sealed class BeliefEqualsCondition(AiRuntime? ai = null) : IConditionEvaluator
 {
     public string Type => "BeliefEquals";

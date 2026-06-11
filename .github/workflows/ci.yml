@@ -23,3 +23,17 @@ jobs:
 
       - name: Validate content
         run: dotnet run --project src/Lattice.Tooling -c Release --no-build -- validate content
+
+      - name: Schema drift check
+        run: |
+          dotnet run --project src/Lattice.Tooling -c Release --no-build -- schemas -o /tmp/schemas
+          diff -r /tmp/schemas schemas
+
+      - name: Generate manifest
+        run: dotnet run --project src/Lattice.Tooling -c Release --no-build -- manifest content -o /tmp/manifest.md
+
+      - name: Upload manifest artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: content-manifest
+          path: /tmp/manifest.md

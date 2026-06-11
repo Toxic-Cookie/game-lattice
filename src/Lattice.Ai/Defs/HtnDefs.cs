@@ -35,6 +35,7 @@ public sealed class HtnCompoundDef : Def
         public Dictionary<string, JsonElement>? Preconditions { get; set; }
 
         /// <summary>Ordered subtask def IDs (goapaction or htncompound).</summary>
+        [LatticeRef("goapaction|htncompound")]
         public List<string> Subtasks { get; set; } = [];
     }
 }

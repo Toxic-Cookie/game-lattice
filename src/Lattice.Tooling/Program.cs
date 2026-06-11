@@ -24,6 +24,7 @@ if (args.Length == 0 || args[0] is "--help" or "-h" or "help")
 
         Usage:
           lattice validate <contentDir>     full content validation (parse, refs, formulas)
+          lattice manifest <contentDir> -o <file>   emit the LLM/modder content manifest (--json for structured)
           lattice schemas -o <outputDir>    emit .schema.json per def kind
           lattice --version                 print version
         """);
@@ -91,6 +92,18 @@ if (args[0] == "validate")
         }
     }
 
+    if (args.Contains("--json"))
+    {
+        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new
+        {
+            ok = report.Ok,
+            defs = report.DefsLoaded,
+            errors = report.Errors,
+            warnings = report.Warnings,
+        }, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+        return report.Ok ? 0 : 1;
+    }
+
     foreach (var warning in report.Warnings)
     {
         Console.WriteLine($"warning: {warning}");
@@ -106,6 +119,62 @@ if (args[0] == "validate")
     return report.Ok ? 0 : 1;
 }
 
+if (args[0] == "manifest")
+{
+    if (args.Length < 2 || !Directory.Exists(args[1]))
+    {
+        Console.Error.WriteLine("error: manifest requires an existing content directory argument");
+        return 2;
+    }
+
+    using var source = new DirectoryContentSource(args[1], watch: false);
+    var registry = new DefRegistry();
+    var types = LatticeWorld.AddDefTypes(LatticeAi.CreateDefTypes());
+    var report = new ContentLoader(types).LoadAll(source, registry);
+    if (!report.Ok)
+    {
+        foreach (var error in report.Errors)
+        {
+            Console.Error.WriteLine($"error: {error}");
+        }
+
+        return 1;
+    }
+
+    var effects = BuiltinEffects.CreateDefault();
+    effects.Register(new StartQuestEffect());
+    var conditions = ConditionRegistry.CreateDefault();
+    conditions.Register(new AgentConditionEvaluator());
+    conditions.Register(new AgentMetaCondition());
+    conditions.Register(new BeliefEqualsCondition());
+    conditions.Register(new UtilityAtLeastCondition());
+    conditions.Register(new NeedBelowCondition());
+
+    var json = args.Contains("--json");
+    var output = json
+        ? ManifestGenerator.GenerateJson(registry, types, effects, conditions, TaskRegistry.CreateDefault())
+        : ManifestGenerator.GenerateMarkdown(registry, types, effects, conditions, TaskRegistry.CreateDefault());
+
+    var outIndex = Array.IndexOf(args, "-o");
+    if (outIndex >= 0 && outIndex + 1 < args.Length)
+    {
+        var outPath = args[outIndex + 1];
+        if (Path.GetDirectoryName(outPath) is { Length: > 0 } directory)
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        File.WriteAllText(outPath, output);
+        Console.WriteLine($"manifest: wrote {outPath} ({registry.Count} defs).");
+    }
+    else
+    {
+        Console.WriteLine(output);
+    }
+
+    return 0;
+}
+
 if (args[0] == "schemas")
 {
     var outIndex = Array.IndexOf(args, "-o");
@@ -118,17 +187,36 @@ if (args[0] == "schemas")
     var outputDir = args[outIndex + 1];
     Directory.CreateDirectory(outputDir);
 
+    var schemaEffects = BuiltinEffects.CreateDefault();
+    schemaEffects.Register(new StartQuestEffect());
+    var schemaConditions = ConditionRegistry.CreateDefault();
+    schemaConditions.Register(new AgentConditionEvaluator());
+    schemaConditions.Register(new AgentMetaCondition());
+    schemaConditions.Register(new BeliefEqualsCondition());
+    schemaConditions.Register(new UtilityAtLeastCondition());
+    schemaConditions.Register(new NeedBelowCondition());
+    SchemaGenerator.UnionVocabularies = new Dictionary<string, string[]>(StringComparer.Ordinal)
+    {
+        ["effect"] = schemaEffects.All.Select(e => e.Type).ToArray(),
+        ["condition"] = schemaConditions.All.Select(c => c.Type).ToArray(),
+        ["task"] = TaskRegistry.CreateDefault().All.Select(t => t.Type).ToArray(),
+    };
+
     var count = 0;
-    foreach (var (typeName, clrType) in LatticeWorld.AddDefTypes(LatticeAi.CreateDefTypes()).All)
+    var kinds = LatticeWorld.AddDefTypes(LatticeAi.CreateDefTypes()).All.ToList();
+    foreach (var (typeName, clrType) in kinds)
     {
         var schema = SchemaGenerator.GenerateSchemaJson(typeName, clrType);
         var path = Path.Combine(outputDir, $"{typeName}.schema.json");
         File.WriteAllText(path, schema);
-        Console.WriteLine($"wrote {path}");
         count++;
     }
 
-    Console.WriteLine($"schemas: {count} def kind(s).");
+    File.WriteAllText(
+        Path.Combine(outputDir, "lattice.schema.json"),
+        SchemaGenerator.GenerateCombinedSchemaJson(kinds.Select(k => k.Key)));
+
+    Console.WriteLine($"schemas: {count} def kind(s) + lattice.schema.json -> {outputDir}");
     return 0;
 }
 

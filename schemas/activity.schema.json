@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lattice.dev/schemas/activity.schema.json",
+  "title": "ActivityDef",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Globally unique def ID."
+    },
+    "type": {
+      "const": "activity"
+    },
+    "description": {
+      "type": "string",
+      "description": "One line for humans and LLMs (surfaced by the manifest)."
+    },
+    "inherits": {
+      "type": "string",
+      "description": "Parent def ID (same kind); objects deep-merge, scalars override, arrays replace or take {\u0022$append\u0022/\u0022$remove\u0022} patches.",
+      "x-lattice-ref": "activity"
+    },
+    "satisfies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "cost": {
+      "type": "string"
+    },
+    "conditions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "x-lattice-union": "condition",
+        "description": "A condition primitive payload; see the manifest for arg signatures.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "AgentCondition",
+              "AgentMeta",
+              "All",
+              "Any",
+              "BeliefEquals",
+              "FlagEquals",
+              "FormulaTrue",
+              "HasItem",
+              "HasTag",
+              "NeedBelow",
+              "Not",
+              "StatAtLeast",
+              "UtilityAtLeast"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "x-lattice-union": "task",
+        "description": "A task primitive payload; see the manifest for arg signatures.",
+        "properties": {
+          "task": {
+            "type": "string",
+            "enum": [
+              "ClearCondition",
+              "FaceEntity",
+              "MoveTo",
+              "NextPatrolPoint",
+              "PerformActivity",
+              "PlayAnimation",
+              "PublishEvent",
+              "SelectNewSchedule",
+              "SetCondition",
+              "UseSmartObject",
+              "Wait"
+            ]
+          }
+        },
+        "required": [
+          "task"
+        ]
+      }
+    }
+  },
+  "required": [
+    "id",
+    "type"
+  ]
+}

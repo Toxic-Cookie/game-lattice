@@ -21,6 +21,9 @@ public abstract class Def
     /// <summary>One-line human/LLM description; surfaced by the manifest exporter (plan/06 §1).</summary>
     public string? Description { get; set; }
 
+    /// <summary>Parent def ID for blueprint inheritance (plan/06 §4); resolved by the loader before deserialization.</summary>
+    public string? Inherits { get; set; }
+
     /// <summary>Content-relative path of the file this def was loaded from (diagnostics + hot reload).</summary>
     [JsonIgnore]
     public string? SourceFile { get; internal set; }

@@ -1,0 +1,330 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lattice.dev/schemas/lattice.schema.json",
+  "title": "Lattice content file",
+  "oneOf": [
+    {
+      "oneOf": [
+        {
+          "$ref": "./activity.schema.json"
+        },
+        {
+          "$ref": "./agent.schema.json"
+        },
+        {
+          "$ref": "./btree.schema.json"
+        },
+        {
+          "$ref": "./collective.schema.json"
+        },
+        {
+          "$ref": "./conditions.schema.json"
+        },
+        {
+          "$ref": "./costprofile.schema.json"
+        },
+        {
+          "$ref": "./dayphases.schema.json"
+        },
+        {
+          "$ref": "./dialogue.schema.json"
+        },
+        {
+          "$ref": "./entity.schema.json"
+        },
+        {
+          "$ref": "./fsmbrain.schema.json"
+        },
+        {
+          "$ref": "./goapaction.schema.json"
+        },
+        {
+          "$ref": "./goapgoal.schema.json"
+        },
+        {
+          "$ref": "./group.schema.json"
+        },
+        {
+          "$ref": "./htncompound.schema.json"
+        },
+        {
+          "$ref": "./item.schema.json"
+        },
+        {
+          "$ref": "./lifecycle.schema.json"
+        },
+        {
+          "$ref": "./loot.schema.json"
+        },
+        {
+          "$ref": "./metasensor.schema.json"
+        },
+        {
+          "$ref": "./navgrid.schema.json"
+        },
+        {
+          "$ref": "./navprofile.schema.json"
+        },
+        {
+          "$ref": "./need.schema.json"
+        },
+        {
+          "$ref": "./quest.schema.json"
+        },
+        {
+          "$ref": "./role.schema.json"
+        },
+        {
+          "$ref": "./schedule.schema.json"
+        },
+        {
+          "$ref": "./season.schema.json"
+        },
+        {
+          "$ref": "./shop.schema.json"
+        },
+        {
+          "$ref": "./slot.schema.json"
+        },
+        {
+          "$ref": "./smartobject.schema.json"
+        },
+        {
+          "$ref": "./stat.schema.json"
+        },
+        {
+          "$ref": "./status.schema.json"
+        },
+        {
+          "$ref": "./time.schema.json"
+        },
+        {
+          "$ref": "./utility.schema.json"
+        },
+        {
+          "$ref": "./weather.schema.json"
+        }
+      ]
+    },
+    {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "./activity.schema.json"
+          },
+          {
+            "$ref": "./agent.schema.json"
+          },
+          {
+            "$ref": "./btree.schema.json"
+          },
+          {
+            "$ref": "./collective.schema.json"
+          },
+          {
+            "$ref": "./conditions.schema.json"
+          },
+          {
+            "$ref": "./costprofile.schema.json"
+          },
+          {
+            "$ref": "./dayphases.schema.json"
+          },
+          {
+            "$ref": "./dialogue.schema.json"
+          },
+          {
+            "$ref": "./entity.schema.json"
+          },
+          {
+            "$ref": "./fsmbrain.schema.json"
+          },
+          {
+            "$ref": "./goapaction.schema.json"
+          },
+          {
+            "$ref": "./goapgoal.schema.json"
+          },
+          {
+            "$ref": "./group.schema.json"
+          },
+          {
+            "$ref": "./htncompound.schema.json"
+          },
+          {
+            "$ref": "./item.schema.json"
+          },
+          {
+            "$ref": "./lifecycle.schema.json"
+          },
+          {
+            "$ref": "./loot.schema.json"
+          },
+          {
+            "$ref": "./metasensor.schema.json"
+          },
+          {
+            "$ref": "./navgrid.schema.json"
+          },
+          {
+            "$ref": "./navprofile.schema.json"
+          },
+          {
+            "$ref": "./need.schema.json"
+          },
+          {
+            "$ref": "./quest.schema.json"
+          },
+          {
+            "$ref": "./role.schema.json"
+          },
+          {
+            "$ref": "./schedule.schema.json"
+          },
+          {
+            "$ref": "./season.schema.json"
+          },
+          {
+            "$ref": "./shop.schema.json"
+          },
+          {
+            "$ref": "./slot.schema.json"
+          },
+          {
+            "$ref": "./smartobject.schema.json"
+          },
+          {
+            "$ref": "./stat.schema.json"
+          },
+          {
+            "$ref": "./status.schema.json"
+          },
+          {
+            "$ref": "./time.schema.json"
+          },
+          {
+            "$ref": "./utility.schema.json"
+          },
+          {
+            "$ref": "./weather.schema.json"
+          }
+        ]
+      }
+    },
+    {
+      "type": "object",
+      "properties": {
+        "defs": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "./activity.schema.json"
+              },
+              {
+                "$ref": "./agent.schema.json"
+              },
+              {
+                "$ref": "./btree.schema.json"
+              },
+              {
+                "$ref": "./collective.schema.json"
+              },
+              {
+                "$ref": "./conditions.schema.json"
+              },
+              {
+                "$ref": "./costprofile.schema.json"
+              },
+              {
+                "$ref": "./dayphases.schema.json"
+              },
+              {
+                "$ref": "./dialogue.schema.json"
+              },
+              {
+                "$ref": "./entity.schema.json"
+              },
+              {
+                "$ref": "./fsmbrain.schema.json"
+              },
+              {
+                "$ref": "./goapaction.schema.json"
+              },
+              {
+                "$ref": "./goapgoal.schema.json"
+              },
+              {
+                "$ref": "./group.schema.json"
+              },
+              {
+                "$ref": "./htncompound.schema.json"
+              },
+              {
+                "$ref": "./item.schema.json"
+              },
+              {
+                "$ref": "./lifecycle.schema.json"
+              },
+              {
+                "$ref": "./loot.schema.json"
+              },
+              {
+                "$ref": "./metasensor.schema.json"
+              },
+              {
+                "$ref": "./navgrid.schema.json"
+              },
+              {
+                "$ref": "./navprofile.schema.json"
+              },
+              {
+                "$ref": "./need.schema.json"
+              },
+              {
+                "$ref": "./quest.schema.json"
+              },
+              {
+                "$ref": "./role.schema.json"
+              },
+              {
+                "$ref": "./schedule.schema.json"
+              },
+              {
+                "$ref": "./season.schema.json"
+              },
+              {
+                "$ref": "./shop.schema.json"
+              },
+              {
+                "$ref": "./slot.schema.json"
+              },
+              {
+                "$ref": "./smartobject.schema.json"
+              },
+              {
+                "$ref": "./stat.schema.json"
+              },
+              {
+                "$ref": "./status.schema.json"
+              },
+              {
+                "$ref": "./time.schema.json"
+              },
+              {
+                "$ref": "./utility.schema.json"
+              },
+              {
+                "$ref": "./weather.schema.json"
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "defs"
+      ]
+    }
+  ]
+}

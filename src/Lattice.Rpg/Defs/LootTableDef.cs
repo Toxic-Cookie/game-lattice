@@ -69,6 +69,7 @@ public sealed class ShopDef : Def
     public string? Name { get; set; }
 
     /// <summary>Currency item ID exchanged in trades.</summary>
+    [LatticeRef("item")]
     public string Currency { get; set; } = "item_gold";
 
     /// <summary>Price the customer pays when buying from the shop.</summary>
@@ -83,6 +84,7 @@ public sealed class ShopDef : Def
     public string? RestockOn { get; set; }
 
     /// <summary>Condition primitives (subject = the customer) gating trade — shop hours live here.</summary>
+    [LatticeUnion("condition")]
     public List<System.Text.Json.JsonElement>? OpenWhen { get; set; }
 
     public override IEnumerable<DefReference> GetReferences()

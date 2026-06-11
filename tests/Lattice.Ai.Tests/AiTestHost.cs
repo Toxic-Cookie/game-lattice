@@ -19,11 +19,11 @@ internal sealed class NullLogger : ILatticeLogger
 /// <summary>Test host with RPG + Narrative + AI attached over a temp content directory.</summary>
 internal sealed class AiTestHost : IDisposable
 {
-    public AiTestHost(int seed = 1)
+    public AiTestHost(int seed = 1, bool watch = false)
     {
         ContentRoot = Path.Combine(Path.GetTempPath(), "lattice-m4a-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(ContentRoot);
-        Content = new DirectoryContentSource(ContentRoot, watch: false);
+        Content = new DirectoryContentSource(ContentRoot, watch);
         Animation = new TimedStubAnimationService(animationDurationSeconds: 0.4);
         Services = new HostServices
         {

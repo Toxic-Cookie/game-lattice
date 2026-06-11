@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lattice.dev/schemas/fsmbrain.schema.json",
+  "title": "FsmBrainDef",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Globally unique def ID."
+    },
+    "type": {
+      "const": "fsmbrain"
+    },
+    "description": {
+      "type": "string",
+      "description": "One line for humans and LLMs (surfaced by the manifest)."
+    },
+    "inherits": {
+      "type": "string",
+      "description": "Parent def ID (same kind); objects deep-merge, scalars override, arrays replace or take {\u0022$append\u0022/\u0022$remove\u0022} patches.",
+      "x-lattice-ref": "fsmbrain"
+    },
+    "initial": {
+      "type": "string"
+    },
+    "states": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "steering": {},
+          "transitions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "to": {
+                  "type": "string"
+                },
+                "when": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "x-lattice-union": "condition",
+                    "description": "A condition primitive payload; see the manifest for arg signatures.",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "AgentCondition",
+                          "AgentMeta",
+                          "All",
+                          "Any",
+                          "BeliefEquals",
+                          "FlagEquals",
+                          "FormulaTrue",
+                          "HasItem",
+                          "HasTag",
+                          "NeedBelow",
+                          "Not",
+                          "StatAtLeast",
+                          "UtilityAtLeast"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "id",
+    "type"
+  ]
+}

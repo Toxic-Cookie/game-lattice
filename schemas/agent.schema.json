@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lattice.dev/schemas/agent.schema.json",
+  "title": "AgentProfileDef",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Globally unique def ID."
+    },
+    "type": {
+      "const": "agent"
+    },
+    "description": {
+      "type": "string",
+      "description": "One line for humans and LLMs (surfaced by the manifest)."
+    },
+    "inherits": {
+      "type": "string",
+      "description": "Parent def ID (same kind); objects deep-merge, scalars override, arrays replace or take {\u0022$append\u0022/\u0022$remove\u0022} patches.",
+      "x-lattice-ref": "agent"
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "x-lattice-ref": "entity"
+      }
+    },
+    "brain": {
+      "type": "string"
+    },
+    "fsmBrain": {
+      "type": "string",
+      "x-lattice-ref": "fsmbrain"
+    },
+    "schedules": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "x-lattice-ref": "schedule"
+      }
+    },
+    "behaviorTree": {
+      "type": "string",
+      "x-lattice-ref": "btree"
+    },
+    "thinkInterval": {
+      "type": "number"
+    },
+    "needs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "x-lattice-ref": "need"
+      }
+    },
+    "activities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "x-lattice-ref": "activity"
+      }
+    },
+    "goals": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "x-lattice-ref": "goapgoal"
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "x-lattice-ref": "goapaction"
+      }
+    },
+    "costProfile": {
+      "type": "string",
+      "x-lattice-ref": "costprofile"
+    },
+    "initialBeliefs": {
+      "type": "object",
+      "additionalProperties": {}
+    },
+    "goalHysteresis": {
+      "type": "number"
+    },
+    "replanCooldown": {
+      "type": "number"
+    },
+    "rootTask": {
+      "type": "string",
+      "x-lattice-ref": "htncompound|goapaction"
+    },
+    "htnInterrupt": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "passport": {
+      "type": "string"
+    },
+    "metaSensors": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "x-lattice-ref": "metasensor"
+      }
+    },
+    "flagConditions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "sensors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "range": {
+            "type": "number"
+          },
+          "sensitivity": {
+            "type": "number"
+          },
+          "fov": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "conditions": {
+      "type": "string",
+      "x-lattice-ref": "conditions"
+    },
+    "hostileTags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "walkSpeed": {
+      "type": "number"
+    },
+    "runSpeed": {
+      "type": "number"
+    },
+    "alertDecaySeconds": {
+      "type": "number"
+    },
+    "patrolPoints": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      }
+    }
+  },
+  "required": [
+    "id",
+    "type"
+  ]
+}

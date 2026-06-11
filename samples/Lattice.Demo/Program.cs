@@ -158,6 +158,9 @@ bool RunCommand(string[] parts)
                   poke <id>                   annoy an NPC (meta-sensor demo)
                   path <id>                   remaining waypoints of a moving agent
                   (time also shows clock, phase, season, weather)
+                UI:
+                  hud                         text gauges over binding paths
+                  bind <path>                 watch a binding path (e.g. Player.stats.stat_hp, flags.weather)
                   noise <x> <y> <z> [loud]    emit a sound stimulus
                   move <id> <x> <y> <z>       teleport an entity (provoke sensors)
                   quit
@@ -752,6 +755,36 @@ bool RunCommand(string[] parts)
                 : rpg.Trade.TrySell(shop, customer, parts[3], out error);
             Console.WriteLine(ok ? "done" : $"error: {error}");
             session.Events.DispatchPending();
+            return true;
+        }
+
+        case "hud":
+        {
+            static string Bar(double current, double max)
+            {
+                var filled = max > 0 ? Math.Clamp((int)Math.Round(current / max * 20), 0, 20) : 0;
+                return $"[{new string('#', filled)}{new string('-', 20 - filled)}]";
+            }
+
+            var hp = rpg.Bindings.Resolve("Player.stats.stat_hp") as double? ?? 0;
+            var hpMax = rpg.Bindings.Resolve("Player.stats.stat_hp.max") as double? ?? 0;
+            var gold = rpg.Bindings.Resolve("Player.inventory.item_gold") as double? ?? 0;
+            Console.WriteLine($"  HP   {Bar(hp, hpMax)} {hp:F0}/{hpMax:F0}");
+            Console.WriteLine($"  Gold {gold:F0}");
+            Console.WriteLine($"  {rpg.Bindings.Resolve("flags.day_phase") ?? "-"}, {rpg.Bindings.Resolve("flags.weather") ?? "-"}");
+            return true;
+        }
+
+        case "bind":
+        {
+            if (parts.Length < 2)
+            {
+                Console.WriteLine("usage: bind <path>   (Player.stats.<stat>[.max] | Player.inventory.<item> | flags.<key>)");
+                return true;
+            }
+
+            var path = parts[1];
+            rpg.Bindings.Subscribe(path, value => Console.WriteLine($"  {path} = {value ?? "(null)"}"));
             return true;
         }
 

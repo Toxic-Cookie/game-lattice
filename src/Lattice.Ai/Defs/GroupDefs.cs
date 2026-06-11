@@ -32,6 +32,7 @@ public sealed class RoleDef : Def
 public sealed class GroupDef : Def
 {
     /// <summary>Role def IDs in fill-priority order (first roles fill first).</summary>
+    [LatticeRef("role")]
     public List<string> Roles { get; set; } = [];
 
     /// <summary>Per-key staleness thresholds in seconds for member reads (latency is a feature — HZD Part 5).</summary>
@@ -86,6 +87,7 @@ public sealed class CollectiveDef : Def
         public float[] Position { get; set; } = [0, 0, 0];
 
         /// <summary>Group def ID instantiated at this site.</summary>
+        [LatticeRef("group")]
         public string Group { get; set; } = "";
 
         public List<Member> Members { get; set; } = [];
@@ -96,6 +98,7 @@ public sealed class CollectiveDef : Def
 
     public sealed class Member
     {
+        [LatticeRef("entity")]
         public string Entity { get; set; } = "";
 
         public int Count { get; set; } = 1;

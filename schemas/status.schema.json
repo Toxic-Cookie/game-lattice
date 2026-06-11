@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lattice.dev/schemas/status.schema.json",
+  "title": "StatusEffectDef",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Globally unique def ID."
+    },
+    "type": {
+      "const": "status"
+    },
+    "description": {
+      "type": "string",
+      "description": "One line for humans and LLMs (surfaced by the manifest)."
+    },
+    "inherits": {
+      "type": "string",
+      "description": "Parent def ID (same kind); objects deep-merge, scalars override, arrays replace or take {\u0022$append\u0022/\u0022$remove\u0022} patches.",
+      "x-lattice-ref": "status"
+    },
+    "name": {
+      "type": "string"
+    },
+    "duration": {
+      "type": "number"
+    },
+    "stacking": {
+      "type": "string"
+    },
+    "maxStacks": {
+      "type": "number"
+    },
+    "logic": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  },
+  "required": [
+    "id",
+    "type"
+  ]
+}

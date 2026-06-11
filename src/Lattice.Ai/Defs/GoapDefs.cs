@@ -35,6 +35,7 @@ public sealed class GoapActionDef : Def
     public bool AnimationBlocking { get; set; }
 
     /// <summary>RPG effect primitives run on completion (source = agent; target = perceived enemy when known).</summary>
+    [LatticeUnion("effect")]
     public List<JsonElement>? RunEffects { get; set; }
 }
 

@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lattice.dev/schemas/group.schema.json",
+  "title": "GroupDef",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Globally unique def ID."
+    },
+    "type": {
+      "const": "group"
+    },
+    "description": {
+      "type": "string",
+      "description": "One line for humans and LLMs (surfaced by the manifest)."
+    },
+    "inherits": {
+      "type": "string",
+      "description": "Parent def ID (same kind); objects deep-merge, scalars override, arrays replace or take {\u0022$append\u0022/\u0022$remove\u0022} patches.",
+      "x-lattice-ref": "group"
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "x-lattice-ref": "role"
+      }
+    },
+    "staleness": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "alertDecaySeconds": {
+      "type": "number"
+    },
+    "maxMembers": {
+      "type": "number"
+    },
+    "minMembers": {
+      "type": "number"
+    },
+    "passports": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "id",
+    "type"
+  ]
+}
