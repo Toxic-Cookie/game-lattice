@@ -1,10 +1,22 @@
-{
-  "id": "metasensor_poke",
-  "type": "metasensor",
-  "description": "Poke the guard three times in five seconds and it stops being polite.",
-  "watch": "Player.Poked",
-  "window": 5.0,
-  "threshold": 3,
-  "setCondition": "ANNOYED",
-  "agentKey": "agentId"
-}
+[
+  {
+    "id": "metasensor_poke",
+    "type": "metasensor",
+    "description": "Poke the guard three times in five seconds and it stops being polite.",
+    "watch": "Player.Poked",
+    "window": 5.0,
+    "threshold": 3,
+    "setCondition": "ANNOYED",
+    "agentKey": "agentId"
+  },
+  {
+    "id": "metasensor_lookaway",
+    "type": "metasensor",
+    "description": "Meta player awareness (plan/07 §1): look away from the conversation twice in half a minute and the innkeeper notices.",
+    "watch": "Player.LookedAway",
+    "window": 30.0,
+    "threshold": 2,
+    "setCondition": "ANNOYED",
+    "agentKey": "agentId"
+  }
+]

@@ -12,6 +12,7 @@
     "GROUP_ALERT",
     "ROLE_WATCHER",
     "ANNOYED",
-    "IS_NIGHT"
+    "IS_NIGHT",
+    "IS_DUSK"
   ]
 }

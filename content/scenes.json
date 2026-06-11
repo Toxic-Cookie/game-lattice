@@ -1,0 +1,16 @@
+[
+  {
+    "id": "lifecycle_tavern",
+    "type": "lifecycle",
+    "description": "Demo scene 1 — The Tavern (plan/07 §1): dialogue, trade, day-night schedules, needs-driven patrons, meta player awareness, weather→narrative coupling.",
+    "initialScene": "scene_tavern",
+    "globalFlags": {
+      "wolves_killed": 0
+    },
+    "spawns": [
+      { "entity": "entity_player", "position": [0, 0, 1] },
+      { "entity": "entity_innkeeper", "position": [4, 0, 4] },
+      { "entity": "entity_patron", "count": 3, "position": [1, 0, -2] }
+    ]
+  }
+]

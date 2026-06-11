@@ -1,5 +1,65 @@
 [
   {
+    "id": "schedule_tend_bar",
+    "type": "schedule",
+    "description": "The innkeeper's default beat: stand behind the bar and serve.",
+    "priority": 10,
+    "metaStates": ["Idle"],
+    "interrupt": ["CAN_SEE_ENEMY", "THREAT_KNOWN", "DAMAGED", "ANNOYED"],
+    "tasks": [
+      { "task": "MoveTo", "target": [4, 0, 4], "speed": "walk" },
+      { "task": "PlayAnimation", "anim": "tend_bar" },
+      { "task": "Wait", "seconds": 2.0 },
+      { "task": "SelectNewSchedule" }
+    ]
+  },
+  {
+    "id": "schedule_innkeeper_sweep",
+    "type": "schedule",
+    "description": "Dusk routine (IS_DUSK from the is_dusk day-phase flag): sweep the floor before closing.",
+    "priority": 20,
+    "metaStates": ["Idle"],
+    "require": ["IS_DUSK"],
+    "interrupt": ["CAN_SEE_ENEMY", "THREAT_KNOWN", "DAMAGED", "ANNOYED"],
+    "tasks": [
+      { "task": "MoveTo", "target": [1, 0, 0], "speed": "walk" },
+      { "task": "PlayAnimation", "anim": "sweep" },
+      { "task": "MoveTo", "target": [-2, 0, -2], "speed": "walk" },
+      { "task": "PlayAnimation", "anim": "sweep" },
+      { "task": "Wait", "seconds": 1.0 },
+      { "task": "SelectNewSchedule" }
+    ]
+  },
+  {
+    "id": "schedule_innkeeper_bed",
+    "type": "schedule",
+    "description": "Night routine: head to the back room and sleep until dawn.",
+    "priority": 30,
+    "metaStates": ["Idle"],
+    "require": ["IS_NIGHT"],
+    "interrupt": ["CAN_SEE_ENEMY", "THREAT_KNOWN", "HEAR_SOUND", "DAMAGED"],
+    "tasks": [
+      { "task": "MoveTo", "target": [6, 0, 6], "speed": "walk" },
+      { "task": "PlayAnimation", "anim": "sleep" },
+      { "task": "Wait", "seconds": 3.0 },
+      { "task": "SelectNewSchedule" }
+    ]
+  },
+  {
+    "id": "schedule_innkeeper_scold",
+    "type": "schedule",
+    "description": "Meta-awareness beat (plan/07 §1): the player looked away twice mid-conversation (ANNOYED via metasensor_lookaway) — the innkeeper snaps and breaks off the dialogue.",
+    "priority": 90,
+    "require": ["ANNOYED"],
+    "interrupt": ["CAN_SEE_ENEMY", "DAMAGED"],
+    "tasks": [
+      { "task": "PublishEvent", "event": "Npc.Scold" },
+      { "task": "PlayAnimation", "anim": "scold" },
+      { "task": "Wait", "seconds": 2.0 },
+      { "task": "SelectNewSchedule" }
+    ]
+  },
+  {
     "id": "schedule_scold",
     "type": "schedule",
     "description": "Meta-awareness reaction: the player has been pestering this NPC (ANNOYED via metasensor_poke).",

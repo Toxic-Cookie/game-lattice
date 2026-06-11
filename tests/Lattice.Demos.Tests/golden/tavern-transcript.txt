@@ -1,0 +1,11 @@
+Innkeeper: Welcome to the Wolf's Rest. What can I do for you?
+  > Heard you have a wolf problem.
+  > Got anything to drink?
+  > Just passing through.
+[chose: Got anything to drink?]
+Innkeeper: Ale's two coins. You look good for it.
+[bought item_ale for 4 gold]
+Innkeeper: Welcome to the Wolf's Rest. What can I do for you?
+[the innkeeper notices you looking away and breaks off the conversation]
+Patron: Hear that? Rain again. Can't hear a thing over it.
+Patron: Good night for sneaking, bad night for guarding.

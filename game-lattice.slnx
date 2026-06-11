@@ -13,6 +13,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Lattice.Ai.Tests/Lattice.Ai.Tests.csproj" />
     <Project Path="tests/Lattice.Core.Tests/Lattice.Core.Tests.csproj" />
+    <Project Path="tests/Lattice.Demos.Tests/Lattice.Demos.Tests.csproj" />
     <Project Path="tests/Lattice.Narrative.Tests/Lattice.Narrative.Tests.csproj" />
     <Project Path="tests/Lattice.Rpg.Tests/Lattice.Rpg.Tests.csproj" />
     <Project Path="tests/Lattice.World.Tests/Lattice.World.Tests.csproj" />

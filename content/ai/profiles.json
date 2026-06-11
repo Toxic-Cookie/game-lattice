@@ -20,6 +20,25 @@
     "patrolPoints": [[6, 0, 6], [6, 0, -6], [-6, 0, -6], [-6, 0, 6]]
   },
   {
+    "id": "profile_innkeeper",
+    "type": "agent",
+    "description": "The Wolf's Rest innkeeper: tends bar by day, sweeps at dusk, sleeps at night — the whole routine is day-phase flags feeding schedule gates.",
+    "entities": ["entity_innkeeper"],
+    "brain": "schedules",
+    "schedules": ["schedule_innkeeper_scold", "schedule_innkeeper_bed", "schedule_innkeeper_sweep", "schedule_tend_bar"],
+    "conditions": "conditions_default",
+    "metaSensors": ["metasensor_lookaway"],
+    "flagConditions": { "IS_NIGHT": "is_night", "IS_DUSK": "is_dusk" },
+    "hostileTags": ["wolf"],
+    "sensors": [
+      { "kind": "visual", "range": 8, "fov": 360, "sensitivity": 0.7 },
+      { "kind": "auditory", "range": 8 }
+    ],
+    "walkSpeed": 1.6,
+    "runSpeed": 3.0,
+    "alertDecaySeconds": 3.0
+  },
+  {
     "id": "profile_patron",
     "type": "agent",
     "description": "Tavern patron: needs-driven utility selection inside a behavior tree (M4b).",

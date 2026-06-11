@@ -41,6 +41,17 @@
     "basePrice": 8
   },
   {
+    "id": "item_ale",
+    "type": "item",
+    "name": "Mug of Ale",
+    "tags": ["consumable", "drink"],
+    "basePrice": 2,
+    "consumeOnUse": true,
+    "useActions": [
+      { "type": "Heal", "formula": "1" }
+    ]
+  },
+  {
     "id": "item_healing_potion",
     "type": "item",
     "name": "Healing Potion",

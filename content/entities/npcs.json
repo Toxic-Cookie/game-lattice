@@ -10,10 +10,20 @@
   {
     "id": "entity_patron",
     "type": "entity",
-    "description": "Tavern patron (profile_patron: needs + behavior tree).",
+    "description": "Tavern patron (profile_patron: needs + behavior tree). Low Charisma: pays full price.",
     "name": "Patron",
     "tags": ["patron", "npc"],
-    "stats": { "stat_con": 3 }
+    "stats": { "stat_con": 3, "stat_cha": 2 },
+    "items": { "item_gold": 20 }
+  },
+  {
+    "id": "entity_innkeeper",
+    "type": "entity",
+    "description": "Wolf's Rest innkeeper (profile_innkeeper): bartender by day, sweeper at dusk, asleep at night; quest giver and shopkeeper.",
+    "name": "Innkeeper",
+    "tags": ["innkeeper", "npc"],
+    "stats": { "stat_con": 4, "stat_cha": 6 },
+    "items": { "item_gold": 100 }
   },
   {
     "id": "entity_forager",
