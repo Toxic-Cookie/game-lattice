@@ -64,6 +64,18 @@ public sealed class AgentProfileDef : Def
     /// <summary>Minimum seconds between replans (ch07 anti-pattern 1).</summary>
     public double ReplanCooldown { get; set; } = 0.5;
 
+    /// <summary>Root HTN task ID, compound or primitive (brain = "htn").</summary>
+    public string? RootTask { get; set; }
+
+    /// <summary>Condition names whose appearance forces an HTN re-decomposition.</summary>
+    public List<string>? HtnInterrupt { get; set; }
+
+    /// <summary>Group-compatibility tag for collective recycling (HZD Part 4).</summary>
+    public string? Passport { get; set; }
+
+    /// <summary>Meta-sensor def IDs watching player behavior patterns on behalf of this agent.</summary>
+    public List<string>? MetaSensors { get; set; }
+
     public List<SensorSpec>? Sensors { get; set; }
 
     /// <summary>Condition catalog def ID.</summary>
@@ -127,6 +139,16 @@ public sealed class AgentProfileDef : Def
         if (CostProfile is not null)
         {
             yield return new DefReference(CostProfile, $"{Id}.costProfile");
+        }
+
+        if (RootTask is not null)
+        {
+            yield return new DefReference(RootTask, $"{Id}.rootTask");
+        }
+
+        foreach (var sensor in MetaSensors ?? [])
+        {
+            yield return new DefReference(sensor, $"{Id}.metaSensors");
         }
 
         yield return new DefReference(Conditions, $"{Id}.conditions");

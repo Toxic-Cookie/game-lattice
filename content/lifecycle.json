@@ -17,6 +17,7 @@
     { "entity": "entity_soldier", "count": 2, "position": [18, 0, 0] },
     { "entity": "entity_dummy", "position": [24, 0, 0] },
     { "entity": "entity_attack_node", "position": [22, 0, 3] },
-    { "entity": "entity_attack_node", "position": [22, 0, -3] }
+    { "entity": "entity_attack_node", "position": [22, 0, -3] },
+    { "entity": "entity_forager", "position": [-15, 0, 5] }
   ]
 }

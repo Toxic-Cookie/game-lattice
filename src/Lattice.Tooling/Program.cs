@@ -62,6 +62,7 @@ if (args[0] == "validate")
     var conditions = ConditionRegistry.CreateDefault();
     conditions.Register(new AgentConditionEvaluator());
     conditions.Register(new AgentMetaCondition());
+    conditions.Register(new BeliefEqualsCondition());
     conditions.Register(new UtilityAtLeastCondition());
     conditions.Register(new NeedBelowCondition());
     registry.Validate(report, formulas);

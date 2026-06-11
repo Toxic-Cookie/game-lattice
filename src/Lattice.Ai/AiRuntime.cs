@@ -3,6 +3,7 @@ using System.Text.Json;
 using Lattice.Ai.Agents;
 using Lattice.Ai.Defs;
 using Lattice.Ai.Goap;
+using Lattice.Ai.Groups;
 using Lattice.Ai.Perception;
 using Lattice.Ai.Tasks;
 using Lattice.Ai.Utility;
@@ -37,9 +38,13 @@ public sealed class AiRuntime
         Narrative = narrative;
         Tasks = TaskRegistry.CreateDefault();
 
+        Groups = new GroupManager(this);
+        MetaSensors = new MetaSensorTracker(this);
+
         session.RegisterModule(this);
         rpg.Conditions.Register(new AgentConditionEvaluator(this));
         rpg.Conditions.Register(new AgentMetaCondition(this));
+        rpg.Conditions.Register(new BeliefEqualsCondition(this));
         rpg.Conditions.Register(new UtilityAtLeastCondition(this));
         rpg.Conditions.Register(new NeedBelowCondition(this));
         session.World.EntityAdded += AttachAgent;
@@ -48,7 +53,15 @@ public sealed class AiRuntime
         session.Events.Subscribe("Stimulus.Sound", e => OnStimulusEvent(e, StimulusType.Sound));
         session.Events.Subscribe("Stimulus.Scent", e => OnStimulusEvent(e, StimulusType.Scent));
         session.Events.Subscribe("Entity.Damaged", OnEntityDamaged);
+        session.Events.Subscribe("Entity.Died", e =>
+        {
+            if (e.Payload.TryGetValue("instanceId", out var id) && id is string memberId)
+            {
+                Groups.RemoveMember(memberId);
+            }
+        });
         session.RegisterSystem(new AgentSystem(this));
+        session.RegisterSystem(new GroupSystem(Groups));
         session.RegisterContentValidator(new AiContentValidator(rpg.Conditions, Tasks, rpg.Effects));
     }
 
@@ -59,6 +72,12 @@ public sealed class AiRuntime
     public NarrativeRuntime? Narrative { get; }
 
     public TaskRegistry Tasks { get; }
+
+    /// <summary>Group agents, role slots, and the collective (M4d).</summary>
+    public GroupManager Groups { get; }
+
+    /// <summary>Meta player-awareness detectors (M4d).</summary>
+    public MetaSensorTracker MetaSensors { get; }
 
     /// <summary>Live transient stimuli (sounds/scents) for sensor evaluation.</summary>
     public IReadOnlyList<StimulusPacket> TransientStimuli { get; private set; } = [];
@@ -124,6 +143,7 @@ public sealed class AiRuntime
 
     private void RebuildIndexes()
     {
+        MetaSensors.RebuildSubscriptions();
         _profileByEntityDef.Clear();
         foreach (var profile in Session.Defs.All<AgentProfileDef>())
         {
@@ -159,6 +179,7 @@ public sealed class AiRuntime
             "bt" when profile.BehaviorTree is not null && Session.Defs.TryGet<BehaviorTreeDef>(profile.BehaviorTree, out var btDef) =>
                 new BehaviorTreeBrain(btDef, Session.Defs),
             "goap" => new GoapBrain(),
+            "htn" => new HtnBrain(),
             _ => new NullBrain(profile.Brain),
         };
 
@@ -239,6 +260,7 @@ public sealed class AiRuntime
 
                 var ctx = new AgentContext { Ai = ai, Entity = entity, Agent = agent };
 
+                ai.MetaSensors.Sync(ctx); // before the sensor refresh: it ORs ManualConditions in
                 SensorPipeline.Update(ctx, ai.TransientStimuli, now);
                 UpdateMetaState(ctx, now);
                 DecayNeeds(session, agent, dt);
@@ -396,6 +418,43 @@ public sealed class AgentMetaCondition(AiRuntime? ai = null) : IConditionEvaluat
     }
 }
 
+/// <summary>
+/// Scalar belief comparison: {"type":"BeliefEquals","key":"role","value":"role_watcher"}.
+/// The bridge that lets FSM transitions and BT gates branch on group role
+/// assignments and other belief facts.
+/// </summary>
+public sealed class BeliefEqualsCondition(AiRuntime? ai = null) : IConditionEvaluator
+{
+    public string Type => "BeliefEquals";
+
+    public bool Evaluate(ConditionContext ctx, JsonElement args)
+    {
+        if (ai is null
+            || ctx.Subject is null
+            || ai.GetAgent(ctx.Subject) is not { } agent
+            || !args.TryGetProperty("value", out var valueProp)
+            || !JsonValueHelper.TryToPlain(valueProp, out var expected))
+        {
+            return false;
+        }
+
+        return Equals(agent.Beliefs.Get(JsonArgs.GetString(args, "key")), expected);
+    }
+
+    public void Validate(JsonElement args, EffectValidationContext v)
+    {
+        if (!JsonArgs.TryGetString(args, "key", out _))
+        {
+            v.Error("BeliefEquals requires 'key'.");
+        }
+
+        if (!args.TryGetProperty("value", out var valueProp) || !JsonValueHelper.TryToPlain(valueProp, out _))
+        {
+            v.Error("BeliefEquals 'value' must be a bool, number, or string.");
+        }
+    }
+}
+
 /// <summary>Entry points for wiring the AI module into a session.</summary>
 public static class LatticeAi
 {
@@ -414,6 +473,11 @@ public static class LatticeAi
         types.Register<GoapActionDef>("goapaction");
         types.Register<GoapGoalDef>("goapgoal");
         types.Register<CostProfileDef>("costprofile");
+        types.Register<HtnCompoundDef>("htncompound");
+        types.Register<RoleDef>("role");
+        types.Register<GroupDef>("group");
+        types.Register<CollectiveDef>("collective");
+        types.Register<MetaSensorDef>("metasensor");
         return types;
     }
 

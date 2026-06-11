@@ -1,0 +1,10 @@
+{
+  "id": "metasensor_poke",
+  "type": "metasensor",
+  "description": "Poke the guard three times in five seconds and it stops being polite.",
+  "watch": "Player.Poked",
+  "window": 5.0,
+  "threshold": 3,
+  "setCondition": "ANNOYED",
+  "agentKey": "agentId"
+}

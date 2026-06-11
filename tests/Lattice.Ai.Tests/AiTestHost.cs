@@ -107,13 +107,15 @@ internal sealed class AiTestHost : IDisposable
             """);
         WriteContent("conditions.json", """
             { "id": "conditions_default", "type": "conditions",
-              "names": ["CAN_SEE_ENEMY", "THREAT_KNOWN", "HEAR_SOUND", "SMELL_DETECTED", "CONTACT", "DAMAGED", "CUSTOM_FLAG"] }
+              "names": ["CAN_SEE_ENEMY", "THREAT_KNOWN", "HEAR_SOUND", "SMELL_DETECTED", "CONTACT", "DAMAGED",
+                        "CUSTOM_FLAG", "GROUP_ALERT", "ROLE_WATCHER", "ANNOYED"] }
             """);
         WriteContent("profiles.json", """
             [
               { "id": "profile_guard", "type": "agent", "entities": ["entity_guard"],
                 "brain": "schedules",
                 "schedules": ["schedule_combat", "schedule_investigate", "schedule_search", "schedule_patrol"],
+                "metaSensors": ["metasensor_poke"],
                 "hostileTags": ["player"],
                 "sensors": [ { "kind": "visual", "range": 10, "fov": 360, "sensitivity": 0.9 },
                              { "kind": "auditory", "range": 12 } ],
@@ -221,6 +223,84 @@ internal sealed class AiTestHost : IDisposable
                         { "type": "AgentCondition", "condition": "CAN_SEE_ENEMY" } ] } } ] } ] }
                 } }
             ]
+            """);
+        WriteContent("htn.json", """
+            [
+              { "id": "action_run_home", "type": "goapaction",
+                "effects": { "hid": true }, "cost": "1", "moveTo": "spawn", "speed": "run" },
+              { "id": "action_goto_berries", "type": "goapaction",
+                "effects": { "at_berries": true }, "cost": "1", "moveTo": [6, 0, 0], "speed": "walk" },
+              { "id": "action_gather", "type": "goapaction",
+                "preconditions": { "at_berries": true }, "effects": { "gathered": true },
+                "cost": "1", "animation": "gather" },
+              { "id": "action_carry_home", "type": "goapaction",
+                "preconditions": { "gathered": true },
+                "effects": { "at_berries": false, "gathered": false, "deliveries_done": true },
+                "cost": "1", "moveTo": "spawn", "speed": "walk" },
+              { "id": "htn_forage", "type": "htncompound", "methods": [
+                  { "name": "hide", "preconditions": { "THREAT_KNOWN": true }, "subtasks": ["action_run_home"] },
+                  { "name": "forage_run", "subtasks": ["action_goto_berries", "action_gather", "action_carry_home"] } ] },
+              { "id": "entity_forager", "type": "entity", "name": "Forager" },
+              { "id": "profile_forager", "type": "agent", "entities": ["entity_forager"],
+                "brain": "htn", "rootTask": "htn_forage",
+                "htnInterrupt": ["THREAT_KNOWN", "CAN_SEE_ENEMY"],
+                "hostileTags": ["player"],
+                "sensors": [ { "kind": "visual", "range": 8, "fov": 360, "sensitivity": 0.6 } ],
+                "walkSpeed": 2.0, "runSpeed": 4.0, "alertDecaySeconds": 2.0, "replanCooldown": 0.3 }
+            ]
+            """);
+        WriteContent("herd.json", """
+            [
+              { "id": "role_watcher", "type": "role", "slots": 2, "condition": "ROLE_WATCHER", "ringRadius": 6 },
+              { "id": "role_grazer", "type": "role", "slots": 99 },
+              { "id": "group_herd", "type": "group",
+                "roles": ["role_watcher", "role_grazer"],
+                "staleness": { "threat_level": 3.0, "threat_position": 6.0 },
+                "alertDecaySeconds": 4.0, "minMembers": 2, "maxMembers": 12,
+                "passports": ["herd_beast"] },
+              { "id": "collective_plains", "type": "collective", "budget": 24, "sites": [
+                  { "position": [-30, 0, -30], "group": "group_herd",
+                    "members": [ { "entity": "entity_beast", "count": 6 } ], "spawnRadius": 4 },
+                  { "position": [-30, 0, 30], "group": "group_herd",
+                    "members": [ { "entity": "entity_beast", "count": 4 } ], "spawnRadius": 4 } ] },
+              { "id": "entity_beast", "type": "entity", "name": "Beast", "tags": ["beast"] },
+              { "id": "profile_beast", "type": "agent", "entities": ["entity_beast"],
+                "brain": "fsm", "fsmBrain": "fsmbrain_beast",
+                "passport": "herd_beast", "hostileTags": ["player"],
+                "sensors": [ { "kind": "visual", "range": 7, "fov": 360, "sensitivity": 0.6 } ],
+                "walkSpeed": 1.4, "runSpeed": 3.8, "alertDecaySeconds": 2.0 },
+              { "id": "fsmbrain_beast", "type": "fsmbrain", "initial": "graze", "states": {
+                  "graze": {
+                    "steering": { "type": "Wander", "speed": 1.0, "radius": 2, "interval": 1.5 },
+                    "transitions": [
+                      { "to": "flee", "when": [ { "type": "Any", "conditions": [
+                          { "type": "AgentCondition", "condition": "GROUP_ALERT" },
+                          { "type": "AgentCondition", "condition": "THREAT_KNOWN" },
+                          { "type": "AgentCondition", "condition": "CAN_SEE_ENEMY" } ] } ] },
+                      { "to": "watch", "when": [ { "type": "BeliefEquals", "key": "role", "value": "role_watcher" } ] } ] },
+                  "watch": {
+                    "steering": { "type": "MoveTo", "target": "post", "speed": 1.4 },
+                    "transitions": [
+                      { "to": "flee", "when": [ { "type": "Any", "conditions": [
+                          { "type": "AgentCondition", "condition": "GROUP_ALERT" },
+                          { "type": "AgentCondition", "condition": "THREAT_KNOWN" },
+                          { "type": "AgentCondition", "condition": "CAN_SEE_ENEMY" } ] } ] },
+                      { "to": "graze", "when": [ { "type": "Not", "condition":
+                          { "type": "BeliefEquals", "key": "role", "value": "role_watcher" } } ] } ] },
+                  "flee": {
+                    "steering": { "type": "FleeFrom", "speed": 3.8, "distance": 8 },
+                    "transitions": [
+                      { "to": "graze", "when": [ { "type": "Not", "condition": { "type": "Any", "conditions": [
+                          { "type": "AgentCondition", "condition": "GROUP_ALERT" },
+                          { "type": "AgentCondition", "condition": "THREAT_KNOWN" },
+                          { "type": "AgentCondition", "condition": "CAN_SEE_ENEMY" } ] } } ] } ] }
+                } }
+            ]
+            """);
+        WriteContent("metasensors.json", """
+            { "id": "metasensor_poke", "type": "metasensor",
+              "watch": "Player.Poked", "window": 5.0, "threshold": 3,
+              "setCondition": "ANNOYED", "agentKey": "agentId" }
             """);
         WriteContent("lifecycle.json", """
             { "id": "lifecycle_test", "type": "lifecycle", "spawns": [] }

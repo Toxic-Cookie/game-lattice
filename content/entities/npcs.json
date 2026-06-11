@@ -16,6 +16,22 @@
     "stats": { "stat_con": 3 }
   },
   {
+    "id": "entity_forager",
+    "type": "entity",
+    "description": "HTN forager (profile_forager): berry run with a threat-hiding method.",
+    "name": "Forager",
+    "tags": ["forager", "npc"],
+    "stats": { "stat_con": 3 }
+  },
+  {
+    "id": "entity_beast",
+    "type": "entity",
+    "description": "Herd animal (profile_beast: role-aware FSM, collective-spawned).",
+    "name": "Beast",
+    "tags": ["beast", "critter"],
+    "stats": { "stat_con": 2 }
+  },
+  {
     "id": "entity_rat",
     "type": "entity",
     "description": "Skittish rat (profile_rat: two-state FSM brain).",

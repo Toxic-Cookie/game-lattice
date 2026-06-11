@@ -1,5 +1,20 @@
 [
   {
+    "id": "schedule_scold",
+    "type": "schedule",
+    "description": "Meta-awareness reaction: the player has been pestering this NPC (ANNOYED via metasensor_poke).",
+    "priority": 90,
+    "require": ["ANNOYED"],
+    "interrupt": ["CAN_SEE_ENEMY", "DAMAGED"],
+    "tasks": [
+      { "task": "FaceEntity", "target": "enemy" },
+      { "task": "PublishEvent", "event": "Npc.Scold" },
+      { "task": "PlayAnimation", "anim": "scold" },
+      { "task": "Wait", "seconds": 2.0 },
+      { "task": "SelectNewSchedule" }
+    ]
+  },
+  {
     "id": "schedule_patrol",
     "type": "schedule",
     "description": "Default beat: walk the route, look around, repeat.",

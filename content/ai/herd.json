@@ -1,0 +1,78 @@
+[
+  {
+    "id": "role_watcher",
+    "type": "role",
+    "description": "Sentries: 2 slots, posted on a ring around the herd centroid. The herd's shape IS this slot limit.",
+    "slots": 2,
+    "condition": "ROLE_WATCHER",
+    "ringRadius": 6
+  },
+  {
+    "id": "role_grazer",
+    "type": "role",
+    "description": "Everyone else: graze near the core.",
+    "slots": 99
+  },
+  {
+    "id": "group_herd",
+    "type": "group",
+    "description": "Plains herd. Knowledge travels only through the blackboard, so unwitnessed kills never alert it.",
+    "roles": ["role_watcher", "role_grazer"],
+    "staleness": { "threat_level": 3.0, "threat_position": 6.0 },
+    "alertDecaySeconds": 6.0,
+    "minMembers": 2,
+    "maxMembers": 12,
+    "passports": ["herd_beast"]
+  },
+  {
+    "id": "collective_plains",
+    "type": "collective",
+    "description": "Spawns and maintains the plains herds within an AI budget.",
+    "budget": 24,
+    "sites": [
+      { "position": [-25, 0, -25], "group": "group_herd",
+        "members": [ { "entity": "entity_beast", "count": 6 } ], "spawnRadius": 4 },
+      { "position": [-25, 0, 25], "group": "group_herd",
+        "members": [ { "entity": "entity_beast", "count": 4 } ], "spawnRadius": 4 }
+    ]
+  },
+  {
+    "id": "fsmbrain_beast",
+    "type": "fsmbrain",
+    "description": "Role-aware critter: graze or stand watch by assignment, flee on personal or group alert.",
+    "initial": "graze",
+    "states": {
+      "graze": {
+        "steering": { "type": "Wander", "speed": 1.0, "radius": 3, "interval": 1.5 },
+        "transitions": [
+          { "to": "flee", "when": [ { "type": "Any", "conditions": [
+              { "type": "AgentCondition", "condition": "GROUP_ALERT" },
+              { "type": "AgentCondition", "condition": "THREAT_KNOWN" },
+              { "type": "AgentCondition", "condition": "CAN_SEE_ENEMY" } ] } ] },
+          { "to": "watch", "when": [ { "type": "BeliefEquals", "key": "role", "value": "role_watcher" } ] }
+        ]
+      },
+      "watch": {
+        "steering": { "type": "MoveTo", "target": "post", "speed": 1.4 },
+        "transitions": [
+          { "to": "flee", "when": [ { "type": "Any", "conditions": [
+              { "type": "AgentCondition", "condition": "GROUP_ALERT" },
+              { "type": "AgentCondition", "condition": "THREAT_KNOWN" },
+              { "type": "AgentCondition", "condition": "CAN_SEE_ENEMY" } ] } ] },
+          { "to": "graze", "when": [ { "type": "Not", "condition":
+              { "type": "BeliefEquals", "key": "role", "value": "role_watcher" } } ] }
+        ]
+      },
+      "flee": {
+        "steering": { "type": "FleeFrom", "speed": 3.8, "distance": 8 },
+        "transitions": [
+          { "to": "graze", "when": [
+            { "type": "Not", "condition": { "type": "Any", "conditions": [
+                { "type": "AgentCondition", "condition": "GROUP_ALERT" },
+                { "type": "AgentCondition", "condition": "THREAT_KNOWN" },
+                { "type": "AgentCondition", "condition": "CAN_SEE_ENEMY" } ] } } ] }
+        ]
+      }
+    }
+  }
+]

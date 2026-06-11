@@ -102,7 +102,8 @@ public sealed class DataFsmBrain : IBrain
 
                 var threat = agent.Beliefs.GetPosition("threat_position")
                              ?? agent.Beliefs.GetPosition("enemy_position")
-                             ?? agent.Beliefs.GetPosition("last_enemy_position");
+                             ?? agent.Beliefs.GetPosition("last_enemy_position")
+                             ?? agent.Beliefs.GetPosition("group_threat_position");
                 if (threat is not { } from)
                 {
                     break;
@@ -184,6 +185,8 @@ public static class MoveTargets
             "scent" => agent.Beliefs.GetPosition("scent_position"),
             "last_enemy" => agent.Beliefs.GetPosition("last_enemy_position") ?? ctx.Entity.Position,
             "spawn" => agent.Beliefs.GetPosition("spawn_position") ?? ctx.Entity.Position,
+            "post" => agent.Beliefs.GetPosition("post_position"),
+            "group_threat" => agent.Beliefs.GetPosition("group_threat_position"),
             _ => null,
         };
     }

@@ -5,8 +5,9 @@
     "description": "Deliberative guard: Half-Life schedules, sharp eyes, decent ears.",
     "entities": ["entity_guard"],
     "brain": "schedules",
-    "schedules": ["schedule_combat", "schedule_investigate", "schedule_search", "schedule_patrol"],
+    "schedules": ["schedule_scold", "schedule_combat", "schedule_investigate", "schedule_search", "schedule_patrol"],
     "conditions": "conditions_default",
+    "metaSensors": ["metasensor_poke"],
     "hostileTags": ["player"],
     "sensors": [
       { "kind": "visual", "range": 12, "fov": 140, "sensitivity": 0.9 },
@@ -35,6 +36,42 @@
     ],
     "walkSpeed": 1.6,
     "runSpeed": 3.2,
+    "alertDecaySeconds": 3.0
+  },
+  {
+    "id": "profile_forager",
+    "type": "agent",
+    "description": "HTN villager (M4d): the root compound's method order is the whole personality.",
+    "entities": ["entity_forager"],
+    "brain": "htn",
+    "rootTask": "htn_forage",
+    "htnInterrupt": ["THREAT_KNOWN", "CAN_SEE_ENEMY"],
+    "conditions": "conditions_default",
+    "hostileTags": ["wolf"],
+    "sensors": [
+      { "kind": "visual", "range": 8, "fov": 360, "sensitivity": 0.6 }
+    ],
+    "walkSpeed": 1.8,
+    "runSpeed": 3.6,
+    "alertDecaySeconds": 3.0,
+    "replanCooldown": 0.5
+  },
+  {
+    "id": "profile_beast",
+    "type": "agent",
+    "description": "Herd member (M4d): role and alerts arrive only via the group blackboard.",
+    "entities": ["entity_beast"],
+    "brain": "fsm",
+    "fsmBrain": "fsmbrain_beast",
+    "conditions": "conditions_default",
+    "passport": "herd_beast",
+    "hostileTags": ["player", "wolf"],
+    "sensors": [
+      { "kind": "visual", "range": 7, "fov": 360, "sensitivity": 0.6 },
+      { "kind": "auditory", "range": 9 }
+    ],
+    "walkSpeed": 1.4,
+    "runSpeed": 3.8,
     "alertDecaySeconds": 3.0
   },
   {

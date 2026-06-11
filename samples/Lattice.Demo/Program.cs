@@ -148,6 +148,11 @@ bool RunCommand(string[] parts)
                   utility <id>                activity scoreboard (chosen = highest eligible)
                   needs <id>                  need values (1 = satisfied)
                   dump <id>                   GOAP decision dump (state, goals, plan, candidates)
+                  trace <id>                  HTN decomposition trace (decompose/ok/fail tree)
+                  groups                      list group agents (alert, members)
+                  bb <groupId>                group blackboard with entry ages
+                  roles <groupId>             role assignments
+                  poke <id>                   annoy an NPC (meta-sensor demo)
                   noise <x> <y> <z> [loud]    emit a sound stimulus
                   move <id> <x> <y> <z>       teleport an entity (provoke sensors)
                   quit
@@ -269,6 +274,95 @@ bool RunCommand(string[] parts)
             }
 
             Console.WriteLine(ai.DumpGoap(entity) ?? "not a goap brain");
+            return true;
+        }
+
+        case "trace":
+        {
+            if (parts.Length < 2 || !session.World.TryGet(parts[1], out var entity) || ai.GetAgent(entity) is not { } agent)
+            {
+                Console.WriteLine("no agent on that entity");
+                return true;
+            }
+
+            if (agent.Brain is Lattice.Ai.Goap.HtnBrain htn)
+            {
+                Console.WriteLine(htn.DecompositionTrace.Count == 0
+                    ? "(no decomposition yet)"
+                    : string.Join(Environment.NewLine, htn.DecompositionTrace));
+            }
+            else
+            {
+                Console.WriteLine($"not an htn brain: {agent.Brain.Describe()}");
+            }
+
+            return true;
+        }
+
+        case "groups":
+        {
+            if (ai.Groups.Groups.Count == 0)
+            {
+                Console.WriteLine("no group agents");
+                return true;
+            }
+
+            foreach (var group in ai.Groups.Groups)
+            {
+                Console.WriteLine($"  {group.Id,-16} alert={group.Alert,-8} members={group.Members.Count}");
+                foreach (var line in group.Log.TakeLast(4))
+                {
+                    Console.WriteLine($"    {line}");
+                }
+            }
+
+            return true;
+        }
+
+        case "bb":
+        {
+            if (parts.Length < 2 || ai.Groups.GetGroup(parts[1]) is not { } group)
+            {
+                Console.WriteLine("usage: bb <groupId>   (see 'groups')");
+                return true;
+            }
+
+            foreach (var key in group.Board.Keys.OrderBy(k => k, StringComparer.Ordinal))
+            {
+                var (value, age) = group.Board.ReadWithAge(key);
+                Console.WriteLine($"  {key,-20} = {value}  (age {age:F1}s)");
+            }
+
+            return true;
+        }
+
+        case "roles":
+        {
+            if (parts.Length < 2 || ai.Groups.GetGroup(parts[1]) is not { } group)
+            {
+                Console.WriteLine("usage: roles <groupId>   (see 'groups')");
+                return true;
+            }
+
+            foreach (var pair in group.RoleOf.OrderBy(p => p.Key, StringComparer.Ordinal))
+            {
+                Console.WriteLine($"  {pair.Key,-10} {pair.Value}");
+            }
+
+            return true;
+        }
+
+        case "poke":
+        {
+            if (parts.Length < 2 || !session.World.TryGet(parts[1], out var entity))
+            {
+                Console.WriteLine("usage: poke <agentId>");
+                return true;
+            }
+
+            session.Events.Publish("Player.Poked", EventPayload.Of(("agentId", entity.InstanceId)));
+            session.Events.DispatchPending();
+            Console.WriteLine($"poked {entity.InstanceId}");
             return true;
         }
 

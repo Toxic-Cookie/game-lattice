@@ -24,6 +24,7 @@ public sealed class AiValidationTests : IDisposable
         var conditions = ConditionRegistry.CreateDefault();
         conditions.Register(new AgentConditionEvaluator());
         conditions.Register(new AgentMetaCondition());
+        conditions.Register(new BeliefEqualsCondition());
         conditions.Register(new UtilityAtLeastCondition());
         conditions.Register(new NeedBelowCondition());
         registry.Validate(report, formulas);
@@ -116,12 +117,12 @@ public sealed class AiValidationTests : IDisposable
     {
         _host.WriteContent("ai.json", """
             [ { "id": "conditions_default", "type": "conditions", "names": [] },
-              { "id": "profile_x", "type": "agent", "brain": "htn" } ]
+              { "id": "profile_x", "type": "agent", "brain": "psychic" } ]
             """);
 
         var report = Validate();
 
-        Assert.Contains(report.Errors, e => e.Contains("unknown brain tier 'htn'"));
+        Assert.Contains(report.Errors, e => e.Contains("unknown brain tier 'psychic'"));
     }
 
     [Fact]

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "action_run_home",
+    "type": "goapaction",
+    "effects": { "hid": true },
+    "cost": "1",
+    "moveTo": "spawn",
+    "speed": "run"
+  },
+  {
+    "id": "action_goto_berries",
+    "type": "goapaction",
+    "effects": { "at_berries": true },
+    "cost": "1",
+    "moveTo": [-15, 0, 12],
+    "speed": "walk"
+  },
+  {
+    "id": "action_gather",
+    "type": "goapaction",
+    "preconditions": { "at_berries": true },
+    "effects": { "gathered": true },
+    "cost": "1",
+    "animation": "gather"
+  },
+  {
+    "id": "action_carry_home",
+    "type": "goapaction",
+    "preconditions": { "gathered": true },
+    "effects": { "at_berries": false, "gathered": false, "deliveries_done": true },
+    "cost": "1",
+    "moveTo": "spawn",
+    "speed": "walk"
+  },
+  {
+    "id": "htn_forage",
+    "type": "htncompound",
+    "description": "Method order is the priority: hide if threatened, otherwise run the forage routine.",
+    "methods": [
+      { "name": "hide", "preconditions": { "THREAT_KNOWN": true }, "subtasks": ["action_run_home"] },
+      { "name": "forage_run", "subtasks": ["action_goto_berries", "action_gather", "action_carry_home"] }
+    ]
+  }
+]

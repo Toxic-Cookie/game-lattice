@@ -18,7 +18,7 @@ namespace Lattice.Ai;
 public sealed class AiContentValidator(ConditionRegistry conditions, TaskRegistry tasks, EffectRegistry? effects = null) : IContentValidator
 {
     private static readonly string[] ValidMetaStates = ["Idle", "Alert"];
-    private static readonly string[] ValidBrains = ["fsm", "schedules", "bt", "goap"];
+    private static readonly string[] ValidBrains = ["fsm", "schedules", "bt", "goap", "htn"];
 
     public void Validate(DefRegistry registry, ContentLoadReport report, IFormulaEngine formulas)
     {
@@ -111,6 +111,121 @@ public sealed class AiContentValidator(ConditionRegistry conditions, TaskRegistr
                 }
             }
         }
+
+        foreach (var compound in registry.All<HtnCompoundDef>())
+        {
+            if (compound.Methods.Count == 0)
+            {
+                report.Errors.Add($"HTN compound '{compound.Id}' declares no methods.");
+            }
+
+            foreach (var method in compound.Methods)
+            {
+                foreach (var subtask in method.Subtasks)
+                {
+                    if (registry.Contains(subtask)
+                        && !registry.TryGet<GoapActionDef>(subtask, out _)
+                        && !registry.TryGet<HtnCompoundDef>(subtask, out _))
+                    {
+                        report.Errors.Add($"HTN compound '{compound.Id}' subtask '{subtask}' is neither a GOAP action nor a compound.");
+                    }
+                }
+            }
+        }
+
+        foreach (var role in registry.All<RoleDef>())
+        {
+            if (role.Slots < 1)
+            {
+                report.Errors.Add($"Role '{role.Id}' must have at least 1 slot.");
+            }
+
+            if (role.RingRadius is <= 0)
+            {
+                report.Errors.Add($"Role '{role.Id}' ringRadius must be positive.");
+            }
+        }
+
+        foreach (var group in registry.All<GroupDef>())
+        {
+            if (group.Roles.Count == 0)
+            {
+                report.Errors.Add($"Group '{group.Id}' declares no roles.");
+            }
+
+            foreach (var roleId in group.Roles)
+            {
+                if (registry.Contains(roleId) && !registry.TryGet<RoleDef>(roleId, out _))
+                {
+                    report.Errors.Add($"Group '{group.Id}' role '{roleId}' is not a role def.");
+                }
+            }
+
+            if (group.MinMembers > group.MaxMembers)
+            {
+                report.Errors.Add($"Group '{group.Id}' minMembers exceeds maxMembers.");
+            }
+
+            foreach (var pair in group.Staleness ?? new Dictionary<string, double>())
+            {
+                if (pair.Value < 0)
+                {
+                    report.Errors.Add($"Group '{group.Id}' staleness for '{pair.Key}' is negative.");
+                }
+            }
+        }
+
+        foreach (var collective in registry.All<CollectiveDef>())
+        {
+            if (collective.Budget < 1)
+            {
+                report.Errors.Add($"Collective '{collective.Id}' budget must be positive.");
+            }
+
+            foreach (var site in collective.Sites)
+            {
+                if (site.Position.Length != 3)
+                {
+                    report.Errors.Add($"Collective '{collective.Id}' has a site position that is not [x, y, z].");
+                }
+
+                if (registry.Contains(site.Group) && !registry.TryGet<GroupDef>(site.Group, out _))
+                {
+                    report.Errors.Add($"Collective '{collective.Id}' site group '{site.Group}' is not a group def.");
+                }
+
+                foreach (var member in site.Members)
+                {
+                    if (member.Count < 1)
+                    {
+                        report.Errors.Add($"Collective '{collective.Id}' member '{member.Entity}' count must be positive.");
+                    }
+
+                    if (registry.Contains(member.Entity) && !registry.TryGet<EntityTemplateDef>(member.Entity, out _))
+                    {
+                        report.Errors.Add($"Collective '{collective.Id}' member '{member.Entity}' is not an entity template.");
+                    }
+                }
+            }
+        }
+
+        foreach (var sensor in registry.All<MetaSensorDef>())
+        {
+            if (sensor.Watch.Length == 0)
+            {
+                report.Errors.Add($"Meta sensor '{sensor.Id}' has no 'watch' topic.");
+            }
+
+            if (sensor.SetCondition.Length == 0)
+            {
+                report.Errors.Add($"Meta sensor '{sensor.Id}' has no 'setCondition'.");
+            }
+
+            if (sensor.Threshold < 1 || sensor.Window <= 0)
+            {
+                report.Errors.Add($"Meta sensor '{sensor.Id}' needs threshold >= 1 and window > 0.");
+            }
+        }
     }
 
     private void ValidateProfile(AgentProfileDef profile, DefRegistry registry, ContentLoadReport report, IFormulaEngine formulas)
@@ -138,6 +253,27 @@ public sealed class AiContentValidator(ConditionRegistry conditions, TaskRegistr
         if (profile.Brain == "goap" && (profile.Goals is not { Count: > 0 }))
         {
             report.Errors.Add($"Agent profile '{profile.Id}' uses brain 'goap' but declares no 'goals'.");
+        }
+
+        if (profile.Brain == "htn" && profile.RootTask is null)
+        {
+            report.Errors.Add($"Agent profile '{profile.Id}' uses brain 'htn' but declares no 'rootTask'.");
+        }
+
+        if (profile.RootTask is { } rootTask
+            && registry.Contains(rootTask)
+            && !registry.TryGet<HtnCompoundDef>(rootTask, out _)
+            && !registry.TryGet<GoapActionDef>(rootTask, out _))
+        {
+            report.Errors.Add($"Agent profile '{profile.Id}' rootTask '{rootTask}' is neither a GOAP action nor an HTN compound.");
+        }
+
+        foreach (var sensorId in profile.MetaSensors ?? [])
+        {
+            if (registry.Contains(sensorId) && !registry.TryGet<MetaSensorDef>(sensorId, out _))
+            {
+                report.Errors.Add($"Agent profile '{profile.Id}' meta sensor '{sensorId}' is not a metasensor def.");
+            }
         }
 
         foreach (var goalId in profile.Goals ?? [])
@@ -239,6 +375,15 @@ public sealed class AiContentValidator(ConditionRegistry conditions, TaskRegistr
                     report.Errors.Add(
                         $"GOAP goal '{goal.Id}' (used by '{profile.Id}') replan condition '{condition}' missing from catalog '{catalog.Id}'.");
                 }
+            }
+        }
+
+        foreach (var condition in profile.HtnInterrupt ?? [])
+        {
+            if (!names.Contains(condition))
+            {
+                report.Errors.Add(
+                    $"Agent profile '{profile.Id}' htnInterrupt condition '{condition}' missing from catalog '{catalog.Id}'.");
             }
         }
     }

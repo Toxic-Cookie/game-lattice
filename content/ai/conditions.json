@@ -8,6 +8,9 @@
     "HEAR_SOUND",
     "SMELL_DETECTED",
     "CONTACT",
-    "DAMAGED"
+    "DAMAGED",
+    "GROUP_ALERT",
+    "ROLE_WATCHER",
+    "ANNOYED"
   ]
 }

@@ -19,12 +19,9 @@ namespace Lattice.Ai.Goap;
 /// </summary>
 public sealed class GoapBrain : IBrain
 {
-    private readonly ExecutionLayer _exec = new();
+    private readonly PlanRunner _runner = new();
     private GoapGoalDef? _goal;
     private double _goalPriority;
-    private GoapPlan? _plan;
-    private int _stepIndex;
-    private bool _stepActive;
     private double _nextPlanAt;
     private uint _replanMask;
 
@@ -37,14 +34,14 @@ public sealed class GoapBrain : IBrain
 
     public string? CurrentGoalId => _goal?.Id;
 
-    public GoapPlan? CurrentPlan => _plan;
+    public GoapPlan? CurrentPlan => _runner.Plan;
 
     public string Describe()
         => _goal is null
             ? "goap (no relevant goal)"
-            : $"goap goal={_goal.Id} " + (_plan is null
+            : $"goap goal={_goal.Id} " + (_runner.Plan is not { } plan
                 ? "(no plan)"
-                : $"plan {_stepIndex + 1}/{_plan.Steps.Count} [{string.Join(" -> ", _plan.Steps.Select(s => s.Id))}]");
+                : $"plan {_runner.StepIndex + 1}/{plan.Steps.Count} [{string.Join(" -> ", plan.Steps.Select(s => s.Id))}]");
 
     public void Tick(AgentContext ctx, float dt)
     {
@@ -65,20 +62,20 @@ public sealed class GoapBrain : IBrain
         if (PredicateState.MatchesAll(state, desired))
         {
             // goal satisfied — idle until priorities shift (the feedback loop is the reactivity)
-            AbandonPlan(ctx, reason: null);
+            _runner.Abandon(ctx, reason: null);
             return;
         }
 
         // mechanism 2: relevance-filtered replan triggers, gated by
         // non-interruptible animation (ch05 §5.6) and the replan cooldown
-        if (_plan is not null && agent.Conditions.HasAnyOf(_replanMask) && !committed)
+        if (_runner.HasPlan && agent.Conditions.HasAnyOf(_replanMask) && !committed)
         {
             var triggered = agent.Conditions.SetNames(agent.Catalog)
                 .Where(name => (agent.Catalog.MaskOf([name]) & _replanMask) != 0);
-            AbandonPlan(ctx, $"replan required by {string.Join("|", triggered)}");
+            _runner.Abandon(ctx, $"replan required by {string.Join("|", triggered)}");
         }
 
-        if (_plan is null)
+        if (!_runner.HasPlan)
         {
             if (ctx.Session.SimTimeSeconds < _nextPlanAt)
             {
@@ -86,13 +83,16 @@ public sealed class GoapBrain : IBrain
             }
 
             BuildPlan(ctx, state, desired);
-            if (_plan is null)
+            if (!_runner.HasPlan)
             {
                 return;
             }
         }
 
-        ExecuteStep(ctx, state, dt);
+        if (_runner.Tick(ctx, state, dt) == PlanRunStatus.Completed)
+        {
+            ctx.Agent.AddTrace(ctx.Session.Tick, $"plan for {_goal.Id} complete");
+        }
     }
 
     /// <summary>Conditions (as bools) layered over scalar beliefs — the agent's plannable view of the world.</summary>
@@ -160,8 +160,8 @@ public sealed class GoapBrain : IBrain
         if (switchGoal)
         {
             ctx.Agent.AddTrace(ctx.Session.Tick, $"goal {_goal?.Id ?? "(none)"} -> {best!.Id} (priority {bestPriority:F1})");
-            AbandonPlan(ctx, reason: null);
-            _exec.ReleaseReservation(ctx);
+            _runner.Abandon(ctx, reason: null);
+            _runner.ReleaseReservation(ctx);
             _goal = best;
             _goalPriority = bestPriority;
             _replanMask = ctx.Agent.Catalog.MaskOf(best.ReplanRequired);
@@ -170,8 +170,8 @@ public sealed class GoapBrain : IBrain
         else if (dropGoal)
         {
             ctx.Agent.AddTrace(ctx.Session.Tick, $"goal {_goal!.Id} no longer relevant");
-            AbandonPlan(ctx, reason: null);
-            _exec.ReleaseReservation(ctx);
+            _runner.Abandon(ctx, reason: null);
+            _runner.ReleaseReservation(ctx);
             _goal = null;
         }
     }
@@ -196,9 +196,7 @@ public sealed class GoapBrain : IBrain
             return;
         }
 
-        _plan = plan;
-        _stepIndex = 0;
-        _stepActive = false;
+        _runner.Set(plan);
         ctx.Agent.AddTrace(ctx.Session.Tick,
             $"plan {_goal!.Id}: {string.Join(" -> ", plan.Steps.Select(s => s.Id))} (cost {plan.TotalCost:F1}, {plan.NodesExplored} nodes)");
     }
@@ -236,20 +234,10 @@ public sealed class GoapBrain : IBrain
 
         foreach (var actionId in ctx.Agent.Profile.Actions ?? [])
         {
-            if (!ctx.Session.Defs.TryGet<GoapActionDef>(actionId, out var action))
+            if (ctx.Session.Defs.TryGet<GoapActionDef>(actionId, out var action))
             {
-                continue;
+                candidates.Add(MakeCandidate(ctx, action, scope, overrides));
             }
-
-            var formula = overrides?.TryGetValue(actionId, out var costOverride) == true ? costOverride : action.Cost;
-            candidates.Add(new GoapCandidate
-            {
-                Id = action.Id,
-                Cost = EvaluateCost(ctx, formula, scope),
-                Preconditions = PredicateState.ToPlain(action.Preconditions),
-                Effects = PredicateState.ToPlain(action.Effects),
-                Action = action,
-            });
         }
 
         // smart objects in sensor range surface as actions (plan/04 §9);
@@ -280,86 +268,22 @@ public sealed class GoapBrain : IBrain
         return candidates;
     }
 
-    private void ExecuteStep(AgentContext ctx, Dictionary<string, object> state, float dt)
+    /// <summary>A costed candidate from an action def, honoring a cost-profile override (shared with the HTN brain).</summary>
+    public static GoapCandidate MakeCandidate(
+        AgentContext ctx, GoapActionDef action, IFormulaContext scope, IReadOnlyDictionary<string, string>? overrides)
     {
-        var step = _plan!.Steps[_stepIndex];
-
-        if (!_stepActive)
+        var formula = overrides is not null && overrides.TryGetValue(action.Id, out var costOverride) ? costOverride : action.Cost;
+        return new GoapCandidate
         {
-            // mechanism 3: precondition re-check at activation
-            if (!PredicateState.MatchesAll(state, step.Preconditions))
-            {
-                AbandonPlan(ctx, $"{step.Id} preconditions no longer hold");
-                return;
-            }
-
-            if (!_exec.Begin(ctx, step))
-            {
-                AbandonPlan(ctx, $"{step.Id} failed to activate");
-                return;
-            }
-
-            _stepActive = true;
-        }
-
-        switch (_exec.Tick(ctx, dt))
-        {
-            case ExecutionStatus.Complete:
-                CompleteStep(ctx, step);
-                break;
-
-            case ExecutionStatus.Failed:
-                AbandonPlan(ctx, $"{step.Id} failed");
-                break;
-        }
+            Id = action.Id,
+            Cost = EvaluateCost(ctx, formula, scope),
+            Preconditions = PredicateState.ToPlain(action.Preconditions),
+            Effects = PredicateState.ToPlain(action.Effects),
+            Action = action,
+        };
     }
 
-    private void CompleteStep(AgentContext ctx, GoapCandidate step)
-    {
-        // the action's symbolic effects become beliefs; sensor-owned keys
-        // are overwritten by the next perception update anyway
-        foreach (var effect in step.Effects)
-        {
-            ctx.Agent.Beliefs.Set(effect.Key, effect.Value);
-        }
-
-        if (step.Action?.RunEffects is { Count: > 0 } effects)
-        {
-            var enemy = ctx.Agent.Beliefs.GetString("enemy_id") is { } enemyId
-                        && ctx.Session.World.TryGet(enemyId, out var entity)
-                ? entity
-                : ctx.Entity;
-            ctx.Ai.Rpg.RunEffects(effects, source: ctx.Entity, target: enemy);
-        }
-
-        ctx.Agent.AddTrace(ctx.Session.Tick, $"action {step.Id} done");
-        _stepIndex++;
-        _stepActive = false;
-        if (_stepIndex >= _plan!.Steps.Count)
-        {
-            ctx.Agent.AddTrace(ctx.Session.Tick, $"plan for {_goal!.Id} complete");
-            _plan = null;
-        }
-    }
-
-    private void AbandonPlan(AgentContext ctx, string? reason)
-    {
-        if (reason is not null)
-        {
-            ctx.Agent.AddTrace(ctx.Session.Tick, reason);
-        }
-
-        if (_stepActive)
-        {
-            _exec.Abort(ctx);
-        }
-
-        _plan = null;
-        _stepIndex = 0;
-        _stepActive = false;
-    }
-
-    private static IFormulaContext Scope(AgentContext ctx)
+    internal static IFormulaContext Scope(AgentContext ctx)
     {
         var conditionContext = new ConditionContext { Session = ctx.Session, Rpg = ctx.Ai.Rpg, Subject = ctx.Entity };
         return UtilityScoring.ScopeFor(ctx, conditionContext);
@@ -396,9 +320,9 @@ public sealed class GoapBrain : IBrain
             sb.AppendLine($" {marker} {goalId,-24} priority {priority:F1}");
         }
 
-        sb.AppendLine(_plan is null
+        sb.AppendLine(_runner.Plan is not { } plan
             ? "plan: (none)"
-            : $"plan: {string.Join(" -> ", _plan.Steps.Select(s => s.Id))} (cost {_plan.TotalCost:F1}, step {_stepIndex + 1}/{_plan.Steps.Count}, {_plan.NodesExplored} nodes)");
+            : $"plan: {string.Join(" -> ", plan.Steps.Select(s => s.Id))} (cost {plan.TotalCost:F1}, step {_runner.StepIndex + 1}/{plan.Steps.Count}, {plan.NodesExplored} nodes)");
 
         var candidates = _lastCandidates.Count > 0 ? _lastCandidates : BuildCandidates(ctx);
         sb.AppendLine("candidates:");
