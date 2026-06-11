@@ -8,6 +8,9 @@ on:
 jobs:
   build-test-validate:
     runs-on: ubuntu-latest
+    env:
+      # opt in to the June 16, 2026 default early so nothing breaks on the flip
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v5
 
