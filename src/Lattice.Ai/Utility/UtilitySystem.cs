@@ -10,7 +10,11 @@ using TaskStatus = Lattice.Ai.Tasks.TaskStatus;
 
 namespace Lattice.Ai.Utility;
 
-/// <summary>Resolves an agent's need keys (and numeric/bool beliefs) as formula identifiers.</summary>
+/// <summary>
+/// Resolves an agent's need keys, catalog condition names (1/0), and
+/// numeric/bool beliefs as formula identifiers — the scope for utility
+/// factors, GOAP goal priorities, and action costs.
+/// </summary>
 public sealed class AgentFormulaContext(AgentComponent agent, GameSession session) : IFormulaContext
 {
     public bool TryResolve(string identifier, out double value)
@@ -22,6 +26,12 @@ public sealed class AgentFormulaContext(AgentComponent agent, GameSession sessio
                 value = pair.Value;
                 return true;
             }
+        }
+
+        if (agent.Catalog.TryGetBit(identifier, out _))
+        {
+            value = agent.Conditions.IsSet(agent.Catalog, identifier) ? 1 : 0;
+            return true;
         }
 
         switch (agent.Beliefs.Get(identifier))

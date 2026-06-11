@@ -143,23 +143,27 @@ public sealed class DataFsmBrain : IBrain
 public static class MoveTargets
 {
     /// <summary>
-    /// Resolve a target spec: "patrol_point", "enemy", "threat", "sound",
-    /// "scent", "last_enemy" (falls back to self), "spawn", or [x,y,z].
+    /// Resolve a target spec found at <paramref name="property"/>:
+    /// "patrol_point", "enemy", "threat", "sound", "scent", "last_enemy"
+    /// (falls back to self), "spawn", or [x,y,z].
     /// </summary>
     public static Vector3? Resolve(AgentContext ctx, JsonElement args, string property)
-    {
-        if (args.ValueKind == JsonValueKind.Object && args.TryGetProperty(property, out var prop))
-        {
-            if (prop.ValueKind == JsonValueKind.Array && prop.GetArrayLength() == 3)
-            {
-                var p = prop.EnumerateArray().Select(e => (float)e.GetDouble()).ToArray();
-                return new Vector3(p[0], p[1], p[2]);
-            }
+        => args.ValueKind == JsonValueKind.Object && args.TryGetProperty(property, out var prop)
+            ? ResolveSpec(ctx, prop)
+            : null;
 
-            if (prop.ValueKind == JsonValueKind.String)
-            {
-                return ResolveSymbol(ctx, prop.GetString()!);
-            }
+    /// <summary>Resolve a bare target spec element (symbol string or [x,y,z]).</summary>
+    public static Vector3? ResolveSpec(AgentContext ctx, JsonElement spec)
+    {
+        if (spec.ValueKind == JsonValueKind.Array && spec.GetArrayLength() == 3)
+        {
+            var p = spec.EnumerateArray().Select(e => (float)e.GetDouble()).ToArray();
+            return new Vector3(p[0], p[1], p[2]);
+        }
+
+        if (spec.ValueKind == JsonValueKind.String)
+        {
+            return ResolveSymbol(ctx, spec.GetString()!);
         }
 
         return null;

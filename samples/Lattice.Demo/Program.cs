@@ -147,6 +147,7 @@ bool RunCommand(string[] parts)
                   bt <id>                     live behavior tree with last-tick status
                   utility <id>                activity scoreboard (chosen = highest eligible)
                   needs <id>                  need values (1 = satisfied)
+                  dump <id>                   GOAP decision dump (state, goals, plan, candidates)
                   noise <x> <y> <z> [loud]    emit a sound stimulus
                   move <id> <x> <y> <z>       teleport an entity (provoke sensors)
                   quit
@@ -256,6 +257,18 @@ bool RunCommand(string[] parts)
                 Console.WriteLine($"  {pair.Key,-16} {pair.Value:F2}  urgency {1 - pair.Value:F2}");
             }
 
+            return true;
+        }
+
+        case "dump":
+        {
+            if (parts.Length < 2 || !session.World.TryGet(parts[1], out var entity))
+            {
+                Console.WriteLine("usage: dump <agentId>");
+                return true;
+            }
+
+            Console.WriteLine(ai.DumpGoap(entity) ?? "not a goap brain");
             return true;
         }
 

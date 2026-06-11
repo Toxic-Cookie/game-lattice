@@ -1,0 +1,25 @@
+[
+  {
+    "id": "entity_soldier",
+    "type": "entity",
+    "description": "GOAP soldier (profile_soldier): plans attack-position use, fire, reload, retreat.",
+    "name": "Soldier",
+    "tags": ["soldier", "npc"],
+    "stats": { "stat_con": 6, "stat_str": 7 }
+  },
+  {
+    "id": "entity_dummy",
+    "type": "entity",
+    "description": "Training dummy the skirmish soldiers treat as an intruder.",
+    "name": "Training Dummy",
+    "tags": ["intruder"],
+    "stats": { "stat_con": 2 }
+  },
+  {
+    "id": "entity_attack_node",
+    "type": "entity",
+    "description": "A tactical position; surfaces to GOAP planners via so_attack_node.",
+    "name": "Attack Position",
+    "tags": ["node"]
+  }
+]

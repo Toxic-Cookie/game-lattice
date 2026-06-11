@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Text.Json;
 using Lattice.Ai.Agents;
 using Lattice.Ai.Defs;
+using Lattice.Ai.Goap;
 using Lattice.Ai.Perception;
 using Lattice.Ai.Tasks;
 using Lattice.Ai.Utility;
@@ -48,7 +49,7 @@ public sealed class AiRuntime
         session.Events.Subscribe("Stimulus.Scent", e => OnStimulusEvent(e, StimulusType.Scent));
         session.Events.Subscribe("Entity.Damaged", OnEntityDamaged);
         session.RegisterSystem(new AgentSystem(this));
-        session.RegisterContentValidator(new AiContentValidator(rpg.Conditions, Tasks));
+        session.RegisterContentValidator(new AiContentValidator(rpg.Conditions, Tasks, rpg.Effects));
     }
 
     public GameSession Session { get; }
@@ -112,6 +113,12 @@ public sealed class AiRuntime
             ? UtilityScoring.ScoreActivities(new AgentContext { Ai = this, Entity = entity, Agent = agent })
             : [];
 
+    /// <summary>The GOAP decision dump for an agent (ch07 §7.4), or null for non-GOAP brains.</summary>
+    public string? DumpGoap(Entity entity)
+        => GetAgent(entity) is { Brain: GoapBrain brain } agent
+            ? brain.Dump(new AgentContext { Ai = this, Entity = entity, Agent = agent })
+            : null;
+
     internal ConditionCatalog GetCatalog(string catalogId)
         => _catalogs.TryGetValue(catalogId, out var catalog) ? catalog : ConditionCatalog.Empty;
 
@@ -151,11 +158,20 @@ public sealed class AiRuntime
             "schedules" => new ScheduleBrain(),
             "bt" when profile.BehaviorTree is not null && Session.Defs.TryGet<BehaviorTreeDef>(profile.BehaviorTree, out var btDef) =>
                 new BehaviorTreeBrain(btDef, Session.Defs),
+            "goap" => new GoapBrain(),
             _ => new NullBrain(profile.Brain),
         };
 
         var agent = new AgentComponent(profile, catalog, brain);
         agent.Beliefs.Set("spawn_position", entity.Position);
+        foreach (var belief in profile.InitialBeliefs ?? new Dictionary<string, JsonElement>())
+        {
+            if (JsonValueHelper.TryToPlain(belief.Value, out var value))
+            {
+                agent.Beliefs.Set(belief.Key, value);
+            }
+        }
+
         foreach (var needId in profile.Needs ?? [])
         {
             if (Session.Defs.TryGet<NeedDef>(needId, out var need))
@@ -395,6 +411,9 @@ public static class LatticeAi
         types.Register<UtilityEvaluatorDef>("utility");
         types.Register<NeedDef>("need");
         types.Register<ActivityDef>("activity");
+        types.Register<GoapActionDef>("goapaction");
+        types.Register<GoapGoalDef>("goapgoal");
+        types.Register<CostProfileDef>("costprofile");
         return types;
     }
 

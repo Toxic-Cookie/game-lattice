@@ -38,6 +38,28 @@
     "alertDecaySeconds": 3.0
   },
   {
+    "id": "profile_soldier",
+    "type": "agent",
+    "description": "GOAP soldier (M4c): goals + action subset + cost profile = the whole personality.",
+    "entities": ["entity_soldier"],
+    "brain": "goap",
+    "conditions": "conditions_default",
+    "goals": ["goal_eliminate_intruder", "goal_survive"],
+    "actions": ["action_open_fire", "action_reload", "action_retreat"],
+    "costProfile": "costprofile_brave",
+    "initialBeliefs": { "weapon_loaded": true },
+    "hostileTags": ["intruder"],
+    "sensors": [
+      { "kind": "visual", "range": 14, "fov": 360, "sensitivity": 0.9 },
+      { "kind": "auditory", "range": 12 }
+    ],
+    "walkSpeed": 2.2,
+    "runSpeed": 4.5,
+    "alertDecaySeconds": 4.0,
+    "replanCooldown": 0.5,
+    "goalHysteresis": 5.0
+  },
+  {
     "id": "profile_rat",
     "type": "agent",
     "description": "Rat-tier critter: two-state FSM, dim eyes, zero planner overhead (the F.E.A.R. lesson).",

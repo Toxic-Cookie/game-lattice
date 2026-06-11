@@ -79,6 +79,20 @@ public sealed class InteractionService
         return false;
     }
 
+    /// <summary>Read-only reservation availability check (planners must not reserve while merely considering).</summary>
+    public bool CanReserve(Entity target, string actorId)
+    {
+        var def = GetBinding(target);
+        if (def is null)
+        {
+            return false;
+        }
+
+        return !_reservations.TryGetValue(target.InstanceId, out var users)
+               || users.Contains(actorId)
+               || users.Count < def.MaxUsers;
+    }
+
     /// <summary>Reserve a slot on an object instance (AI exclusion, M4). Idempotent per actor.</summary>
     public bool TryReserve(Entity target, string actorId)
     {

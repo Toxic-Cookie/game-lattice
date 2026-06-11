@@ -6,6 +6,18 @@
     "tags": ["object"]
   },
   {
+    "id": "so_attack_node",
+    "type": "smartobject",
+    "entity": "entity_attack_node",
+    "name": "Attack Position",
+    "description": "GOAP-plannable tactical node; maxUsers 1 makes reservation the flanking coordinator.",
+    "maxUsers": 1,
+    "interactions": [],
+    "approachOffset": [0, 0, 0],
+    "animation": "aim",
+    "aiEffects": { "in_attack_position": true }
+  },
+  {
     "id": "so_chest",
     "type": "smartobject",
     "entity": "entity_chest",

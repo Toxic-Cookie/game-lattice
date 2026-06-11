@@ -27,7 +27,8 @@ public sealed class AiValidationTests : IDisposable
         conditions.Register(new UtilityAtLeastCondition());
         conditions.Register(new NeedBelowCondition());
         registry.Validate(report, formulas);
-        new AiContentValidator(conditions, TaskRegistry.CreateDefault()).Validate(registry, report, formulas);
+        new AiContentValidator(conditions, TaskRegistry.CreateDefault(), Lattice.Rpg.Effects.BuiltinEffects.CreateDefault())
+            .Validate(registry, report, formulas);
         return report;
     }
 
@@ -115,12 +116,12 @@ public sealed class AiValidationTests : IDisposable
     {
         _host.WriteContent("ai.json", """
             [ { "id": "conditions_default", "type": "conditions", "names": [] },
-              { "id": "profile_x", "type": "agent", "brain": "goap" } ]
+              { "id": "profile_x", "type": "agent", "brain": "htn" } ]
             """);
 
         var report = Validate();
 
-        Assert.Contains(report.Errors, e => e.Contains("unknown brain tier 'goap'"));
+        Assert.Contains(report.Errors, e => e.Contains("unknown brain tier 'htn'"));
     }
 
     [Fact]
@@ -248,6 +249,73 @@ public sealed class AiValidationTests : IDisposable
         var report = Validate();
 
         Assert.Contains(report.Errors, e => e.Contains("AgentMeta requires 'is'"));
+    }
+
+    [Fact]
+    public void GoapProfileWithoutGoals_IsError()
+    {
+        _host.WriteContent("ai.json", """
+            [ { "id": "conditions_default", "type": "conditions", "names": [] },
+              { "id": "profile_x", "type": "agent", "brain": "goap" } ]
+            """);
+
+        var report = Validate();
+
+        Assert.Contains(report.Errors, e => e.Contains("declares no 'goals'"));
+    }
+
+    [Fact]
+    public void GoapActionWithoutEffects_IsError()
+    {
+        _host.WriteContent("goap.json", """
+            { "id": "action_x", "type": "goapaction", "cost": "1" }
+            """);
+
+        var report = Validate();
+
+        Assert.Contains(report.Errors, e => e.Contains("has no effects"));
+    }
+
+    [Fact]
+    public void GoapGoalWithBadPriorityFormula_IsError()
+    {
+        _host.WriteContent("goap.json", """
+            { "id": "goal_x", "type": "goapgoal", "desired": { "ok": true }, "priority": "1 +" }
+            """);
+
+        var report = Validate();
+
+        Assert.Contains(report.Errors, e => e.Contains("goal_x") && e.Contains("priority formula"));
+    }
+
+    [Fact]
+    public void GoapReplanConditionMissingFromCatalog_IsError()
+    {
+        _host.WriteContent("ai.json", """
+            [ { "id": "conditions_default", "type": "conditions", "names": ["CAN_SEE_ENEMY"] },
+              { "id": "entity_x", "type": "entity" },
+              { "id": "goal_x", "type": "goapgoal", "desired": { "ok": true }, "priority": "1",
+                "replanRequired": ["NOT_A_CONDITION"] },
+              { "id": "profile_x", "type": "agent", "entities": ["entity_x"],
+                "brain": "goap", "goals": ["goal_x"] } ]
+            """);
+
+        var report = Validate();
+
+        Assert.Contains(report.Errors, e => e.Contains("NOT_A_CONDITION") && e.Contains("missing from catalog"));
+    }
+
+    [Fact]
+    public void GoapActionRunEffects_AreValidated()
+    {
+        _host.WriteContent("goap.json", """
+            { "id": "action_x", "type": "goapaction", "effects": { "done": true },
+              "runEffects": [ { "type": "Explode" } ] }
+            """);
+
+        var report = Validate();
+
+        Assert.Contains(report.Errors, e => e.Contains("unknown effect type 'Explode'"));
     }
 
     [Fact]

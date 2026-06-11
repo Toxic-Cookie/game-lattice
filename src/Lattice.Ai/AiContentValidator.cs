@@ -4,6 +4,7 @@ using Lattice.Ai.Tasks;
 using Lattice.Core.Content;
 using Lattice.Core.Formulas;
 using Lattice.Rpg.Conditions;
+using Lattice.Rpg.Effects;
 
 namespace Lattice.Ai;
 
@@ -11,12 +12,13 @@ namespace Lattice.Ai;
 /// AI validation rules (plan/04): catalog budgets, profile structure,
 /// schedule condition names checked against each using profile's catalog,
 /// task payloads, FSM state graph integrity, behavior-tree node graphs
-/// (including subtree cycles), and the utility vocabulary.
+/// (including subtree cycles), the utility vocabulary, and the GOAP
+/// action/goal/cost-profile vocabulary.
 /// </summary>
-public sealed class AiContentValidator(ConditionRegistry conditions, TaskRegistry tasks) : IContentValidator
+public sealed class AiContentValidator(ConditionRegistry conditions, TaskRegistry tasks, EffectRegistry? effects = null) : IContentValidator
 {
     private static readonly string[] ValidMetaStates = ["Idle", "Alert"];
-    private static readonly string[] ValidBrains = ["fsm", "schedules", "bt"];
+    private static readonly string[] ValidBrains = ["fsm", "schedules", "bt", "goap"];
 
     public void Validate(DefRegistry registry, ContentLoadReport report, IFormulaEngine formulas)
     {
@@ -75,6 +77,40 @@ public sealed class AiContentValidator(ConditionRegistry conditions, TaskRegistr
         {
             ValidateActivity(activity, registry, report, formulas);
         }
+
+        foreach (var action in registry.All<GoapActionDef>())
+        {
+            ValidateGoapAction(action, registry, report, formulas);
+        }
+
+        foreach (var goal in registry.All<GoapGoalDef>())
+        {
+            if (goal.Desired.Count == 0)
+            {
+                report.Errors.Add($"GOAP goal '{goal.Id}' has an empty 'desired' state.");
+            }
+
+            if (!formulas.TryParse(goal.Priority, out var error))
+            {
+                report.Errors.Add($"GOAP goal '{goal.Id}' priority formula: {error}");
+            }
+        }
+
+        foreach (var costProfile in registry.All<CostProfileDef>())
+        {
+            foreach (var pair in costProfile.Overrides)
+            {
+                if (registry.Contains(pair.Key) && !registry.TryGet<GoapActionDef>(pair.Key, out _))
+                {
+                    report.Errors.Add($"Cost profile '{costProfile.Id}' overrides '{pair.Key}', which is not a GOAP action.");
+                }
+
+                if (!formulas.TryParse(pair.Value, out var error))
+                {
+                    report.Errors.Add($"Cost profile '{costProfile.Id}' override for '{pair.Key}': {error}");
+                }
+            }
+        }
     }
 
     private void ValidateProfile(AgentProfileDef profile, DefRegistry registry, ContentLoadReport report, IFormulaEngine formulas)
@@ -97,6 +133,27 @@ public sealed class AiContentValidator(ConditionRegistry conditions, TaskRegistr
         if (profile.Brain == "bt" && profile.BehaviorTree is null)
         {
             report.Errors.Add($"Agent profile '{profile.Id}' uses brain 'bt' but declares no 'behaviorTree'.");
+        }
+
+        if (profile.Brain == "goap" && (profile.Goals is not { Count: > 0 }))
+        {
+            report.Errors.Add($"Agent profile '{profile.Id}' uses brain 'goap' but declares no 'goals'.");
+        }
+
+        foreach (var goalId in profile.Goals ?? [])
+        {
+            if (registry.Contains(goalId) && !registry.TryGet<GoapGoalDef>(goalId, out _))
+            {
+                report.Errors.Add($"Agent profile '{profile.Id}' goal '{goalId}' is not a GOAP goal def.");
+            }
+        }
+
+        foreach (var actionId in profile.Actions ?? [])
+        {
+            if (registry.Contains(actionId) && !registry.TryGet<GoapActionDef>(actionId, out _))
+            {
+                report.Errors.Add($"Agent profile '{profile.Id}' action '{actionId}' is not a GOAP action def.");
+            }
         }
 
         if (profile.ThinkInterval < 0)
@@ -167,6 +224,50 @@ public sealed class AiContentValidator(ConditionRegistry conditions, TaskRegistr
                 }
             }
         }
+
+        foreach (var goalId in profile.Goals ?? [])
+        {
+            if (!registry.TryGet<GoapGoalDef>(goalId, out var goal))
+            {
+                continue;
+            }
+
+            foreach (var condition in goal.ReplanRequired ?? [])
+            {
+                if (!names.Contains(condition))
+                {
+                    report.Errors.Add(
+                        $"GOAP goal '{goal.Id}' (used by '{profile.Id}') replan condition '{condition}' missing from catalog '{catalog.Id}'.");
+                }
+            }
+        }
+    }
+
+    private void ValidateGoapAction(GoapActionDef action, DefRegistry registry, ContentLoadReport report, IFormulaEngine formulas)
+    {
+        if (action.Effects.Count == 0)
+        {
+            report.Errors.Add($"GOAP action '{action.Id}' has no effects — the planner can never use it.");
+        }
+
+        if (!formulas.TryParse(action.Cost, out var error))
+        {
+            report.Errors.Add($"GOAP action '{action.Id}' cost formula: {error}");
+        }
+
+        if (action.MoveTo is { } moveTo
+            && moveTo.ValueKind != JsonValueKind.String
+            && !(moveTo.ValueKind == JsonValueKind.Array && moveTo.GetArrayLength() == 3))
+        {
+            report.Errors.Add($"GOAP action '{action.Id}' moveTo must be a symbol string or [x, y, z].");
+        }
+
+        if (action.Speed is { } speed && speed is not ("walk" or "run"))
+        {
+            report.Errors.Add($"GOAP action '{action.Id}' speed must be \"walk\" or \"run\".");
+        }
+
+        effects?.ValidateList(action.RunEffects, $"{action.Id}.runEffects", registry, formulas, report);
     }
 
     private void ValidateFsmBrain(FsmBrainDef brain, DefRegistry registry, ContentLoadReport report, IFormulaEngine formulas)

@@ -25,7 +25,7 @@ public sealed class AgentProfileDef : Def
     /// <summary>Entity template IDs this profile attaches to.</summary>
     public List<string> Entities { get; set; } = [];
 
-    /// <summary>Brain tier: "fsm" or "schedules" (M4a), "bt" (M4b).</summary>
+    /// <summary>Brain tier: "fsm" or "schedules" (M4a), "bt" (M4b), "goap" (M4c).</summary>
     public string Brain { get; set; } = "fsm";
 
     /// <summary>FSM brain def (brain = "fsm").</summary>
@@ -45,6 +45,24 @@ public sealed class AgentProfileDef : Def
 
     /// <summary>Activity def IDs the PerformActivity task chooses among.</summary>
     public List<string>? Activities { get; set; }
+
+    /// <summary>GOAP goal def IDs (brain = "goap").</summary>
+    public List<string>? Goals { get; set; }
+
+    /// <summary>GOAP action def IDs — the F.E.A.R. action-subset pattern (brain = "goap").</summary>
+    public List<string>? Actions { get; set; }
+
+    /// <summary>Cost profile def ID overriding action costs (personality as data).</summary>
+    public string? CostProfile { get; set; }
+
+    /// <summary>Beliefs seeded at spawn (e.g. {"weapon_loaded": true}).</summary>
+    public Dictionary<string, JsonElement>? InitialBeliefs { get; set; }
+
+    /// <summary>A new goal must beat the active one's priority by this margin (ch07 §7.4 oscillation guard).</summary>
+    public double GoalHysteresis { get; set; } = 0.5;
+
+    /// <summary>Minimum seconds between replans (ch07 anti-pattern 1).</summary>
+    public double ReplanCooldown { get; set; } = 0.5;
 
     public List<SensorSpec>? Sensors { get; set; }
 
@@ -94,6 +112,21 @@ public sealed class AgentProfileDef : Def
         foreach (var activity in Activities ?? [])
         {
             yield return new DefReference(activity, $"{Id}.activities");
+        }
+
+        foreach (var goal in Goals ?? [])
+        {
+            yield return new DefReference(goal, $"{Id}.goals");
+        }
+
+        foreach (var action in Actions ?? [])
+        {
+            yield return new DefReference(action, $"{Id}.actions");
+        }
+
+        if (CostProfile is not null)
+        {
+            yield return new DefReference(CostProfile, $"{Id}.costProfile");
         }
 
         yield return new DefReference(Conditions, $"{Id}.conditions");

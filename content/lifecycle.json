@@ -13,6 +13,10 @@
     { "entity": "entity_chest", "position": [2, 0, -3] },
     { "entity": "entity_guard", "position": [6, 0, 6] },
     { "entity": "entity_rat", "count": 2, "position": [-4, 0, 2] },
-    { "entity": "entity_patron", "position": [1, 0, 1] }
+    { "entity": "entity_patron", "position": [1, 0, 1] },
+    { "entity": "entity_soldier", "count": 2, "position": [18, 0, 0] },
+    { "entity": "entity_dummy", "position": [24, 0, 0] },
+    { "entity": "entity_attack_node", "position": [22, 0, 3] },
+    { "entity": "entity_attack_node", "position": [22, 0, -3] }
   ]
 }

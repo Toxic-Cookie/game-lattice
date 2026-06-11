@@ -67,7 +67,7 @@ if (args[0] == "validate")
     registry.Validate(report, formulas);
     new RpgContentValidator(effects, conditions).Validate(registry, report, formulas);
     new NarrativeContentValidator(effects, conditions).Validate(registry, report, formulas);
-    new AiContentValidator(conditions, TaskRegistry.CreateDefault()).Validate(registry, report, formulas);
+    new AiContentValidator(conditions, TaskRegistry.CreateDefault(), effects).Validate(registry, report, formulas);
 
     // Yarn scripts compile-check (same function library the runtime registers)
     var yarnFiles = source.EnumerateFiles("*.yarn").Select(f => f.AbsolutePath).ToArray();

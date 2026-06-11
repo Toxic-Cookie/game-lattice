@@ -62,7 +62,47 @@ internal sealed class AiTestHost : IDisposable
               { "id": "entity_player", "type": "entity", "name": "Player", "tags": ["player"], "stats": { "stat_con": 4 } },
               { "id": "entity_guard", "type": "entity", "name": "Guard", "tags": ["guard"], "stats": { "stat_con": 5 } },
               { "id": "entity_rat", "type": "entity", "name": "Rat", "tags": ["rat"], "stats": { "stat_con": 1 } },
-              { "id": "entity_patron", "type": "entity", "name": "Patron", "tags": ["patron"], "stats": { "stat_con": 3 } }
+              { "id": "entity_patron", "type": "entity", "name": "Patron", "tags": ["patron"], "stats": { "stat_con": 3 } },
+              { "id": "entity_soldier", "type": "entity", "name": "Soldier", "tags": ["soldier"], "stats": { "stat_con": 6 } },
+              { "id": "entity_dummy", "type": "entity", "name": "Dummy", "tags": ["intruder"], "stats": { "stat_con": 2 } },
+              { "id": "entity_attack_node", "type": "entity", "name": "Attack Position", "tags": ["node"] }
+            ]
+            """);
+        WriteContent("goapobjects.json", """
+            { "id": "so_attack_node", "type": "smartobject", "entity": "entity_attack_node",
+              "maxUsers": 1, "interactions": [],
+              "animation": "aim", "aiEffects": { "in_attack_position": true } }
+            """);
+        WriteContent("goap.json", """
+            [
+              { "id": "goal_eliminate_intruder", "type": "goapgoal",
+                "desired": { "intruder_down": true },
+                "priority": "CAN_SEE_ENEMY * 50 + THREAT_KNOWN * 10",
+                "replanRequired": ["DAMAGED"] },
+              { "id": "goal_survive", "type": "goapgoal",
+                "desired": { "safe": true }, "priority": "DAMAGED * 100" },
+              { "id": "action_open_fire", "type": "goapaction",
+                "preconditions": { "in_attack_position": true, "weapon_loaded": true },
+                "effects": { "intruder_down": true, "weapon_loaded": false },
+                "cost": "1", "animation": "shoot", "animationBlocking": true,
+                "runEffects": [ { "type": "DealDamage", "formula": "2d6 + 4" } ] },
+              { "id": "action_reload", "type": "goapaction",
+                "preconditions": { "weapon_loaded": false },
+                "effects": { "weapon_loaded": true }, "cost": "1", "animation": "reload" },
+              { "id": "action_retreat", "type": "goapaction",
+                "effects": { "safe": true }, "cost": "2", "moveTo": "spawn", "speed": "run" },
+              { "id": "costprofile_brave", "type": "costprofile",
+                "overrides": { "action_retreat": "20" } },
+              { "id": "profile_soldier", "type": "agent", "entities": ["entity_soldier"],
+                "brain": "goap",
+                "goals": ["goal_eliminate_intruder", "goal_survive"],
+                "actions": ["action_open_fire", "action_reload", "action_retreat"],
+                "costProfile": "costprofile_brave",
+                "initialBeliefs": { "weapon_loaded": true },
+                "hostileTags": ["intruder"],
+                "sensors": [ { "kind": "visual", "range": 14, "fov": 360, "sensitivity": 0.9 } ],
+                "walkSpeed": 2.2, "runSpeed": 4.5, "alertDecaySeconds": 4.0,
+                "replanCooldown": 0.5, "goalHysteresis": 5.0 }
             ]
             """);
         WriteContent("conditions.json", """
