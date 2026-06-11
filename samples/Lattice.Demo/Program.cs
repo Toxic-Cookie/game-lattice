@@ -16,10 +16,19 @@ using Lattice.World;
 using Lattice.World.Navigation;
 
 const float TickSeconds = 1f / 30f;
-const string DefaultLifecycle = "lifecycle_default";
 const string DefaultSaveFile = "save.json";
 
-var contentRoot = args.Length > 0 ? args[0] : FindContentRoot();
+// usage: [contentRoot] [--scene default|tavern|dungeon|quest|<lifecycleId>]
+var sceneIndex = Array.IndexOf(args, "--scene");
+var scene = sceneIndex >= 0 && sceneIndex + 1 < args.Length ? args[sceneIndex + 1] : "default";
+var positional = args
+    .Select((arg, index) => (Arg: arg, Index: index))
+    .Where(x => !x.Arg.StartsWith("--", StringComparison.Ordinal) && (sceneIndex < 0 || x.Index != sceneIndex + 1))
+    .Select(x => x.Arg)
+    .ToArray();
+
+var lifecycleId = scene.StartsWith("lifecycle_", StringComparison.Ordinal) ? scene : $"lifecycle_{scene}";
+var contentRoot = positional.Length > 0 ? positional[0] : FindContentRoot();
 var logger = new ConsoleLogger(LogLevel.Debug);
 var host = new StandaloneHost(randomSeed: 12345, logger);
 
@@ -58,10 +67,10 @@ foreach (var error in loadReport.Errors)
 
 logger.Info($"Content loaded: {loadReport.DefsLoaded} def(s), {loadReport.Errors.Count} error(s).");
 session.EnableHotReload();
-session.Boot(DefaultLifecycle);
+session.Boot(lifecycleId);
 session.Events.DispatchPending();
 
-logger.Info("Lattice demo host ready. Type 'help' for commands.");
+logger.Info($"Lattice demo host ready (scene {lifecycleId}). Type 'help' for commands.");
 while (true)
 {
     Console.Write("lattice> ");
@@ -157,7 +166,9 @@ bool RunCommand(string[] parts)
                   roles <groupId>             role assignments
                   poke <id>                   annoy an NPC (meta-sensor demo)
                   path <id>                   remaining waypoints of a moving agent
+                  perf                        planner invocation counters (the rat-problem audit)
                   (time also shows clock, phase, season, weather)
+                  (boot a demo scene with --scene tavern|dungeon|quest)
                 UI:
                   hud                         text gauges over binding paths
                   bind <path>                 watch a binding path (e.g. Player.stats.stat_hp, flags.weather)
@@ -355,6 +366,18 @@ bool RunCommand(string[] parts)
             foreach (var pair in group.RoleOf.OrderBy(p => p.Key, StringComparer.Ordinal))
             {
                 Console.WriteLine($"  {pair.Key,-10} {pair.Value}");
+            }
+
+            return true;
+        }
+
+        case "perf":
+        {
+            Console.WriteLine($"  tick {session.Tick}, {session.World.Count} entit(ies), {session.Events.Trace.Count()} traced event(s)");
+            Console.WriteLine($"  planner invocations: {ai.PlannerInvocations}");
+            foreach (var pair in ai.PlannerInvocationsByAgent.OrderByDescending(p => p.Value))
+            {
+                Console.WriteLine($"    {pair.Key,-24} {pair.Value}");
             }
 
             return true;

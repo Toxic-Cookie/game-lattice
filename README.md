@@ -17,23 +17,39 @@ never requires recompilation. The data formats are designed to be authorable by 
 | `src/Lattice.World` | World simulation: clock & calendar, day phases, Markov weather, season overlays, grid A* navigation |
 | `src/Lattice.Tooling` | `lattice` CLI: validate, manifest, schemas |
 | `schemas/` | Generated JSON schemas (CI fails on drift) |
+| `docs/llm-guide.md` | The condensed authoring guide — paste it into a model's context |
+| `docs/architecture.md` | Layer diagram, system map, and extension walkthroughs for humans |
 | `docs/manifest.md` | Generated content manifest — the dictionary LLMs read before authoring |
 | `samples/Lattice.Demo` | Headless console host / development workbench |
-| `tests/` | xunit test projects |
-| `content/` | Game content JSON |
+| `tests/` | xunit test projects; `Lattice.Demos.Tests` plays the demo scenes over shipped content |
+| `content/` | Game content JSON — including the three demo scenes (`scenes.json`) |
 | `plan/` | The end-to-end implementation plan (start at `plan/00-overview.md`) |
 | `research/` | The emergent-AI research corpus the design is grounded in |
 
 ## Quick start
 
 ```bash
-dotnet test                                   # build + run tests
-dotnet run --project samples/Lattice.Demo     # interactive host shell
+dotnet test                                   # build + run all tests (incl. the demo scenes)
+dotnet run --project samples/Lattice.Demo     # interactive host shell (kitchen-sink scene)
+dotnet run --project samples/Lattice.Demo -- --scene tavern    # or: dungeon | quest
 dotnet run --project src/Lattice.Tooling -- validate content
 ```
 
 ## Status
 
+**M7 (demonstration & polish) complete — v0.1.0:** three demo scenes ship as content
+(`lifecycle_tavern`, `lifecycle_dungeon`, `lifecycle_quest`) and run headless in CI as
+simulation tests over the *shipped* `content/` tree. The Tavern plays a full game day —
+the innkeeper's routine flips with the day phases, patrons run needs-driven activity
+loops, Charisma haggles bar prices, a look-away meta-sensor interrupts dialogue, and a
+patron comments when the rain rolls in — against a golden transcript. The Dungeon
+reproduces the F.E.A.R. flanking result (three GOAP soldiers, exclusive attack-node
+reservation, distinct nodes held simultaneously), audits the rat problem with the new
+planner-invocation counters (`perf` command), rolls loot on kills, ticks a poison trap,
+and shows HTN method fallback on a boss (ranged while the arrow lasts, melee after). The
+Quest-Giver runs `quest_wolves` end-to-end across a mid-quest save/load. Docs shipped for
+both audiences: `docs/llm-guide.md` (the ≤4k-token authoring guide) and
+`docs/architecture.md` (layers, seams, extension walkthroughs). Earlier:
 **M6 (LLM & modding integration) complete:** blueprint inheritance (`"inherits"` with
 deep-merge + explicit `$append`/`$remove` array operators, cross-file chains, cycle/kind
 checks); content packs (`pack.json` directories overlay the base content in

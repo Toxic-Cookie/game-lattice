@@ -1,6 +1,6 @@
 # Game Lattice — Content Manifest
 
-84 defs. Every def needs `id`, `type`, and ideally a one-line `description`.
+108 defs. Every def needs `id`, `type`, and ideally a one-line `description`.
 Defs may declare `"inherits": "<parent id>"` (same kind): objects deep-merge, scalars override,
 arrays replace — or patch the parent's array with `{"$append": [...], "$remove": [...]}`.
 
@@ -12,11 +12,13 @@ arrays replace — or patch the parent's array with `{"$append": [...], "$remove
 - `activity_drink` — Walk to the bar and drink. Selector score = thirst urgency × 0.7 / 1.
 - `activity_rest` — Sit on the corner chair. Costlier, so it only wins when rest urgency is high.
 
-### `agent` — 6
+### `agent` — 8
 
 - `profile_beast` — Herd member (M4d): role and alerts arrive only via the group blackboard.
+- `profile_boss` — Boss-lite: HTN method selection is visible in the decomposition trace — ranged while arrows last, melee after.
 - `profile_forager` — HTN villager (M4d): the root compound's method order is the whole personality.
 - `profile_guard` — Deliberative guard: Half-Life schedules, sharp eyes, decent ears.
+- `profile_innkeeper` — The Wolf's Rest innkeeper: tends bar by day, sweeps at dusk, sleeps at night — the whole routine is day-phase flags feeding schedule gates.
 - `profile_patron` — Tavern patron: needs-driven utility selection inside a behavior tree (M4b).
 - `profile_rat` — Rat-tier critter: two-state FSM, dim eyes, zero planner overhead (the F.E.A.R. lesson).
 - `profile_soldier` — GOAP soldier (M4c): goals + action subset + cost profile = the whole personality.
@@ -46,18 +48,22 @@ arrays replace — or patch the parent's array with `{"$append": [...], "$remove
 
 - `tree_guard` — JSON dialogue-tree sample (machine-friendly format).
 
-### `entity` — 12
+### `entity` — 16
 
 - `entity_attack_node` — A tactical position; surfaces to GOAP planners via so_attack_node.
 - `entity_beast` — Herd animal (profile_beast: role-aware FSM, collective-spawned).
+- `entity_boss` — Boss-lite (profile_boss: HTN with ranged-preferred / melee-fallback methods).
 - `entity_chest`
+- `entity_delver` (inherits `entity_player`) — The dungeon-delving player: the base player blueprint plus the 'intruder' tag the soldiers hunt and enough Constitution to survive the crossfire.
 - `entity_dummy` — Training dummy the skirmish soldiers treat as an intruder.
 - `entity_forager` — HTN forager (profile_forager): berry run with a threat-hiding method.
 - `entity_guard` — Patrolling guard (profile_guard: schedule brain).
-- `entity_patron` — Tavern patron (profile_patron: needs + behavior tree).
+- `entity_innkeeper` — Wolf's Rest innkeeper (profile_innkeeper): bartender by day, sweeper at dusk, asleep at night; quest giver and shopkeeper.
+- `entity_patron` — Tavern patron (profile_patron: needs + behavior tree). Low Charisma: pays full price.
 - `entity_player` — The player avatar.
 - `entity_rat` — Skittish rat (profile_rat: two-state FSM brain).
 - `entity_soldier` — GOAP soldier (profile_soldier): plans attack-position use, fire, reload, retreat.
+- `entity_trap` — Floor plate bound to so_poison_trap.
 - `entity_wolf` — A common wolf; bites are poisonous. Drops loot_wolf.
 - `entity_wolf_alpha` (inherits `entity_wolf`) — Blueprint demo (plan/06 §4): the base wolf plus overrides and an array patch.
 
@@ -66,15 +72,19 @@ arrays replace — or patch the parent's array with `{"$append": [...], "$remove
 - `fsmbrain_beast` — Role-aware critter: graze or stand watch by assignment, flee on personal or group alert.
 - `fsmbrain_rat` — Wander until something threatening appears; flee until it's gone.
 
-### `goapaction` — 7
+### `goapaction` — 11
 
 - `action_carry_home`
+- `action_charge` — Close the distance to the perceived enemy.
+- `action_claw`
 - `action_gather`
 - `action_goto_berries`
+- `action_lurk` — Idle filler so the root compound always decomposes to something.
 - `action_open_fire` — Shoot from a held attack position; really damages the perceived enemy.
 - `action_reload`
 - `action_retreat` — Fall back to spawn. Expensive for brave profiles — personality is a cost number.
 - `action_run_home`
+- `action_shoot_bow` — Loose the last arrow: only plannable while has_arrows holds, and shooting spends it.
 
 ### `goapgoal` — 2
 
@@ -85,30 +95,38 @@ arrays replace — or patch the parent's array with `{"$append": [...], "$remove
 
 - `group_herd` — Plains herd. Knowledge travels only through the blackboard, so unwitnessed kills never alert it.
 
-### `htncompound` — 1
+### `htncompound` — 2
 
+- `htn_boss` — Method order is the doctrine (plan/07 §2): shoot while arrows last, fall back to melee, otherwise lurk in the dark.
 - `htn_forage` — Method order is the priority: hide if threatened, otherwise run the forage routine.
 
-### `item` — 5
+### `item` — 6
 
+- `item_ale`
 - `item_gold`
 - `item_healing_potion`
 - `item_iron_sword`
 - `item_wolf_fang`
 - `item_wolf_pelt`
 
-### `lifecycle` — 1
+### `lifecycle` — 4
 
 - `lifecycle_default` — Default boot: a player and two wolves in the test scene.
+- `lifecycle_dungeon` — Demo scene 2 — The Dungeon (plan/07 §2): GOAP combat with flanking from smart-object reservation, rat-tier FSM critters, loot on kill, a poison trap, and an HTN boss.
+- `lifecycle_quest` — Demo scene 3 — The Quest-Giver (plan/07 §3): the quest_wolves chain end-to-end over the event bus, with mid-quest save/load.
+- `lifecycle_tavern` — Demo scene 1 — The Tavern (plan/07 §1): dialogue, trade, day-night schedules, needs-driven patrons, meta player awareness, weather→narrative coupling.
 
-### `loot` — 3
+### `loot` — 5
 
+- `loot_boss`
 - `loot_rare`
+- `loot_soldier` — Kills roll loot tables (plan/07 §2): a soldier always carries pay.
 - `loot_wolf`
 - `loot_wolf_winter` — Winter overlay target: season_winter redirects loot_wolf here (thicker pelts, leaner purses).
 
-### `metasensor` — 1
+### `metasensor` — 2
 
+- `metasensor_lookaway` — Meta player awareness (plan/07 §1): look away from the conversation twice in half a minute and the innkeeper notices.
 - `metasensor_poke` — Poke the guard three times in five seconds and it stops being polite.
 
 ### `navgrid` — 1
@@ -134,22 +152,27 @@ arrays replace — or patch the parent's array with `{"$append": [...], "$remove
 - `role_grazer` — Everyone else: graze near the core.
 - `role_watcher` — Sentries: 2 slots, posted on a ring around the herd centroid. The herd's shape IS this slot limit.
 
-### `schedule` — 6
+### `schedule` — 10
 
 - `schedule_combat` — Enemy visible: close in and attack.
+- `schedule_innkeeper_bed` — Night routine: head to the back room and sleep until dawn.
+- `schedule_innkeeper_scold` — Meta-awareness beat (plan/07 §1): the player looked away twice mid-conversation (ANNOYED via metasensor_lookaway) — the innkeeper snaps and breaks off the dialogue.
+- `schedule_innkeeper_sweep` — Dusk routine (IS_DUSK from the is_dusk day-phase flag): sweep the floor before closing.
 - `schedule_investigate` — Heard something: run to the sound and look around.
 - `schedule_patrol` — Default beat: walk the route, look around, repeat.
 - `schedule_scold` — Meta-awareness reaction: the player has been pestering this NPC (ANNOYED via metasensor_poke).
 - `schedule_search` — Lost the enemy: sweep their last known position.
 - `schedule_sleep` — Off-duty at night (IS_NIGHT fed from the is_night flag via flagConditions). Outranks patrol, yields to anything urgent.
+- `schedule_tend_bar` — The innkeeper's default beat: stand behind the bar and serve.
 
 ### `season` — 2
 
 - `season_summer`
 - `season_winter` — The overlay season: wolves drop winter loot, rain doubles.
 
-### `shop` — 1
+### `shop` — 2
 
+- `shop_innkeeper` — The innkeeper's bar: Charisma haggles the ale price down; closed for the night (openWhen reads the is_night day-phase flag).
 - `shop_trader` — Charisma lowers buy prices and raises sell prices.
 
 ### `slot` — 2
@@ -157,10 +180,11 @@ arrays replace — or patch the parent's array with `{"$append": [...], "$remove
 - `slot_chest`
 - `slot_main_hand`
 
-### `smartobject` — 2
+### `smartobject` — 3
 
 - `so_attack_node` — GOAP-plannable tactical node; maxUsers 1 makes reservation the flanking coordinator.
 - `so_chest` — One-time gold cache; opening is gated on a world flag.
+- `so_poison_trap` — Stepping on the plate envenoms the actor — statuses, interactions, and events composing (plan/07 §2).
 
 ### `stat` — 7
 
@@ -191,6 +215,7 @@ arrays replace — or patch the parent's array with `{"$append": [...], "$remove
 
 ## Blueprint hierarchies
 
+- `entity_player` -> `entity_delver`
 - `entity_wolf` -> `entity_wolf_alpha`
 
 ## Effect primitives (`"type"` discriminator)
@@ -343,8 +368,8 @@ arrays replace — or patch the parent's array with `{"$append": [...], "$remove
 - `slot_chest`
 - `slot_main_hand`
 
-### Condition catalog `conditions_default` (10/32 bits)
-`CAN_SEE_ENEMY`, `THREAT_KNOWN`, `HEAR_SOUND`, `SMELL_DETECTED`, `CONTACT`, `DAMAGED`, `GROUP_ALERT`, `ROLE_WATCHER`, `ANNOYED`, `IS_NIGHT`
+### Condition catalog `conditions_default` (11/32 bits)
+`CAN_SEE_ENEMY`, `THREAT_KNOWN`, `HEAR_SOUND`, `SMELL_DETECTED`, `CONTACT`, `DAMAGED`, `GROUP_ALERT`, `ROLE_WATCHER`, `ANNOYED`, `IS_NIGHT`, `IS_DUSK`
 
 ### Event topics
 - `Entity.Damaged` — an entity took damage {instanceId, amount}
