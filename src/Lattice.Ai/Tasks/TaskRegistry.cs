@@ -78,6 +78,7 @@ public sealed class TaskRegistry
         registry.Register(new ClearConditionTask());
         registry.Register(new NextPatrolPointTask());
         registry.Register(new SelectNewScheduleTask());
+        registry.Register(new Utility.PerformActivityTask());
         return registry;
     }
 }

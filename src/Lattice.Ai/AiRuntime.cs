@@ -4,6 +4,7 @@ using Lattice.Ai.Agents;
 using Lattice.Ai.Defs;
 using Lattice.Ai.Perception;
 using Lattice.Ai.Tasks;
+using Lattice.Ai.Utility;
 using Lattice.Core.Content;
 using Lattice.Core.Events;
 using Lattice.Core.Hosting;
@@ -37,6 +38,9 @@ public sealed class AiRuntime
 
         session.RegisterModule(this);
         rpg.Conditions.Register(new AgentConditionEvaluator(this));
+        rpg.Conditions.Register(new AgentMetaCondition(this));
+        rpg.Conditions.Register(new UtilityAtLeastCondition(this));
+        rpg.Conditions.Register(new NeedBelowCondition(this));
         session.World.EntityAdded += AttachAgent;
         session.ContentLoaded += _ => RebuildIndexes();
         session.Events.Subscribe("Content.Reloaded", _ => RebuildIndexes());
@@ -102,6 +106,12 @@ public sealed class AiRuntime
         return true;
     }
 
+    /// <summary>The utility scoreboard for an agent (ch07: every choice explainable). Empty for non-agents.</summary>
+    public IReadOnlyList<ActivityScore> ScoreActivities(Entity entity)
+        => GetAgent(entity) is { } agent
+            ? UtilityScoring.ScoreActivities(new AgentContext { Ai = this, Entity = entity, Agent = agent })
+            : [];
+
     internal ConditionCatalog GetCatalog(string catalogId)
         => _catalogs.TryGetValue(catalogId, out var catalog) ? catalog : ConditionCatalog.Empty;
 
@@ -139,11 +149,21 @@ public sealed class AiRuntime
             "fsm" when profile.FsmBrain is not null && Session.Defs.TryGet<FsmBrainDef>(profile.FsmBrain, out var fsmDef) =>
                 new DataFsmBrain(fsmDef),
             "schedules" => new ScheduleBrain(),
+            "bt" when profile.BehaviorTree is not null && Session.Defs.TryGet<BehaviorTreeDef>(profile.BehaviorTree, out var btDef) =>
+                new BehaviorTreeBrain(btDef, Session.Defs),
             _ => new NullBrain(profile.Brain),
         };
 
         var agent = new AgentComponent(profile, catalog, brain);
         agent.Beliefs.Set("spawn_position", entity.Position);
+        foreach (var needId in profile.Needs ?? [])
+        {
+            if (Session.Defs.TryGet<NeedDef>(needId, out var need))
+            {
+                agent.Needs[needId] = Math.Clamp(need.Initial, 0, 1);
+            }
+        }
+
         entity.SetComponent(agent);
     }
 
@@ -205,8 +225,35 @@ public sealed class AiRuntime
 
                 SensorPipeline.Update(ctx, ai.TransientStimuli, now);
                 UpdateMetaState(ctx, now);
-                agent.Brain.Tick(ctx, dt);
+                DecayNeeds(session, agent, dt);
+
+                // tick-rate decoupling (ch06 §6.9): perception and movement run
+                // every tick; thinking runs at the profile's cadence
+                agent.ThinkAccumulator += dt;
+                if (agent.Profile.ThinkInterval <= 0 || agent.ThinkAccumulator >= agent.Profile.ThinkInterval)
+                {
+                    agent.Brain.Tick(ctx, (float)agent.ThinkAccumulator);
+                    agent.ThinkAccumulator = 0;
+                }
+
                 Move(ctx, dt);
+            }
+        }
+
+        /// <summary>The Sims pattern (ch05 §5.4): motives fall over time, so urgency rises until an activity wins.</summary>
+        private static void DecayNeeds(GameSession session, AgentComponent agent, float dt)
+        {
+            if (agent.Needs.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var needId in agent.Needs.Keys.ToList())
+            {
+                if (session.Defs.TryGet<NeedDef>(needId, out var need) && need.DecayPerSecond > 0)
+                {
+                    agent.Needs[needId] = Math.Clamp(agent.Needs[needId] - need.DecayPerSecond * dt, 0, 1);
+                }
             }
         }
 
@@ -308,6 +355,31 @@ public sealed class AgentConditionEvaluator(AiRuntime? ai = null) : IConditionEv
     }
 }
 
+/// <summary>
+/// Meta-state gate: {"type":"AgentMeta","is":"Alert"}. Because the meta
+/// state persists for AlertDecaySeconds after the last threat perception,
+/// this smooths the per-tick flicker of instantaneous sensor conditions —
+/// the BT analog of the schedule brain's metaStates filter.
+/// </summary>
+public sealed class AgentMetaCondition(AiRuntime? ai = null) : IConditionEvaluator
+{
+    public string Type => "AgentMeta";
+
+    public bool Evaluate(ConditionContext ctx, JsonElement args)
+        => ai is not null
+           && ctx.Subject is not null
+           && ai.GetAgent(ctx.Subject) is { } agent
+           && string.Equals(agent.Meta.ToString(), JsonArgs.GetString(args, "is"), StringComparison.OrdinalIgnoreCase);
+
+    public void Validate(JsonElement args, EffectValidationContext v)
+    {
+        if (!JsonArgs.TryGetString(args, "is", out var meta) || meta is not ("Idle" or "Alert"))
+        {
+            v.Error("AgentMeta requires 'is': \"Idle\" or \"Alert\".");
+        }
+    }
+}
+
 /// <summary>Entry points for wiring the AI module into a session.</summary>
 public static class LatticeAi
 {
@@ -319,6 +391,10 @@ public static class LatticeAi
         types.Register<AgentProfileDef>("agent");
         types.Register<FsmBrainDef>("fsmbrain");
         types.Register<ScheduleDef>("schedule");
+        types.Register<BehaviorTreeDef>("btree");
+        types.Register<UtilityEvaluatorDef>("utility");
+        types.Register<NeedDef>("need");
+        types.Register<ActivityDef>("activity");
         return types;
     }
 

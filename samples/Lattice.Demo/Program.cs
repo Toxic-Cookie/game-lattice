@@ -5,6 +5,7 @@ using Lattice.Core.Formulas;
 using Lattice.Core.Hosting;
 using Lattice.Core.Hosting.Standalone;
 using Lattice.Ai;
+using Lattice.Ai.Agents;
 using Lattice.Core.Events;
 using Lattice.Core.Persistence;
 using Lattice.Core.Simulation;
@@ -143,6 +144,9 @@ bool RunCommand(string[] parts)
                 AI:
                   agent <id>                  brain state, conditions, trace
                   senses <id>                 beliefs + set conditions
+                  bt <id>                     live behavior tree with last-tick status
+                  utility <id>                activity scoreboard (chosen = highest eligible)
+                  needs <id>                  need values (1 = satisfied)
                   noise <x> <y> <z> [loud]    emit a sound stimulus
                   move <id> <x> <y> <z>       teleport an entity (provoke sensors)
                   quit
@@ -180,6 +184,76 @@ bool RunCommand(string[] parts)
             foreach (var fact in agent.Beliefs.Facts.OrderBy(f => f.Key, StringComparer.Ordinal))
             {
                 Console.WriteLine($"  {fact.Key} = {fact.Value}");
+            }
+
+            return true;
+        }
+
+        case "bt":
+        {
+            if (parts.Length < 2 || !session.World.TryGet(parts[1], out var entity) || ai.GetAgent(entity) is not { } agent)
+            {
+                Console.WriteLine("no agent on that entity");
+                return true;
+            }
+
+            if (agent.Brain is BehaviorTreeBrain brain)
+            {
+                Console.WriteLine(brain.DescribeTree());
+            }
+            else
+            {
+                Console.WriteLine($"not a bt brain: {agent.Brain.Describe()}");
+            }
+
+            return true;
+        }
+
+        case "utility":
+        {
+            if (parts.Length < 2 || !session.World.TryGet(parts[1], out var entity) || ai.GetAgent(entity) is not { } agent)
+            {
+                Console.WriteLine("no agent on that entity");
+                return true;
+            }
+
+            var scores = ai.ScoreActivities(entity);
+            if (scores.Count == 0)
+            {
+                Console.WriteLine("no activities in this agent's profile");
+                return true;
+            }
+
+            var chosen = scores.Where(s => s.Eligible && s.Score > 0)
+                .OrderByDescending(s => s.Score).ThenBy(s => s.Activity.Id, StringComparer.Ordinal)
+                .Select(s => s.Activity.Id).FirstOrDefault();
+            foreach (var score in scores.OrderByDescending(s => s.Score))
+            {
+                var marker = score.Activity.Id == chosen ? ">" : " ";
+                var note = score.Eligible ? "" : "  (ineligible)";
+                Console.WriteLine($" {marker} {score.Activity.Id,-20} {score.Score:F3} = ({score.Breakdown}) / {score.Cost:F2}{note}");
+            }
+
+            return true;
+        }
+
+        case "needs":
+        {
+            if (parts.Length < 2 || !session.World.TryGet(parts[1], out var entity) || ai.GetAgent(entity) is not { } agent)
+            {
+                Console.WriteLine("no agent on that entity");
+                return true;
+            }
+
+            if (agent.Needs.Count == 0)
+            {
+                Console.WriteLine("no needs in this agent's profile");
+                return true;
+            }
+
+            foreach (var pair in agent.Needs.OrderBy(p => p.Key, StringComparer.Ordinal))
+            {
+                Console.WriteLine($"  {pair.Key,-16} {pair.Value:F2}  urgency {1 - pair.Value:F2}");
             }
 
             return true;

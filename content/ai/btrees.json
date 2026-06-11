@@ -1,0 +1,41 @@
+[
+  {
+    "id": "bt_patron",
+    "type": "btree",
+    "description": "Tavern patron: flee threats, otherwise serve needs, otherwise loiter. Gates re-check every think and abort the running subtree.",
+    "root": {
+      "node": "Selector",
+      "children": [
+        {
+          "node": "ConditionGate",
+          "when": [ { "type": "AgentMeta", "is": "Alert" } ],
+          "child": {
+            "node": "Sequence",
+            "children": [
+              { "task": "MoveTo", "target": [-6, 0, 8], "speed": "run" },
+              { "task": "Wait", "seconds": 1.0 }
+            ]
+          }
+        },
+        {
+          "node": "ConditionGate",
+          "when": [ { "type": "UtilityAtLeast", "evaluator": "utility_patron_motivation", "threshold": 0.15 } ],
+          "child": { "task": "PerformActivity" }
+        },
+        { "subtree": "bt_loiter" }
+      ]
+    }
+  },
+  {
+    "id": "bt_loiter",
+    "type": "btree",
+    "description": "Reusable idle filler subtree.",
+    "root": {
+      "node": "Sequence",
+      "children": [
+        { "task": "PlayAnimation", "anim": "idle" },
+        { "task": "Wait", "seconds": 0.5 }
+      ]
+    }
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "need_thirst",
+    "type": "need",
+    "description": "Drink urgency. Decays fast — the tavern's reason to exist.",
+    "key": "Thirst",
+    "initial": 0.5,
+    "decayPerSecond": 0.02
+  },
+  {
+    "id": "need_rest",
+    "type": "need",
+    "description": "Tiredness. Decays slowly; restored by sitting down.",
+    "key": "Rest",
+    "initial": 0.9,
+    "decayPerSecond": 0.008
+  },
+  {
+    "id": "need_social",
+    "type": "need",
+    "description": "Loneliness. Restored by chatting at the table.",
+    "key": "Social",
+    "initial": 0.7,
+    "decayPerSecond": 0.012
+  }
+]

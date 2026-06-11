@@ -1,0 +1,10 @@
+{
+  "id": "utility_patron_motivation",
+  "type": "utility",
+  "description": "How much the patron's needs demand attention (0–1). Thirst weighs double. Gates PerformActivity in bt_patron.",
+  "factors": [
+    { "formula": "1 - Thirst", "weight": 2 },
+    { "formula": "1 - Rest", "weight": 1 },
+    { "formula": "1 - Social", "weight": 1 }
+  ]
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "activity_drink",
+    "type": "activity",
+    "description": "Walk to the bar and drink. Selector score = thirst urgency × 0.7 / 1.",
+    "satisfies": { "need_thirst": 0.7 },
+    "cost": "1",
+    "tasks": [
+      { "task": "MoveTo", "target": [3, 0, 3], "speed": "walk" },
+      { "task": "PlayAnimation", "anim": "drink" },
+      { "task": "Wait", "seconds": 1.0 }
+    ]
+  },
+  {
+    "id": "activity_rest",
+    "type": "activity",
+    "description": "Sit on the corner chair. Costlier, so it only wins when rest urgency is high.",
+    "satisfies": { "need_rest": 0.6 },
+    "cost": "1.5",
+    "tasks": [
+      { "task": "MoveTo", "target": [-3, 0, 2], "speed": "walk" },
+      { "task": "PlayAnimation", "anim": "sit" },
+      { "task": "Wait", "seconds": 2.0 }
+    ]
+  },
+  {
+    "id": "activity_chat",
+    "type": "activity",
+    "description": "Join the table talk.",
+    "satisfies": { "need_social": 0.6 },
+    "cost": "1.2",
+    "tasks": [
+      { "task": "MoveTo", "target": [0, 0, -3], "speed": "walk" },
+      { "task": "PlayAnimation", "anim": "talk" },
+      { "task": "Wait", "seconds": 1.5 }
+    ]
+  }
+]

@@ -12,6 +12,7 @@
     { "entity": "entity_wolf", "count": 2, "position": [10, 0, 5] },
     { "entity": "entity_chest", "position": [2, 0, -3] },
     { "entity": "entity_guard", "position": [6, 0, 6] },
-    { "entity": "entity_rat", "count": 2, "position": [-4, 0, 2] }
+    { "entity": "entity_rat", "count": 2, "position": [-4, 0, 2] },
+    { "entity": "entity_patron", "position": [1, 0, 1] }
   ]
 }

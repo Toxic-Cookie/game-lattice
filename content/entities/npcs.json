@@ -8,6 +8,14 @@
     "stats": { "stat_con": 5, "stat_str": 6 }
   },
   {
+    "id": "entity_patron",
+    "type": "entity",
+    "description": "Tavern patron (profile_patron: needs + behavior tree).",
+    "name": "Patron",
+    "tags": ["patron", "npc"],
+    "stats": { "stat_con": 3 }
+  },
+  {
     "id": "entity_rat",
     "type": "entity",
     "description": "Skittish rat (profile_rat: two-state FSM brain).",

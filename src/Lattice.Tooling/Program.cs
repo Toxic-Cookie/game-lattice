@@ -1,5 +1,6 @@
 using Lattice.Ai;
 using Lattice.Ai.Tasks;
+using Lattice.Ai.Utility;
 using Lattice.Core.Content;
 using Lattice.Core.Formulas;
 using Lattice.Core.Hosting.Standalone;
@@ -60,6 +61,9 @@ if (args[0] == "validate")
     effects.Register(new StartQuestEffect());
     var conditions = ConditionRegistry.CreateDefault();
     conditions.Register(new AgentConditionEvaluator());
+    conditions.Register(new AgentMetaCondition());
+    conditions.Register(new UtilityAtLeastCondition());
+    conditions.Register(new NeedBelowCondition());
     registry.Validate(report, formulas);
     new RpgContentValidator(effects, conditions).Validate(registry, report, formulas);
     new NarrativeContentValidator(effects, conditions).Validate(registry, report, formulas);

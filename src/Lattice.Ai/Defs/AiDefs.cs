@@ -25,7 +25,7 @@ public sealed class AgentProfileDef : Def
     /// <summary>Entity template IDs this profile attaches to.</summary>
     public List<string> Entities { get; set; } = [];
 
-    /// <summary>Brain tier: "fsm" or "schedules" (M4a).</summary>
+    /// <summary>Brain tier: "fsm" or "schedules" (M4a), "bt" (M4b).</summary>
     public string Brain { get; set; } = "fsm";
 
     /// <summary>FSM brain def (brain = "fsm").</summary>
@@ -33,6 +33,18 @@ public sealed class AgentProfileDef : Def
 
     /// <summary>Schedule def IDs in priority order, highest first (brain = "schedules").</summary>
     public List<string>? Schedules { get; set; }
+
+    /// <summary>Behavior tree def (brain = "bt").</summary>
+    public string? BehaviorTree { get; set; }
+
+    /// <summary>Seconds between brain ticks; 0 = think every simulation tick (ch06 §6.9 tick-rate decoupling).</summary>
+    public double ThinkInterval { get; set; }
+
+    /// <summary>Need def IDs this agent tracks (decayed per tick; drive the utility selector).</summary>
+    public List<string>? Needs { get; set; }
+
+    /// <summary>Activity def IDs the PerformActivity task chooses among.</summary>
+    public List<string>? Activities { get; set; }
 
     public List<SensorSpec>? Sensors { get; set; }
 
@@ -67,6 +79,21 @@ public sealed class AgentProfileDef : Def
         foreach (var schedule in Schedules ?? [])
         {
             yield return new DefReference(schedule, $"{Id}.schedules");
+        }
+
+        if (BehaviorTree is not null)
+        {
+            yield return new DefReference(BehaviorTree, $"{Id}.behaviorTree");
+        }
+
+        foreach (var need in Needs ?? [])
+        {
+            yield return new DefReference(need, $"{Id}.needs");
+        }
+
+        foreach (var activity in Activities ?? [])
+        {
+            yield return new DefReference(activity, $"{Id}.activities");
         }
 
         yield return new DefReference(Conditions, $"{Id}.conditions");

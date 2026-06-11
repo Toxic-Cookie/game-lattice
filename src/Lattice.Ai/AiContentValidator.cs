@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Lattice.Ai.Defs;
 using Lattice.Ai.Tasks;
 using Lattice.Core.Content;
@@ -9,12 +10,13 @@ namespace Lattice.Ai;
 /// <summary>
 /// AI validation rules (plan/04): catalog budgets, profile structure,
 /// schedule condition names checked against each using profile's catalog,
-/// task payloads, FSM state graph integrity.
+/// task payloads, FSM state graph integrity, behavior-tree node graphs
+/// (including subtree cycles), and the utility vocabulary.
 /// </summary>
 public sealed class AiContentValidator(ConditionRegistry conditions, TaskRegistry tasks) : IContentValidator
 {
     private static readonly string[] ValidMetaStates = ["Idle", "Alert"];
-    private static readonly string[] ValidBrains = ["fsm", "schedules"];
+    private static readonly string[] ValidBrains = ["fsm", "schedules", "bt"];
 
     public void Validate(DefRegistry registry, ContentLoadReport report, IFormulaEngine formulas)
     {
@@ -53,13 +55,33 @@ public sealed class AiContentValidator(ConditionRegistry conditions, TaskRegistr
                 }
             }
         }
+
+        foreach (var tree in registry.All<BehaviorTreeDef>())
+        {
+            ValidateBehaviorTree(tree, registry, report, formulas);
+        }
+
+        foreach (var evaluator in registry.All<UtilityEvaluatorDef>())
+        {
+            ValidateUtilityEvaluator(evaluator, report, formulas);
+        }
+
+        foreach (var need in registry.All<NeedDef>())
+        {
+            ValidateNeed(need, report);
+        }
+
+        foreach (var activity in registry.All<ActivityDef>())
+        {
+            ValidateActivity(activity, registry, report, formulas);
+        }
     }
 
     private void ValidateProfile(AgentProfileDef profile, DefRegistry registry, ContentLoadReport report, IFormulaEngine formulas)
     {
         if (!ValidBrains.Contains(profile.Brain))
         {
-            report.Errors.Add($"Agent profile '{profile.Id}' has unknown brain tier '{profile.Brain}' (M4a supports: {string.Join(", ", ValidBrains)}).");
+            report.Errors.Add($"Agent profile '{profile.Id}' has unknown brain tier '{profile.Brain}' (supported: {string.Join(", ", ValidBrains)}).");
         }
 
         if (profile.Brain == "fsm" && profile.FsmBrain is null)
@@ -70,6 +92,32 @@ public sealed class AiContentValidator(ConditionRegistry conditions, TaskRegistr
         if (profile.Brain == "schedules" && (profile.Schedules is not { Count: > 0 }))
         {
             report.Errors.Add($"Agent profile '{profile.Id}' uses brain 'schedules' but declares no 'schedules'.");
+        }
+
+        if (profile.Brain == "bt" && profile.BehaviorTree is null)
+        {
+            report.Errors.Add($"Agent profile '{profile.Id}' uses brain 'bt' but declares no 'behaviorTree'.");
+        }
+
+        if (profile.ThinkInterval < 0)
+        {
+            report.Errors.Add($"Agent profile '{profile.Id}' has a negative 'thinkInterval'.");
+        }
+
+        foreach (var needId in profile.Needs ?? [])
+        {
+            if (registry.Contains(needId) && !registry.TryGet<NeedDef>(needId, out _))
+            {
+                report.Errors.Add($"Agent profile '{profile.Id}' need '{needId}' is not a need def.");
+            }
+        }
+
+        foreach (var activityId in profile.Activities ?? [])
+        {
+            if (registry.Contains(activityId) && !registry.TryGet<ActivityDef>(activityId, out _))
+            {
+                report.Errors.Add($"Agent profile '{profile.Id}' activity '{activityId}' is not an activity def.");
+            }
         }
 
         foreach (var entityDef in profile.Entities)
@@ -147,5 +195,197 @@ public sealed class AiContentValidator(ConditionRegistry conditions, TaskRegistr
                 report.Errors.Add($"FSM brain '{brain.Id}' state '{pair.Key}' has unknown steering type '{steeringType}'.");
             }
         }
+    }
+
+    private void ValidateBehaviorTree(BehaviorTreeDef tree, DefRegistry registry, ContentLoadReport report, IFormulaEngine formulas)
+    {
+        if (tree.Root.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+        {
+            report.Errors.Add($"Behavior tree '{tree.Id}' has no 'root'.");
+            return;
+        }
+
+        ValidateBtNode(tree.Root, $"{tree.Id}.root", registry, report, formulas);
+
+        // subtree reference cycles (the builder degrades them to fail leaves,
+        // but they are always an authoring error)
+        var visiting = new HashSet<string>(StringComparer.Ordinal) { tree.Id };
+        DetectSubtreeCycle(tree, tree.Id, visiting, registry, report);
+    }
+
+    private static void DetectSubtreeCycle(BehaviorTreeDef tree, string rootId, HashSet<string> visiting, DefRegistry registry, ContentLoadReport report)
+    {
+        foreach (var subtreeId in BehaviorTreeDef.CollectSubtrees(tree.Root))
+        {
+            if (!visiting.Add(subtreeId))
+            {
+                report.Errors.Add($"Behavior tree '{rootId}' has a subtree reference cycle through '{subtreeId}'.");
+                continue;
+            }
+
+            if (registry.TryGet<BehaviorTreeDef>(subtreeId, out var subtree))
+            {
+                DetectSubtreeCycle(subtree, rootId, visiting, registry, report);
+            }
+
+            visiting.Remove(subtreeId);
+        }
+    }
+
+    private void ValidateBtNode(JsonElement node, string owner, DefRegistry registry, ContentLoadReport report, IFormulaEngine formulas)
+    {
+        if (node.ValueKind != JsonValueKind.Object)
+        {
+            report.Errors.Add($"[{owner}] behavior tree node is not an object.");
+            return;
+        }
+
+        if (node.TryGetProperty("task", out _))
+        {
+            tasks.ValidateList([node], owner, registry, formulas, report);
+            return;
+        }
+
+        if (node.TryGetProperty("condition", out var condition))
+        {
+            List<JsonElement> list = condition.ValueKind == JsonValueKind.Array ? condition.EnumerateArray().ToList() : [condition];
+            conditions.ValidateList(list, owner, registry, formulas, report);
+            return;
+        }
+
+        if (node.TryGetProperty("subtree", out var subtree))
+        {
+            if (subtree.ValueKind != JsonValueKind.String)
+            {
+                report.Errors.Add($"[{owner}] 'subtree' must be a behavior tree ID string.");
+            }
+            else if (registry.Contains(subtree.GetString()!) && !registry.TryGet<BehaviorTreeDef>(subtree.GetString()!, out _))
+            {
+                report.Errors.Add($"[{owner}] subtree '{subtree.GetString()}' is not a behavior tree def.");
+            }
+
+            return; // dangling refs are caught by the link pass
+        }
+
+        if (!Rpg.Effects.JsonArgs.TryGetString(node, "node", out var kind))
+        {
+            report.Errors.Add($"[{owner}] behavior tree node needs one of 'node', 'task', 'condition', or 'subtree'.");
+            return;
+        }
+
+        switch (kind)
+        {
+            case "Sequence" or "Selector":
+                if (node.TryGetProperty("children", out var children) && children.ValueKind == JsonValueKind.Array && children.GetArrayLength() > 0)
+                {
+                    var index = 0;
+                    foreach (var child in children.EnumerateArray())
+                    {
+                        ValidateBtNode(child, $"{owner}.{kind}[{index++}]", registry, report, formulas);
+                    }
+                }
+                else
+                {
+                    report.Errors.Add($"[{owner}] {kind} requires a non-empty 'children' array.");
+                }
+
+                break;
+
+            case "Inverter" or "RepeatUntilFail" or "Cooldown" or "ConditionGate":
+                if (kind == "Cooldown" && Rpg.Effects.JsonArgs.GetDouble(node, "seconds", 1.0) <= 0)
+                {
+                    report.Errors.Add($"[{owner}] Cooldown 'seconds' must be positive.");
+                }
+
+                if (kind == "ConditionGate")
+                {
+                    if (node.TryGetProperty("when", out var when) && when.ValueKind == JsonValueKind.Array)
+                    {
+                        conditions.ValidateList(when.EnumerateArray().ToList(), owner, registry, formulas, report);
+                    }
+                    else
+                    {
+                        report.Errors.Add($"[{owner}] ConditionGate requires a 'when' condition array.");
+                    }
+                }
+
+                if (node.TryGetProperty("child", out var only))
+                {
+                    ValidateBtNode(only, $"{owner}.{kind}", registry, report, formulas);
+                }
+                else
+                {
+                    report.Errors.Add($"[{owner}] {kind} requires a 'child'.");
+                }
+
+                break;
+
+            default:
+                report.Errors.Add($"[{owner}] unknown behavior tree node '{kind}'.");
+                break;
+        }
+    }
+
+    private static void ValidateUtilityEvaluator(UtilityEvaluatorDef evaluator, ContentLoadReport report, IFormulaEngine formulas)
+    {
+        if (evaluator.Factors.Count == 0)
+        {
+            report.Errors.Add($"Utility evaluator '{evaluator.Id}' declares no factors.");
+        }
+
+        foreach (var factor in evaluator.Factors)
+        {
+            if (!formulas.TryParse(factor.Formula, out var error))
+            {
+                report.Errors.Add($"Utility evaluator '{evaluator.Id}' factor formula '{factor.Formula}': {error}");
+            }
+
+            if (factor.Weight <= 0)
+            {
+                report.Errors.Add($"Utility evaluator '{evaluator.Id}' factor '{factor.Formula}' has non-positive weight.");
+            }
+        }
+    }
+
+    private static void ValidateNeed(NeedDef need, ContentLoadReport report)
+    {
+        if (string.IsNullOrWhiteSpace(need.Key))
+        {
+            report.Errors.Add($"Need '{need.Id}' has no 'key' (the identifier formulas use).");
+        }
+
+        if (need.Initial is < 0 or > 1)
+        {
+            report.Errors.Add($"Need '{need.Id}' initial value must be 0–1.");
+        }
+
+        if (need.DecayPerSecond < 0)
+        {
+            report.Errors.Add($"Need '{need.Id}' has a negative decay rate.");
+        }
+    }
+
+    private void ValidateActivity(ActivityDef activity, DefRegistry registry, ContentLoadReport report, IFormulaEngine formulas)
+    {
+        if (activity.Satisfies.Count == 0)
+        {
+            report.Errors.Add($"Activity '{activity.Id}' satisfies no needs — the selector can never score it.");
+        }
+
+        foreach (var pair in activity.Satisfies)
+        {
+            if (registry.Contains(pair.Key) && !registry.TryGet<NeedDef>(pair.Key, out _))
+            {
+                report.Errors.Add($"Activity '{activity.Id}' satisfies '{pair.Key}', which is not a need def.");
+            }
+        }
+
+        if (!formulas.TryParse(activity.Cost, out var error))
+        {
+            report.Errors.Add($"Activity '{activity.Id}' cost formula: {error}");
+        }
+
+        conditions.ValidateList(activity.Conditions, $"{activity.Id}.conditions", registry, formulas, report);
+        tasks.ValidateList(activity.Tasks, $"{activity.Id}.tasks", registry, formulas, report);
     }
 }

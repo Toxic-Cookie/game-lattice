@@ -18,6 +18,26 @@
     "patrolPoints": [[6, 0, 6], [6, 0, -6], [-6, 0, -6], [-6, 0, 6]]
   },
   {
+    "id": "profile_patron",
+    "type": "agent",
+    "description": "Tavern patron: needs-driven utility selection inside a behavior tree (M4b).",
+    "entities": ["entity_patron"],
+    "brain": "bt",
+    "behaviorTree": "bt_patron",
+    "thinkInterval": 0.1,
+    "conditions": "conditions_default",
+    "needs": ["need_thirst", "need_rest", "need_social"],
+    "activities": ["activity_drink", "activity_rest", "activity_chat"],
+    "hostileTags": ["wolf"],
+    "sensors": [
+      { "kind": "visual", "range": 6, "fov": 360, "sensitivity": 0.6 },
+      { "kind": "auditory", "range": 8 }
+    ],
+    "walkSpeed": 1.6,
+    "runSpeed": 3.2,
+    "alertDecaySeconds": 3.0
+  },
+  {
     "id": "profile_rat",
     "type": "agent",
     "description": "Rat-tier critter: two-state FSM, dim eyes, zero planner overhead (the F.E.A.R. lesson).",

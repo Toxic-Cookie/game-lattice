@@ -1,4 +1,5 @@
 using Lattice.Ai.Tasks;
+using Lattice.Ai.Utility;
 using Lattice.Core.Content;
 using Lattice.Core.Formulas;
 using Lattice.Core.Hosting.Standalone;
@@ -22,6 +23,9 @@ public sealed class AiValidationTests : IDisposable
         var formulas = new NCalcFormulaEngine(new LatticeRandom(0));
         var conditions = ConditionRegistry.CreateDefault();
         conditions.Register(new AgentConditionEvaluator());
+        conditions.Register(new AgentMetaCondition());
+        conditions.Register(new UtilityAtLeastCondition());
+        conditions.Register(new NeedBelowCondition());
         registry.Validate(report, formulas);
         new AiContentValidator(conditions, TaskRegistry.CreateDefault()).Validate(registry, report, formulas);
         return report;
@@ -117,5 +121,144 @@ public sealed class AiValidationTests : IDisposable
         var report = Validate();
 
         Assert.Contains(report.Errors, e => e.Contains("unknown brain tier 'goap'"));
+    }
+
+    [Fact]
+    public void BtBrainProfileWithoutTreeDef_IsError()
+    {
+        _host.WriteContent("ai.json", """
+            [ { "id": "conditions_default", "type": "conditions", "names": [] },
+              { "id": "profile_x", "type": "agent", "brain": "bt" } ]
+            """);
+
+        var report = Validate();
+
+        Assert.Contains(report.Errors, e => e.Contains("declares no 'behaviorTree'"));
+    }
+
+    [Fact]
+    public void UnknownBtNodeKind_IsError()
+    {
+        _host.WriteContent("bt.json", """
+            { "id": "btree_x", "type": "btree", "root": { "node": "Parallel", "children": [] } }
+            """);
+
+        var report = Validate();
+
+        Assert.Contains(report.Errors, e => e.Contains("unknown behavior tree node 'Parallel'"));
+    }
+
+    [Fact]
+    public void SequenceWithoutChildren_IsError()
+    {
+        _host.WriteContent("bt.json", """
+            { "id": "btree_x", "type": "btree", "root": { "node": "Sequence" } }
+            """);
+
+        var report = Validate();
+
+        Assert.Contains(report.Errors, e => e.Contains("requires a non-empty 'children' array"));
+    }
+
+    [Fact]
+    public void ConditionGateWithoutWhen_IsError()
+    {
+        _host.WriteContent("bt.json", """
+            { "id": "btree_x", "type": "btree", "root": {
+                "node": "ConditionGate", "child": { "task": "Wait", "seconds": 1 } } }
+            """);
+
+        var report = Validate();
+
+        Assert.Contains(report.Errors, e => e.Contains("requires a 'when' condition array"));
+    }
+
+    [Fact]
+    public void SubtreeCycle_IsError()
+    {
+        _host.WriteContent("bt.json", """
+            [ { "id": "btree_a", "type": "btree", "root": { "subtree": "btree_b" } },
+              { "id": "btree_b", "type": "btree", "root": { "subtree": "btree_a" } } ]
+            """);
+
+        var report = Validate();
+
+        Assert.Contains(report.Errors, e => e.Contains("subtree reference cycle"));
+    }
+
+    [Fact]
+    public void BtTaskLeafPayload_IsValidated()
+    {
+        _host.WriteContent("bt.json", """
+            { "id": "btree_x", "type": "btree", "root": { "task": "Backflip" } }
+            """);
+
+        var report = Validate();
+
+        Assert.Contains(report.Errors, e => e.Contains("unknown task type 'Backflip'"));
+    }
+
+    [Fact]
+    public void UtilityEvaluatorWithBadFormula_IsError()
+    {
+        _host.WriteContent("utility.json", """
+            { "id": "utility_x", "type": "utility", "factors": [ { "formula": "1 +" } ] }
+            """);
+
+        var report = Validate();
+
+        Assert.Contains(report.Errors, e => e.Contains("utility_x") && e.Contains("factor formula"));
+    }
+
+    [Fact]
+    public void UtilityEvaluatorWithoutFactors_IsError()
+    {
+        _host.WriteContent("utility.json", """
+            { "id": "utility_x", "type": "utility" }
+            """);
+
+        var report = Validate();
+
+        Assert.Contains(report.Errors, e => e.Contains("declares no factors"));
+    }
+
+    [Fact]
+    public void ActivitySatisfyingANonNeed_IsError()
+    {
+        _host.WriteContent("ai.json", """
+            [ { "id": "entity_x", "type": "entity" },
+              { "id": "activity_x", "type": "activity", "satisfies": { "entity_x": 0.5 },
+                "tasks": [ { "task": "Wait", "seconds": 1 } ] } ]
+            """);
+
+        var report = Validate();
+
+        Assert.Contains(report.Errors, e => e.Contains("'entity_x', which is not a need def"));
+    }
+
+    [Fact]
+    public void AgentMetaWithUnknownState_IsError()
+    {
+        _host.WriteContent("bt.json", """
+            { "id": "btree_x", "type": "btree", "root": {
+                "node": "ConditionGate", "when": [ { "type": "AgentMeta", "is": "Panicking" } ],
+                "child": { "task": "Wait", "seconds": 1 } } }
+            """);
+
+        var report = Validate();
+
+        Assert.Contains(report.Errors, e => e.Contains("AgentMeta requires 'is'"));
+    }
+
+    [Fact]
+    public void NeedWithOutOfRangeInitial_IsError()
+    {
+        _host.WriteContent("need.json", """
+            { "id": "need_x", "type": "need", "key": "X", "initial": 1.5 }
+            """);
+
+        var report = Validate();
+
+        Assert.Contains(report.Errors, e => e.Contains("initial value must be 0–1"));
     }
 }

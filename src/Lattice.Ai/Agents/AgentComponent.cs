@@ -66,6 +66,12 @@ public sealed class AgentComponent
     /// <summary>Sticky bits set/cleared by tasks (SetCondition/ClearCondition); survive the per-frame sensor refresh.</summary>
     public uint ManualConditions;
 
+    /// <summary>Need values (0–1, 1 = satisfied) keyed by need def ID; decayed every tick by the agent system.</summary>
+    public Dictionary<string, double> Needs { get; } = new(StringComparer.Ordinal);
+
+    /// <summary>Seconds accumulated since the brain last thought (tick-rate decoupling, ch06 §6.9).</summary>
+    public double ThinkAccumulator { get; set; }
+
     public MetaState Meta { get; set; } = MetaState.Idle;
 
     /// <summary>Sim time of the last threat-ish perception (drives Alert decay).</summary>
