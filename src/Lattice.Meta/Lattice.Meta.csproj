@@ -7,6 +7,8 @@
     <PackageId>GameLattice</PackageId>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <!-- No build output means no pdbs; nuget.org 400s on a pdb-less snupkg. -->
+    <IncludeSymbols>false</IncludeSymbols>
   </PropertyGroup>
 
   <ItemGroup>
