@@ -1,0 +1,38 @@
+<Project>
+
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)..'))" />
+
+  <!-- NuGet packaging for the shipped libraries. "Lattice"/"Lattice.Core" are taken on
+       nuget.org, so package IDs use the GameLattice.* prefix; assembly names and
+       namespaces remain Lattice.*. -->
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>Game$(MSBuildProjectName)</PackageId>
+    <Authors>Toxic_Cookie</Authors>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/Toxic-Cookie/game-lattice</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Toxic-Cookie/game-lattice</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>game;rpg;framework;ai;goap;htn;behavior-tree;narrative;simulation;unity;godot</PackageTags>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Description Condition="'$(MSBuildProjectName)' == 'Lattice.Core'">Engine-agnostic, JSON-driven RPG framework core: def registry with link pass, event bus, lifecycle boot, NCalc formulas with dice, deterministic PCG32 RNG, save/load.</Description>
+    <Description Condition="'$(MSBuildProjectName)' == 'Lattice.Rpg'">RPG systems for Game Lattice: stats, derived attributes, inventories, loot tables, items, equipment, and progression — all defined in JSON content.</Description>
+    <Description Condition="'$(MSBuildProjectName)' == 'Lattice.Narrative'">Narrative layer for Game Lattice: Yarn-style dialogue, quests with event-bus counters, and reward flows driven by JSON content.</Description>
+    <Description Condition="'$(MSBuildProjectName)' == 'Lattice.Ai'">AI suite for Game Lattice: five brain tiers over one task vocabulary — FSM, schedules, behavior trees with needs/utility, GOAP with reservation flanking, and HTN — plus sensors, group agents, and the Collective.</Description>
+    <Description Condition="'$(MSBuildProjectName)' == 'Lattice.World'">World simulation for Game Lattice: persisted deterministic clock/calendar, day phases, Markov weather, seasons, and deterministic grid A* with per-profile costs and node reservation.</Description>
+    <Description Condition="'$(MSBuildProjectName)' == 'Lattice.Tooling'">Command-line tooling for Game Lattice content: validate content trees, export JSON schemas, and generate content manifests. Install as a dotnet tool; invoke as 'lattice'.</Description>
+    <Description Condition="'$(MSBuildProjectName)' == 'Lattice.Meta'">Game Lattice: an engine-agnostic, JSON-driven RPG framework (netstandard2.1, Unity/Godot compatible). Meta-package that references all framework libraries.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(RepoRoot)README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>

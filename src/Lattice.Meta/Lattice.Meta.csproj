@@ -1,14 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- Dependencies-only meta-package: `dotnet add package GameLattice` pulls every
+       framework library. No build output ships (NU5128 is the expected no-lib warning). -->
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Lattice.Tooling</RootNamespace>
-    <AssemblyName>lattice</AssemblyName>
-    <!-- Ships as a dotnet tool: dotnet tool install GameLattice.Tooling; invoke as `lattice`. -->
-    <PackAsTool>true</PackAsTool>
-    <ToolCommandName>lattice</ToolCommandName>
-    <RollForward>Major</RollForward>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <PackageId>GameLattice</PackageId>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

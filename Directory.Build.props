@@ -1,6 +1,7 @@
 <Project>
 
   <PropertyGroup>
+    <!-- Local-dev fallback; release builds override via -p:Version (see .github/workflows/release.yml). -->
     <Version>0.1.0</Version>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -9,6 +10,8 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisLevel>latest</AnalysisLevel>
     <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
+    <!-- Only src/ projects pack; src/Directory.Build.props flips this back on. -->
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
 </Project>
