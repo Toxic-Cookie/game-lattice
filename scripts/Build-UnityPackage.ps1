@@ -3,7 +3,7 @@
 Builds the Unity UPM package (com.gamelattice.lattice) for a given version.
 
 .DESCRIPTION
-Compiles packaging/unity/Lattice.UnityBundle.csproj to collect the full Lattice
+Compiles packaging/bundle/Lattice.Bundle.csproj to collect the full Lattice
 dependency closure, stages the UPM layout from packaging/unity/upm, generates
 deterministic Unity .meta files (GUID = MD5 of package-relative path, so GUIDs are
 stable across releases and machines), and emits:
@@ -31,10 +31,10 @@ if (-not $OutputDir) { $OutputDir = Join-Path $repoRoot 'artifacts' }
 $packageName = 'com.gamelattice.lattice'
 
 Write-Host "Building dependency closure..."
-dotnet build (Join-Path $repoRoot 'packaging/unity/Lattice.UnityBundle.csproj') -c Release
+dotnet build (Join-Path $repoRoot 'packaging/bundle/Lattice.Bundle.csproj') -c Release
 if ($LASTEXITCODE -ne 0) { throw "dotnet build failed" }
 
-$binDir = Join-Path $repoRoot 'packaging/unity/bin/Release/netstandard2.1'
+$binDir = Join-Path $repoRoot 'packaging/bundle/bin/Release/netstandard2.1'
 $staging = Join-Path $OutputDir 'upm-staging'
 $pkgDir = Join-Path $staging 'package'
 if (Test-Path $staging) { Remove-Item $staging -Recurse -Force }
@@ -50,7 +50,7 @@ Copy-Item (Join-Path $repoRoot 'LICENSE') (Join-Path $pkgDir 'LICENSE.md')
 # Bundle every assembly except the collector project's own output. Lattice pdbs ride
 # along for usable stack traces; dependency pdbs don't exist in the NuGet lib folders.
 Get-ChildItem $binDir -File |
-    Where-Object { $_.Name -notlike 'Lattice.UnityBundle.*' -and $_.Extension -in '.dll', '.pdb' } |
+    Where-Object { $_.Name -notlike 'Lattice.Bundle.*' -and $_.Extension -in '.dll', '.pdb' } |
     Copy-Item -Destination $runtimeDir
 
 # --- Unity .meta generation -------------------------------------------------------

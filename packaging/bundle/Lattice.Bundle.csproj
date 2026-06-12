@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!-- Not a shipped library: builds the full Lattice dependency closure into one output
-       folder (CopyLocalLockFileAssemblies) so scripts/Build-UnityPackage.ps1 can collect
-       every DLL the UPM package must bundle. Unity has no NuGet restore, so transitive
-       packages (NCalc, System.Text.Json, ...) ship inside the package. -->
+       folder (CopyLocalLockFileAssemblies) so the Unity and Godot packaging scripts can
+       collect every DLL those engines must bundle (no NuGet restore at import time):
+       NCalc, YarnSpinner, System.Text.Json, and friends ship inside the packages. -->
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
