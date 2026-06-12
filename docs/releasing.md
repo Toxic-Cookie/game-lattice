@@ -11,8 +11,7 @@ merged PR). No manual steps are part of the regular flow.
 | `GameLattice.Tooling` (dotnet tool, command `lattice`) | GitHub Release; nuget.org when `NUGET_API_KEY` is set |
 | `com.gamelattice.lattice-<v>.tgz` (Unity UPM tarball) | GitHub Release |
 | `upm` branch + `upm/<v>` tag (flat UPM layout) | Git-URL installs; OpenUPM builds from these tags |
-| `game-lattice-addon-<v>.zip` (Godot `addons/game_lattice`) | GitHub Release |
-| `godot-addon` branch + `godot/<v>` tag | Godot Asset Library downloads repo archives of this branch |
+| `game-lattice-addon-<v>.zip` (Godot `addons/game_lattice`) | GitHub Release; uploaded manually to the Godot Asset Store (no API yet) |
 
 The Unity and Godot artifacts bundle the full dependency closure (NCalc, YarnSpinner,
 System.Text.Json, ...) collected by `packaging/bundle/Lattice.Bundle.csproj`, because
@@ -56,19 +55,21 @@ After the **first** release has pushed an `upm/<v>` tag:
 3. Submit — it opens a PR against `openupm/openupm`; once merged, OpenUPM's pipelines
    automatically build every future `upm/<v>` tag. No secrets needed in this repo.
 
-### Godot Asset Library
+### Godot Asset Store
 
-The least robust leg (the AssetLib is in maintenance mode pending the Godot Asset
-Store, and every edit passes human moderation):
+We target the new store at <https://store.godotengine.org/> (the legacy Asset Library
+is headed for read-only). The store is in beta and **has no upload API yet** — a CLI
+for CI automation is on its roadmap
+([godot-asset-store-tracker#15](https://github.com/godotengine/godot-asset-store-tracker/issues/15));
+until it ships, Godot publishing is the one manual leg of the pipeline:
 
-1. After the first release, manually submit the asset at
-   <https://godotengine.org/asset-library/asset/edit> — point it at this repo with the
-   **`godot-addon` branch commit** as the download commit (the AssetLib downloads repo
-   archives, and that branch contains the bare `addons/game_lattice` layout).
-2. Once approved, note the asset id from its URL and add three repo secrets:
-   `GODOT_ASSETLIB_USERNAME`, `GODOT_ASSETLIB_PASSWORD`, `GODOT_ASSETLIB_ASSET_ID`.
-3. Each release then submits an edit (new `version_string` + download commit) via the
-   AssetLib API; expect a moderation delay before it appears publicly.
+1. One-time: create the asset via *Upload Asset* at <https://store.godotengine.org/>
+   (license Apache-2.0; `media/thumbnail-600x300.png` works as the image).
+2. Per release: the workflow emits a reminder notice — download
+   `game-lattice-addon-<v>.zip` from the GitHub release and upload it as a new
+   download version on the asset, pasting the release notes as the changelog.
+3. When the store CLI ships, add it to the *Publish* steps in
+   `.github/workflows/release.yml` and delete step 2 from this list.
 
 ## Package identity
 

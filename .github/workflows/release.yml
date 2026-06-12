@@ -6,9 +6,9 @@ name: Release
 #   - PR label release:minor / release:major -> bump that part instead
 #   - PR label release:skip, or "[skip release]" in the head commit message
 #     (for direct pushes, which can't carry labels) -> no release
-# Publishing steps are gated on secrets so the pipeline degrades gracefully:
-# without them the GitHub Release (nupkgs, UPM tarball, Godot zip) still ships.
-# One-time registry setup lives in docs/releasing.md.
+# Publishing steps degrade gracefully: nuget.org is gated on its secret, and the
+# GitHub Release (nupkgs, UPM tarball, Godot zip) always ships. One-time registry
+# setup lives in docs/releasing.md.
 
 on:
   push:
@@ -148,45 +148,12 @@ jobs:
           git tag "upm/$VERSION"
           git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" upm "upm/$VERSION"
 
-      - name: Publish godot-addon branch
-        if: steps.version.outputs.skip != 'true'
-        id: godot_branch
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          set -euo pipefail
-          cd artifacts/godot-staging
-          git init -q -b godot-addon
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -qm "game_lattice addon $VERSION"
-          git tag "godot/$VERSION"
-          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" godot-addon "godot/$VERSION"
-          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-
-      - name: Update Godot Asset Library
+      # Godot Asset Store (store.godotengine.org): no upload API yet — versions are
+      # uploaded manually from the release zip until the planned store CLI ships
+      # (https://github.com/godotengine/godot-asset-store-tracker/issues/15).
+      - name: Godot Asset Store reminder
         if: steps.version.outputs.skip != 'true'
         env:
-          ASSETLIB_USERNAME: ${{ secrets.GODOT_ASSETLIB_USERNAME }}
-          ASSETLIB_PASSWORD: ${{ secrets.GODOT_ASSETLIB_PASSWORD }}
-          ASSETLIB_ASSET_ID: ${{ secrets.GODOT_ASSETLIB_ASSET_ID }}
           VERSION: ${{ steps.version.outputs.version }}
-          ADDON_SHA: ${{ steps.godot_branch.outputs.sha }}
         run: |
-          set -euo pipefail
-          if [ -z "$ASSETLIB_USERNAME" ] || [ -z "$ASSETLIB_PASSWORD" ] || [ -z "$ASSETLIB_ASSET_ID" ]; then
-            echo "::notice::Godot AssetLib secrets not set; skipping AssetLib update (see docs/releasing.md)."
-            exit 0
-          fi
-          api=https://godotengine.org/asset-library/api
-          token=$(curl -sf -X POST "$api/login" \
-            -H 'Content-Type: application/json' \
-            -d "$(jq -n --arg u "$ASSETLIB_USERNAME" --arg p "$ASSETLIB_PASSWORD" '{username: $u, password: $p}')" \
-            | jq -r .token)
-          curl -sf -X POST "$api/asset/$ASSETLIB_ASSET_ID/edit" \
-            -H 'Content-Type: application/json' \
-            -d "$(jq -n --arg t "$token" --arg v "$VERSION" --arg c "$ADDON_SHA" \
-              '{token: $t, version_string: $v, download_commit: $c}')"
-          echo "::notice::AssetLib edit submitted for v$VERSION; it now waits in the human moderation queue."
+          echo "::notice::Godot Asset Store has no upload API yet: upload game-lattice-addon-$VERSION.zip from the GitHub release manually (see docs/releasing.md)."

@@ -17,11 +17,11 @@ dotnet add package GameLattice
 ```
 
 Use this addon when you want vendored, offline DLLs checked into your project, or
-when installing from the Godot Asset Library.
+when installing from the Godot Asset Store.
 
 ## Using the addon
 
-1. Copy `addons/game_lattice/` into your project (the Asset Library import does
+1. Copy `addons/game_lattice/` into your project (the Asset Store import does
    this for you).
 2. Reference the assemblies from your project's `.csproj`:
 

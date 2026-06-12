@@ -10,7 +10,7 @@ GameLattice.props that references them, README, LICENSE, VERSION), and emits:
   <OutputDir>/game-lattice-addon-<Version>.zip
 
 The zip has a top-level addons/ folder, the layout the Godot editor and Asset
-Library importer expect. Runs on Windows PowerShell 7+ and pwsh on Linux CI.
+Store importer expect. Runs on Windows PowerShell 7+ and pwsh on Linux CI.
 
 .EXAMPLE
 pwsh scripts/Build-GodotAddon.ps1 -Version 0.1.1
