@@ -4,7 +4,8 @@ name: Release
 #   - no v* tag yet        -> use <Version> from Directory.Build.props as-is
 #   - default              -> patch bump of the latest v* tag
 #   - PR label release:minor / release:major -> bump that part instead
-#   - PR label release:skip -> no release
+#   - PR label release:skip, or "[skip release]" in the head commit message
+#     (for direct pushes, which can't carry labels) -> no release
 # Publishing steps are gated on secrets so the pipeline degrades gracefully:
 # without them the GitHub Release (nupkgs, UPM tarball, Godot zip) still ships.
 # One-time registry setup lives in docs/releasing.md.
@@ -41,6 +42,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          if git log -1 --format=%B "$GITHUB_SHA" | grep -qiF '[skip release]'; then
+            echo "[skip release] in commit message; not releasing."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           labels=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" \
             --jq '[.[0].labels[]?.name] | join(",")' 2>/dev/null || echo "")
           echo "PR labels: ${labels:-none}"
