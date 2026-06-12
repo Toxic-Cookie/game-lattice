@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <!-- Game Lattice cover (1920x1080, Godot Asset Store image size).
+       The 600x300 thumbnail composition, scaled 3.2x onto a 16:9 canvas with the
+       gradient painted full-bleed. Render: media/cover-1920x1080.png via headless
+       Edge/Chrome screenshot. Keep in sync with media/thumbnail.svg. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1120"/>
+      <stop offset="1" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="title" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#94a3b8"/>
+    </linearGradient>
+    <filter id="glow" x="-150%" y="-150%" width="400%" height="400%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+
+  <g transform="translate(0,60) scale(3.2)">
+    <!-- lattice: two node constellations framing the title -->
+    <g stroke="#334155" stroke-width="1.2" opacity="0.9">
+      <!-- left cluster -->
+      <line x1="38" y1="52" x2="108" y2="34"/>
+      <line x1="38" y1="52" x2="86" y2="118"/>
+      <line x1="108" y1="34" x2="86" y2="118"/>
+      <line x1="108" y1="34" x2="166" y2="86"/>
+      <line x1="86" y1="118" x2="26" y2="168"/>
+      <line x1="86" y1="118" x2="166" y2="86"/>
+      <line x1="86" y1="118" x2="150" y2="170"/>
+      <line x1="26" y1="168" x2="118" y2="205"/>
+      <line x1="118" y1="205" x2="58" y2="254"/>
+      <line x1="118" y1="205" x2="150" y2="170"/>
+      <line x1="166" y1="86" x2="230" y2="40"/>
+      <line x1="166" y1="86" x2="150" y2="170"/>
+      <line x1="150" y1="170" x2="196" y2="245"/>
+      <line x1="118" y1="205" x2="196" y2="245"/>
+      <!-- right cluster (mirror) -->
+      <line x1="562" y1="52" x2="492" y2="34"/>
+      <line x1="562" y1="52" x2="514" y2="118"/>
+      <line x1="492" y1="34" x2="514" y2="118"/>
+      <line x1="492" y1="34" x2="434" y2="86"/>
+      <line x1="514" y1="118" x2="574" y2="168"/>
+      <line x1="514" y1="118" x2="434" y2="86"/>
+      <line x1="514" y1="118" x2="450" y2="170"/>
+      <line x1="574" y1="168" x2="482" y2="205"/>
+      <line x1="482" y1="205" x2="542" y2="254"/>
+      <line x1="482" y1="205" x2="450" y2="170"/>
+      <line x1="434" y1="86" x2="370" y2="40"/>
+      <line x1="434" y1="86" x2="450" y2="170"/>
+      <line x1="450" y1="170" x2="404" y2="245"/>
+      <line x1="482" y1="205" x2="404" y2="245"/>
+    </g>
+    <!-- faint spans tying the clusters together behind the text -->
+    <g stroke="#334155" stroke-width="1" opacity="0.45">
+      <line x1="230" y1="40" x2="370" y2="40"/>
+      <line x1="196" y1="245" x2="404" y2="245"/>
+    </g>
+
+    <!-- nodes -->
+    <g fill="#475569">
+      <circle cx="38" cy="52" r="3"/>
+      <circle cx="108" cy="34" r="3"/>
+      <circle cx="26" cy="168" r="3"/>
+      <circle cx="118" cy="205" r="3"/>
+      <circle cx="58" cy="254" r="3"/>
+      <circle cx="150" cy="170" r="3"/>
+      <circle cx="230" cy="40" r="3"/>
+      <circle cx="196" cy="245" r="3"/>
+      <circle cx="562" cy="52" r="3"/>
+      <circle cx="492" cy="34" r="3"/>
+      <circle cx="574" cy="168" r="3"/>
+      <circle cx="482" cy="205" r="3"/>
+      <circle cx="542" cy="254" r="3"/>
+      <circle cx="450" cy="170" r="3"/>
+      <circle cx="370" cy="40" r="3"/>
+      <circle cx="404" cy="245" r="3"/>
+    </g>
+    <g fill="#22d3ee" filter="url(#glow)">
+      <circle cx="86" cy="118" r="4"/>
+      <circle cx="514" cy="118" r="4"/>
+    </g>
+    <g fill="#f59e0b" filter="url(#glow)">
+      <circle cx="166" cy="86" r="3.5"/>
+      <circle cx="434" cy="86" r="3.5"/>
+    </g>
+
+    <!-- wordmark -->
+    <text x="130" y="166" text-anchor="middle" font-family="Consolas, 'Cascadia Code', monospace"
+          font-size="60" fill="#22d3ee" opacity="0.9">{</text>
+    <text x="470" y="166" text-anchor="middle" font-family="Consolas, 'Cascadia Code', monospace"
+          font-size="60" fill="#22d3ee" opacity="0.9">}</text>
+    <text x="300" y="150" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif"
+          font-size="46" font-weight="700" letter-spacing="1" fill="url(#title)">Game Lattice</text>
+    <text x="300" y="188" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif"
+          font-size="15" font-style="italic" fill="#94a3b8">C# provides the engine, JSON provides the soul.</text>
+
+    <!-- footer -->
+    <text x="300" y="258" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif"
+          font-size="12" letter-spacing="4" fill="#64748b">UNITY &#183; GODOT &#183; .NET &#8212; DATA-DRIVEN RPG FRAMEWORK</text>
+  </g>
+</svg>
