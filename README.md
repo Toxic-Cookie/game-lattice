@@ -26,6 +26,18 @@ never requires recompilation. The data formats are designed to be authorable by 
 | `plan/` | The end-to-end implementation plan (start at `plan/00-overview.md`) |
 | `research/` | The emergent-AI research corpus the design is grounded in |
 
+## Install
+
+Every merge to `main` cuts a [GitHub release](https://github.com/Toxic-Cookie/game-lattice/releases)
+with all artifacts; see `docs/releasing.md` for how the pipeline works.
+
+| Host | How |
+|---|---|
+| .NET / NuGet | `dotnet add package GameLattice` (meta-package), or pick `GameLattice.Core` / `.Rpg` / `.Narrative` / `.Ai` / `.World` individually |
+| `lattice` CLI | `dotnet tool install -g GameLattice.Tooling` |
+| Unity 2021.2+ | OpenUPM `com.gamelattice.lattice`, git URL `https://github.com/Toxic-Cookie/game-lattice.git#upm`, or the `.tgz` from a release (see `packaging/unity/upm/README.md`) |
+| Godot 4 .NET | NuGet (preferred), or the `game-lattice-addon-*.zip` from a release / Asset Library (see `packaging/godot/README.md`) |
+
 ## Quick start
 
 ```bash
