@@ -1,0 +1,186 @@
+name: Release
+
+# Cuts a release on every push to main (i.e. every merged PR). Versioning:
+#   - no v* tag yet        -> use <Version> from Directory.Build.props as-is
+#   - default              -> patch bump of the latest v* tag
+#   - PR label release:minor / release:major -> bump that part instead
+#   - PR label release:skip -> no release
+# Publishing steps are gated on secrets so the pipeline degrades gracefully:
+# without them the GitHub Release (nupkgs, UPM tarball, Godot zip) still ships.
+# One-time registry setup lives in docs/releasing.md.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Compute version
+        id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          labels=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" \
+            --jq '[.[0].labels[]?.name] | join(",")' 2>/dev/null || echo "")
+          echo "PR labels: ${labels:-none}"
+          if [[ ",$labels," == *",release:skip,"* ]]; then
+            echo "release:skip label present; not releasing."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          last_tag=$(git tag --list 'v*' --sort=-v:refname | head -n1)
+          if [ -z "$last_tag" ]; then
+            version=$(sed -n 's@.*<Version>\(.*\)</Version>.*@\1@p' Directory.Build.props)
+            echo "No release tag yet; using Directory.Build.props version $version"
+          else
+            base="${last_tag#v}"
+            IFS=. read -r major minor patch <<< "$base"
+            if [[ ",$labels," == *",release:major,"* ]]; then
+              version="$((major + 1)).0.0"
+            elif [[ ",$labels," == *",release:minor,"* ]]; then
+              version="$major.$((minor + 1)).0"
+            else
+              version="$major.$minor.$((patch + 1))"
+            fi
+          fi
+          if git rev-parse -q --verify "refs/tags/v$version" > /dev/null; then
+            echo "Tag v$version already exists; skipping (re-run of an already-released commit)."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Releasing v$version"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        if: steps.version.outputs.skip != 'true'
+        run: dotnet build game-lattice.slnx -c Release -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Test
+        if: steps.version.outputs.skip != 'true'
+        run: dotnet test game-lattice.slnx -c Release --no-build -p:Version=${{ steps.version.outputs.version }} --verbosity normal
+
+      - name: Pack NuGet packages
+        if: steps.version.outputs.skip != 'true'
+        run: dotnet pack game-lattice.slnx -c Release -p:Version=${{ steps.version.outputs.version }} -o artifacts/nuget
+
+      - name: Build Unity UPM package
+        if: steps.version.outputs.skip != 'true'
+        shell: pwsh
+        run: ./scripts/Build-UnityPackage.ps1 -Version ${{ steps.version.outputs.version }}
+
+      - name: Build Godot addon
+        if: steps.version.outputs.skip != 'true'
+        shell: pwsh
+        run: ./scripts/Build-GodotAddon.ps1 -Version ${{ steps.version.outputs.version }}
+
+      - name: Create GitHub release
+        if: steps.version.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          gh release create "v$VERSION" \
+            artifacts/nuget/*.nupkg \
+            artifacts/nuget/*.snupkg \
+            "artifacts/com.gamelattice.lattice-$VERSION.tgz" \
+            "artifacts/game-lattice-addon-$VERSION.zip" \
+            --title "v$VERSION" \
+            --target "$GITHUB_SHA" \
+            --generate-notes
+
+      - name: Publish to nuget.org
+        if: steps.version.outputs.skip != 'true'
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$NUGET_API_KEY" ]; then
+            echo "::notice::NUGET_API_KEY secret not set; skipping nuget.org publish (see docs/releasing.md)."
+            exit 0
+          fi
+          dotnet nuget push "artifacts/nuget/*.nupkg" \
+            --api-key "$NUGET_API_KEY" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      - name: Publish upm branch + tag (git-URL installs and OpenUPM)
+        if: steps.version.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          cd artifacts/upm-staging/package
+          git init -q -b upm
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -qm "com.gamelattice.lattice $VERSION"
+          git tag "upm/$VERSION"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" upm "upm/$VERSION"
+
+      - name: Publish godot-addon branch
+        if: steps.version.outputs.skip != 'true'
+        id: godot_branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          cd artifacts/godot-staging
+          git init -q -b godot-addon
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -qm "game_lattice addon $VERSION"
+          git tag "godot/$VERSION"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" godot-addon "godot/$VERSION"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Update Godot Asset Library
+        if: steps.version.outputs.skip != 'true'
+        env:
+          ASSETLIB_USERNAME: ${{ secrets.GODOT_ASSETLIB_USERNAME }}
+          ASSETLIB_PASSWORD: ${{ secrets.GODOT_ASSETLIB_PASSWORD }}
+          ASSETLIB_ASSET_ID: ${{ secrets.GODOT_ASSETLIB_ASSET_ID }}
+          VERSION: ${{ steps.version.outputs.version }}
+          ADDON_SHA: ${{ steps.godot_branch.outputs.sha }}
+        run: |
+          set -euo pipefail
+          if [ -z "$ASSETLIB_USERNAME" ] || [ -z "$ASSETLIB_PASSWORD" ] || [ -z "$ASSETLIB_ASSET_ID" ]; then
+            echo "::notice::Godot AssetLib secrets not set; skipping AssetLib update (see docs/releasing.md)."
+            exit 0
+          fi
+          api=https://godotengine.org/asset-library/api
+          token=$(curl -sf -X POST "$api/login" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -n --arg u "$ASSETLIB_USERNAME" --arg p "$ASSETLIB_PASSWORD" '{username: $u, password: $p}')" \
+            | jq -r .token)
+          curl -sf -X POST "$api/asset/$ASSETLIB_ASSET_ID/edit" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -n --arg t "$token" --arg v "$VERSION" --arg c "$ADDON_SHA" \
+              '{token: $t, version_string: $v, download_commit: $c}')"
+          echo "::notice::AssetLib edit submitted for v$VERSION; it now waits in the human moderation queue."
