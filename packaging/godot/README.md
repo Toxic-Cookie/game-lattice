@@ -7,6 +7,12 @@ Project Settings → Plugins; the addon simply puts the assemblies in your proje
 
 Full documentation: <https://github.com/Toxic-Cookie/game-lattice>
 
+New to the framework? The
+[interactive Godot playground](https://github.com/Toxic-Cookie/game-lattice-godot-example)
+is a ready-to-run Godot project with nine hands-on lessons over a live, hot-reloading
+session — the fastest way to see what Game Lattice does before wiring it into your own
+project.
+
 ## Prefer NuGet if you can
 
 For most Godot .NET projects the cleaner install is NuGet, which handles updates
