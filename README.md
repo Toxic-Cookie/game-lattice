@@ -1,44 +1,66 @@
 # Game Lattice
 
+![Game Lattice](https://raw.githubusercontent.com/Toxic-Cookie/game-lattice/main/media/thumbnail-600x300.png)
+
+[![CI](https://github.com/Toxic-Cookie/game-lattice/actions/workflows/ci.yml/badge.svg)](https://github.com/Toxic-Cookie/game-lattice/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Toxic-Cookie/game-lattice)](https://github.com/Toxic-Cookie/game-lattice/releases)
+[![NuGet](https://img.shields.io/nuget/v/GameLattice)](https://www.nuget.org/packages/GameLattice)
+[![License](https://img.shields.io/github/license/Toxic-Cookie/game-lattice)](https://github.com/Toxic-Cookie/game-lattice/blob/main/LICENSE)
+
 An engine-agnostic, data-driven RPG framework: **C# provides the engine, JSON provides the soul.**
 
-The C# core is an interpreter over a fixed vocabulary of effect, condition, and task primitives;
-all game content — items, spells, quests, NPC brains, weather, economies — is declared in JSON and
-never requires recompilation. The data formats are designed to be authorable by LLMs as well as humans.
+The C# core is a *fixed interpreter* over a closed vocabulary of effect, condition, and task
+primitives. Every gameplay noun — items, spells, quests, NPC brains, weather, economies — is a
+JSON *def* that hot-loads into a running session without recompiling. The data formats are
+designed to be authorable by LLMs as well as humans: paste
+[`docs/llm-guide.md`](https://github.com/Toxic-Cookie/game-lattice/blob/main/docs/llm-guide.md)
+into a model's context and it can write working content.
 
-## Layout
+## Why it's interesting
 
-| Path | What |
-|---|---|
-| `src/Lattice.Core` | Core engine seam (netstandard2.1 — Unity/Godot compatible) |
-| `src/Lattice.Rpg` | RPG module: stats, status effects, effect/condition primitives, inventory, loot, trade |
-| `src/Lattice.Narrative` | Narrative module: Yarn + JSON-tree dialogue, quests, smart-object interactions |
-| `src/Lattice.Ai` | AI module: sensors, condition bitmask world model, FSM/schedule/BT/GOAP/HTN brain tiers, utility needs, groups & collective |
-| `src/Lattice.World` | World simulation: clock & calendar, day phases, Markov weather, season overlays, grid A* navigation |
-| `src/Lattice.Tooling` | `lattice` CLI: validate, manifest, schemas |
-| `schemas/` | Generated JSON schemas (CI fails on drift) |
-| `docs/llm-guide.md` | The condensed authoring guide — paste it into a model's context |
-| `docs/architecture.md` | Layer diagram, system map, and extension walkthroughs for humans |
-| `docs/manifest.md` | Generated content manifest — the dictionary LLMs read before authoring |
-| `samples/Lattice.Demo` | Headless console host / development workbench |
-| `tests/` | xunit test projects; `Lattice.Demos.Tests` plays the demo scenes over shipped content |
-| `content/` | Game content JSON — including the three demo scenes (`scenes.json`) |
-| `plan/` | The end-to-end implementation plan (start at `plan/00-overview.md`) |
-| `research/` | The emergent-AI research corpus the design is grounded in |
+- **Content never touches C#.** A new spell, a blueprint NPC variant, or a two-step quest is
+  JSON that hot-loads and runs. Adding a new *primitive* is a deliberate, small C# event.
+- **Five AI tiers, one vocabulary.** NPC brains scale from two-state FSMs through Half-Life-style
+  schedules and reactive behavior trees up to GOAP and HTN planners — all sharing the same
+  task/condition verbs, so content can move an NPC between tiers without rewriting it. The
+  dungeon demo reproduces the F.E.A.R. flanking result with three GOAP soldiers.
+- **Engine-agnostic by construction.** The libraries target `netstandard2.1` (Unity 2021.2+,
+  Godot 4 .NET, any modern .NET host) and never reference an engine; hosts implement five small
+  interfaces (clock/log, content source, navigation, animation, physics queries).
+- **Deterministic and testable.** Everything above the hosting seams runs under a seeded RNG —
+  the three demo scenes play out headless in CI as simulation tests against golden transcripts.
+- **Built for modding.** Blueprint inheritance with array patches (`$append`/`$remove`),
+  content packs that overlay base content, generated JSON schemas for every def kind, and a
+  validation CLI with link-pass and AI-reachability warnings.
+
+## What's in the box
+
+| Package | Library | What it does |
+|---|---|---|
+| `GameLattice.Core` | `Lattice.Core` | Def registry with blueprint + link passes, event bus, lifecycle boot, NCalc formulas with dice, seeded PCG32 RNG, save/load, hosting seams |
+| `GameLattice.Rpg` | `Lattice.Rpg` | Stats and derived attributes, status effects, effect/condition primitives, inventory, equipment, loot tables, trade, path-string UI bindings |
+| `GameLattice.Narrative` | `Lattice.Narrative` | Yarn + JSON-tree dialogue, event-driven quests, smart objects with reservation |
+| `GameLattice.Ai` | `Lattice.Ai` | Profile-calibrated sensors, condition-bitmask world model, the five brain tiers, needs/utility, group agents, the Collective, player-aware meta-sensors |
+| `GameLattice.World` | `Lattice.World` | Persisted game clock and calendar, day phases, Markov weather, season overlays, deterministic grid A* with per-profile costs and node reservation |
+| `GameLattice` | — | Meta-package that references all five libraries |
+| `GameLattice.Tooling` | `Lattice.Tooling` | The `lattice` CLI (dotnet tool): `validate`, `manifest`, `schemas` |
 
 ## Install
 
-Every merge to `main` cuts a [GitHub release](https://github.com/Toxic-Cookie/game-lattice/releases)
-with all artifacts; see `docs/releasing.md` for how the pipeline works.
-
 | Host | How |
 |---|---|
-| .NET / NuGet | `dotnet add package GameLattice` (meta-package), or pick `GameLattice.Core` / `.Rpg` / `.Narrative` / `.Ai` / `.World` individually |
+| .NET / NuGet | `dotnet add package GameLattice` — or pick individual `GameLattice.*` packages |
 | `lattice` CLI | `dotnet tool install -g GameLattice.Tooling` |
-| Unity 2021.2+ | OpenUPM `com.gamelattice.lattice`, git URL `https://github.com/Toxic-Cookie/game-lattice.git#upm`, or the `.tgz` from a release (see `packaging/unity/upm/README.md`) |
-| Godot 4 .NET | NuGet (preferred), or the `game-lattice-addon-*.zip` from a release / Asset Library (see `packaging/godot/README.md`) |
+| Unity 2021.2+ | OpenUPM `com.gamelattice.lattice`, git URL `https://github.com/Toxic-Cookie/game-lattice.git#upm`, or the `.tgz` from a [release](https://github.com/Toxic-Cookie/game-lattice/releases) — see [`packaging/unity/upm/README.md`](https://github.com/Toxic-Cookie/game-lattice/blob/main/packaging/unity/upm/README.md) |
+| Godot 4 .NET | NuGet (preferred), or the `game-lattice-addon-*.zip` from a release / Asset Library — see [`packaging/godot/README.md`](https://github.com/Toxic-Cookie/game-lattice/blob/main/packaging/godot/README.md) |
+
+Every merge to `main` cuts a [GitHub release](https://github.com/Toxic-Cookie/game-lattice/releases)
+automatically — see [`docs/releasing.md`](https://github.com/Toxic-Cookie/game-lattice/blob/main/docs/releasing.md).
 
 ## Quick start
+
+Working from the repo requires the **.NET 10 SDK** (the shipped libraries themselves target
+`netstandard2.1`):
 
 ```bash
 dotnet test                                   # build + run all tests (incl. the demo scenes)
@@ -47,48 +69,90 @@ dotnet run --project samples/Lattice.Demo -- --scene tavern    # or: dungeon | q
 dotnet run --project src/Lattice.Tooling -- validate content
 ```
 
+### Hosting the framework
+
+Modules attach onto a `GameSession` in dependency order, then content loads once:
+
+```csharp
+var session   = GameSession.Create(services, LatticeWorld.AddDefTypes(LatticeAi.CreateDefTypes()));
+var rpg       = LatticeRpg.Attach(session);
+var narrative = LatticeNarrative.Attach(session, rpg);
+var ai        = LatticeAi.Attach(session, rpg, narrative);
+var world     = LatticeWorld.Attach(session, rpg);   // composition is additive
+session.LoadContent();
+session.Boot("lifecycle_tavern");                     // a lifecycle def is a bootable scene
+```
+
+`services` is a `HostServices` built from five interfaces; standalone implementations
+(seeded RNG host, directory content source with hot reload, grid A*, stub animation,
+permissive physics) ship in the box, so the framework runs headless with zero engine code.
+
+### Authoring content
+
+Defs are plain JSON — this is the shipped healing potion; effects compose, no item class exists:
+
+```json
+{ "id": "item_healing_potion", "type": "item", "name": "Healing Potion",
+  "tags": ["consumable"], "basePrice": 12, "consumeOnUse": true,
+  "useActions": [ { "type": "Heal", "formula": "10" },
+                  { "type": "RemoveStatus", "status": "status_poison" } ] }
+```
+
+Formulas are strings evaluated against the live world (`"Str * 2 + 4"`, `"2d6 + 4"`,
+`"CAN_SEE_ENEMY * 50"`); cross-references are ids checked by a link pass at load. Start with
+[`docs/llm-guide.md`](https://github.com/Toxic-Cookie/game-lattice/blob/main/docs/llm-guide.md),
+then keep [`docs/manifest.md`](https://github.com/Toxic-Cookie/game-lattice/blob/main/docs/manifest.md)
+(every registered def and primitive) beside you.
+
+## The demo scenes
+
+Three scenes ship as content (`content/scenes.json`) and double as CI simulation tests:
+
+- **The Tavern** — a full game day: the innkeeper's routine flips with day phases, patrons run
+  needs-driven activity loops, Charisma haggles bar prices, a look-away meta-sensor interrupts
+  dialogue, and a patron comments when the rain rolls in.
+- **The Dungeon** — three GOAP soldiers flank via exclusive attack-node reservation, rat-tier
+  critters provably never invoke the planner, kills roll loot tables, a poison trap ticks, and
+  an HTN boss falls back from ranged to melee.
+- **The Quest-Giver** — `quest_wolves` end-to-end (accept → hunt → report → reward) across a
+  mid-quest save/load.
+
+The demo shell exposes the whole machine: `agent`, `senses`, `bt`, `utility`, `needs`, `dump`,
+`trace`, `groups`, `bb`, `roles`, `path`, `time`, `events`, `quests`, `perf`, `hud`.
+
+## Documentation
+
+| Doc | Audience |
+|---|---|
+| [`docs/llm-guide.md`](https://github.com/Toxic-Cookie/game-lattice/blob/main/docs/llm-guide.md) | Content authors (human or LLM) — the condensed authoring guide |
+| [`docs/manifest.md`](https://github.com/Toxic-Cookie/game-lattice/blob/main/docs/manifest.md) | Generated dictionary of every def and primitive vocabulary |
+| [`docs/architecture.md`](https://github.com/Toxic-Cookie/game-lattice/blob/main/docs/architecture.md) | Framework developers — layers, hosting seams, extension walkthroughs |
+| [`docs/releasing.md`](https://github.com/Toxic-Cookie/game-lattice/blob/main/docs/releasing.md) | The automated release pipeline and registry setup |
+| [`plan/00-overview.md`](https://github.com/Toxic-Cookie/game-lattice/blob/main/plan/00-overview.md) | The end-to-end implementation plan (milestones M0–M7) |
+| [`research/`](https://github.com/Toxic-Cookie/game-lattice/tree/main/research) | The emergent-AI research corpus the design is grounded in |
+| [`CHANGELOG.md`](https://github.com/Toxic-Cookie/game-lattice/blob/main/CHANGELOG.md) | What shipped, milestone by milestone |
+
+## Repository layout
+
+| Path | What |
+|---|---|
+| `src/` | The six shipped projects (`Lattice.Core/.Rpg/.Narrative/.Ai/.World/.Tooling`) |
+| `content/` | Game content JSON — including the three demo scenes |
+| `schemas/` | Generated JSON schemas, one per def kind (CI fails on drift) |
+| `samples/Lattice.Demo` | Headless console host / development workbench |
+| `tests/` | xunit projects; `Lattice.Demos.Tests` plays the demo scenes over shipped content |
+| `packaging/`, `scripts/` | Unity/Godot package builders used by the release pipeline |
+| `docs/`, `plan/`, `research/` | See [Documentation](#documentation) |
+
 ## Status
 
-**M7 (demonstration & polish) complete — v0.1.0:** three demo scenes ship as content
-(`lifecycle_tavern`, `lifecycle_dungeon`, `lifecycle_quest`) and run headless in CI as
-simulation tests over the *shipped* `content/` tree. The Tavern plays a full game day —
-the innkeeper's routine flips with the day phases, patrons run needs-driven activity
-loops, Charisma haggles bar prices, a look-away meta-sensor interrupts dialogue, and a
-patron comments when the rain rolls in — against a golden transcript. The Dungeon
-reproduces the F.E.A.R. flanking result (three GOAP soldiers, exclusive attack-node
-reservation, distinct nodes held simultaneously), audits the rat problem with the new
-planner-invocation counters (`perf` command), rolls loot on kills, ticks a poison trap,
-and shows HTN method fallback on a boss (ranged while the arrow lasts, melee after). The
-Quest-Giver runs `quest_wolves` end-to-end across a mid-quest save/load. Docs shipped for
-both audiences: `docs/llm-guide.md` (the ≤4k-token authoring guide) and
-`docs/architecture.md` (layers, seams, extension walkthroughs). Earlier:
-**M6 (LLM & modding integration) complete:** blueprint inheritance (`"inherits"` with
-deep-merge + explicit `$append`/`$remove` array operators, cross-file chains, cycle/kind
-checks); content packs (`pack.json` directories overlay the base content in
-priority/dependency order); the `lattice manifest` exporter (every def + the full primitive
-vocabularies sourced from `[PrimitiveDoc]` on the executors + catalogs + formula scope, in
-markdown or `--json`); matured schemas (`x-lattice-ref` link annotations, primitive-union
-discriminators with registered names, `$schema`-header wrapper files, CI drift gate);
-rat-problem and GOAP-reachability validation warnings; and path-string UI binding
-(`Player.stats.stat_hp`, event-driven, never polled) rendered as console gauges. The
-acceptance is literal: LLM-shaped JSON — a spell, a blueprint NPC, a 2-step quest — hot-loads
-into a running session and functions, no C# changes, no restart. Earlier:
-**M5 (world & environment) complete:** a persisted, deterministic game clock and calendar
-publishing `Time.*` events and `Hour`/`Day`/`Season` formula identifiers; day phases that set
-`is_night`-style flags (guards sleep, shops close — all data); Markov weather whose states hold
-global flags (rain halves auditory range, so stealth weather emerges from a number) and run
-tag-scoped effect primitives at boundaries; seasons as registry-redirect overlays (winter swaps
-loot tables) that also bias weather; and a deterministic grid A* navigation service with
-context-dependent costs (tall grass impassable on patrol, crossable when alert) and
-node-reservation splitting. Earlier: **M4 (the full AI suite) complete.** Five data-driven brain tiers sharing one task/condition/
-action vocabulary: two-state FSMs, Half-Life condition-gated schedules, behavior trees with
-reactive preemption, GOAP (budgeted A*, cost-profile personalities, flanking from smart-object
-reservation), and HTN (ordered methods, backtracking decomposition, traced). Above the
-individuals: non-physical group agents whose role *slots* produce herd structure, scoped
-blackboards whose per-key staleness makes unwitnessed kills genuinely unwitnessed, an
-alert-level ladder, a Collective that spawns, budgets, and passport-recycles populations, and
-declarative meta-sensors that turn player behavior patterns into ordinary conditions. Debug
-commands ship with every system: `agent`, `senses`, `bt`, `utility`, `needs`, `dump`, `trace`,
-`groups`, `bb`, `roles`. Plus the M1–M3 stack: registry, events, formulas, persistence, hot
-reload, stats/effects, dialogue, quests, and smart objects. See `plan/00-overview.md` §4 for
-the roadmap M0–M7.
+All planned milestones (M0–M7) are complete and shipping as **v0.1.x**: the data backbone,
+RPG systems, narrative, the full five-tier AI suite, world simulation, modding/LLM
+integration, and the three demo scenes. See the
+[CHANGELOG](https://github.com/Toxic-Cookie/game-lattice/blob/main/CHANGELOG.md) for the
+detailed history and [`plan/00-overview.md`](https://github.com/Toxic-Cookie/game-lattice/blob/main/plan/00-overview.md)
+for what's next.
+
+## License
+
+[Apache-2.0](https://github.com/Toxic-Cookie/game-lattice/blob/main/LICENSE)
