@@ -210,32 +210,53 @@ code {
   filter: brightness(1.1);
 }
 
+/* Virtualized def table (grid rows; only visible rows render) */
 .tablewrap {
   flex: 1;
   overflow: auto;
+  position: relative;
 }
-table {
-  width: 100%;
-  border-collapse: collapse;
+.vrow {
+  display: grid;
+  grid-template-columns: 130px 250px minmax(220px, 1fr) 180px 210px;
+  align-items: center;
 }
-thead th {
+.vrow > div {
+  padding: 0 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vhead {
   position: sticky;
   top: 0;
+  z-index: 2;
+  height: 34px;
   background: var(--panel);
   color: var(--muted);
   font-weight: 500;
-  text-align: left;
-  padding: 8px 12px;
   border-bottom: 1px solid var(--border);
-  z-index: 1;
 }
-tbody td {
-  padding: 7px 12px;
+.vbody {
+  position: relative;
+  width: 100%;
+}
+.vbody .vrow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   border-bottom: 1px solid var(--border);
-  vertical-align: top;
 }
-tbody tr:hover {
+.vbody .vrow:hover {
   background: var(--panel);
+}
+.row {
+  cursor: pointer;
+}
+.vbody .vrow.selected,
+.vbody .vrow.selected:hover {
+  background: #1b2740;
 }
 .kindtag {
   display: inline-block;
@@ -252,22 +273,10 @@ tbody tr:hover {
 .c-id code {
   color: var(--text);
 }
-.c-desc {
-  max-width: 520px;
-}
 .empty {
   text-align: center;
   color: var(--muted);
   padding: 30px;
-}
-tbody tr.row {
-  cursor: pointer;
-}
-tbody tr.selected {
-  background: #1b2740;
-}
-tbody tr.selected:hover {
-  background: #1b2740;
 }
 
 /* Editor panel */

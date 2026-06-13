@@ -197,10 +197,15 @@ pick a different existing file. Overrides persist in `studio.config.json` beside
         the recent reload log — the "validation mirrors the running engine" affordance.
   - Verified: a save bumps `reloads` + `lastReloaded`; a broken file write flips `healthy=false` (rejected,
     108 defs preserved) and recovers on delete; 278 tests green.
-- **M8.x — Polish [deferred]**
-  - [ ] **Photino.NET native-window shell** (deferred from M8.1): replace the browser-launch fallback
-        with a real desktop window; resolve the default `--content` path against the repo root, not cwd.
-  - [ ] Virtualize the browser table once the corpus outgrows a plain render.
+- **M8.x — Polish** *(done)*
+  - [x] **Photino.NET native-window shell**: the host starts non-blocking, then a native window
+        (WebView2) loads the SPA; `--browser` opens a browser instead, `--no-window` serves headless,
+        and a window-creation failure falls back to serve-only. Default `--content` now walks up from
+        the working dir to find a `content/` folder. *(Window opens and the SPA loads — verified by the
+        WebView's API requests; full pixel render isn't capturable in this automation env (GDI can't
+        read WebView2's GPU surface) — the identical server renders perfectly in a browser.)*
+  - [x] **Virtualized def table** (`@tanstack/react-virtual`): a grid-row list rendering only visible
+        rows (+overscan) with a sticky header; scales to thousands. Verified render + scroll.
 
 > **Separate enhancement (out of scope for this roadmap): doc-comment quality pass.** Now that the def
 > types' XML `<summary>` comments are surfaced to *content authors* (editor field hints, kind browser,

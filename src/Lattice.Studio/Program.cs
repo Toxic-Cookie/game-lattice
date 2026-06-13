@@ -2,13 +2,14 @@ using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Lattice.Studio;
+using Photino.NET;
 
-// Lattice.Studio — the visual content editor's local host (plan/08, M8.1).
-// Serves the read-only API over the real content pipeline plus the built SPA.
+// Lattice.Studio — the visual content editor (plan/08). Serves the API over the
+// real content pipeline plus the built SPA, in a native desktop window.
 //
-//   dotnet run --project src/Lattice.Studio -- --content content/ [--port N] [--no-open]
+//   dotnet run --project src/Lattice.Studio -- [--content <dir>] [--port N] [--no-window] [--browser]
 
-var contentDir = GetOption(args, "--content") ?? "content";
+var contentDir = ResolveContentDir(GetOption(args, "--content"));
 if (!Directory.Exists(contentDir))
 {
     Console.Error.WriteLine($"error: content directory not found: {Path.GetFullPath(contentDir)}");
@@ -16,7 +17,8 @@ if (!Directory.Exists(contentDir))
 }
 
 var port = int.TryParse(GetOption(args, "--port"), out var p) ? p : 5210;
-var open = !args.Contains("--no-open");
+var useWindow = !args.Contains("--no-window");
+var useBrowser = args.Contains("--browser");
 
 var service = new StudioContentService(contentDir);
 var live = new LiveSession(service.ContentDir, service.Context.Types);
@@ -111,19 +113,68 @@ if (Directory.Exists(wwwroot))
 }
 
 var url = $"http://127.0.0.1:{port}/";
+
+// Start the web host without blocking, then own the main thread with the
+// native window (or just wait, headless).
+app.StartAsync().GetAwaiter().GetResult();
 Console.WriteLine($"Lattice.Studio → {url}  (content: {service.ContentDir})");
-if (open)
+
+if (useBrowser)
 {
-    app.Lifetime.ApplicationStarted.Register(() => TryOpenBrowser(url));
+    TryOpenBrowser(url);
+    app.WaitForShutdown();
+}
+else if (useWindow)
+{
+    try
+    {
+        new PhotinoWindow()
+            .SetTitle("Lattice Studio")
+            .SetUseOsDefaultSize(false)
+            .SetSize(1480, 920)
+            .Center()
+            .Load(new Uri(url))
+            .WaitForClose();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"(native window unavailable: {ex.Message}) — open {url} in a browser.");
+        app.WaitForShutdown();
+    }
+}
+else
+{
+    app.WaitForShutdown(); // --no-window: serve only (automation/headless)
 }
 
-app.Run();
+app.StopAsync().GetAwaiter().GetResult();
 return 0;
 
 static string? GetOption(string[] args, string name)
 {
     var i = Array.IndexOf(args, name);
     return i >= 0 && i + 1 < args.Length ? args[i + 1] : null;
+}
+
+// Default content dir: walk up from the working directory to find a `content/`
+// folder, so running from anywhere in the repo (or via `dotnet run`) just works.
+static string ResolveContentDir(string? requested)
+{
+    if (!string.IsNullOrWhiteSpace(requested))
+    {
+        return requested;
+    }
+
+    for (var dir = new DirectoryInfo(Directory.GetCurrentDirectory()); dir is not null; dir = dir.Parent)
+    {
+        var candidate = Path.Combine(dir.FullName, "content");
+        if (Directory.Exists(candidate))
+        {
+            return candidate;
+        }
+    }
+
+    return "content";
 }
 
 static void TryOpenBrowser(string url)

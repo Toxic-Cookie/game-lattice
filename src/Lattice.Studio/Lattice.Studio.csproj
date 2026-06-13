@@ -13,6 +13,11 @@
     <ProjectReference Include="..\Lattice.Tooling\Lattice.Tooling.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Native desktop-window shell (WebView2 on Windows) hosting the local SPA. -->
+    <PackageReference Include="Photino.NET" Version="4.0.16" />
+  </ItemGroup>
+
   <!-- The built React SPA lives in wwwroot (gitignored build artifact). The web/
        sources are committed; `npm run build` (or publish) populates wwwroot. -->
   <ItemGroup>

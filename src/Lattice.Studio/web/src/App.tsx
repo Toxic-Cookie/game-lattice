@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { api, type Catalog, type ContentIndex, type JsonSchema, type LiveStatus, type ValidationResult } from "./api.ts";
 import { Editor } from "./Editor.tsx";
 import { NewDefDialog } from "./NewDefDialog.tsx";
@@ -77,6 +78,14 @@ export function App() {
       );
     });
   }, [index, query, kind, file]);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 34,
+    overscan: 12,
+  });
 
   if (error) return <div className="fatal">Failed to load: {error}</div>;
   if (!index) return <div className="loading">Loading content…</div>;
@@ -159,46 +168,43 @@ export function App() {
             </button>
           </div>
 
-          <div className="tablewrap">
-            <table>
-              <thead>
-                <tr>
-                  <th className="c-kind">Kind</th>
-                  <th className="c-id">ID</th>
-                  <th className="c-desc">Description</th>
-                  <th className="c-inh">Inherits</th>
-                  <th className="c-file">File</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((d) => (
-                  <tr
-                    key={d.id}
-                    className={`row ${selected === d.id ? "selected" : ""}`}
-                    onClick={() => select(d.id)}
-                  >
-                    <td className="c-kind">
-                      <span className="kindtag">{d.kind}</span>
-                    </td>
-                    <td className="c-id">
-                      <code>{d.id}</code>
-                    </td>
-                    <td className="c-desc">{d.description}</td>
-                    <td className="c-inh">{d.inherits && <code className="muted">{d.inherits}</code>}</td>
-                    <td className="c-file">
-                      <span className="muted">{d.sourceFile}</span>
-                    </td>
-                  </tr>
-                ))}
-                {rows.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="empty">
-                      No defs match the current filters.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+          <div className="tablewrap" ref={scrollRef}>
+            <div className="vrow vhead">
+              <div className="c-kind">Kind</div>
+              <div className="c-id">ID</div>
+              <div className="c-desc">Description</div>
+              <div className="c-inh">Inherits</div>
+              <div className="c-file">File</div>
+            </div>
+            {rows.length === 0 ? (
+              <div className="empty">No defs match the current filters.</div>
+            ) : (
+              <div className="vbody" style={{ height: rowVirtualizer.getTotalSize() }}>
+                {rowVirtualizer.getVirtualItems().map((vi) => {
+                  const d = rows[vi.index];
+                  return (
+                    <div
+                      key={d.id}
+                      className={`vrow row ${selected === d.id ? "selected" : ""}`}
+                      style={{ transform: `translateY(${vi.start}px)`, height: vi.size }}
+                      onClick={() => select(d.id)}
+                    >
+                      <div className="c-kind">
+                        <span className="kindtag">{d.kind}</span>
+                      </div>
+                      <div className="c-id">
+                        <code>{d.id}</code>
+                      </div>
+                      <div className="c-desc">{d.description}</div>
+                      <div className="c-inh">{d.inherits && <code className="muted">{d.inherits}</code>}</div>
+                      <div className="c-file">
+                        <span className="muted">{d.sourceFile}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </main>
 
