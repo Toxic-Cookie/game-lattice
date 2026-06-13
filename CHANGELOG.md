@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Unity UPM package: stop bundling `Microsoft.CSharp.dll`. The Unity editor references
+  its own copy in every compilation, so the bundled one made any consuming project fail
+  with CS1703 ("multiple assemblies with equivalent identity") until it was deleted by
+  hand. Unity's copy satisfies the dependency closure at runtime.
+
 ## 0.1.0 — 2026-06-11
 
 First complete vertical slice: the framework interprets, the content plays, the docs teach.

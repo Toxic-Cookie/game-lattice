@@ -47,10 +47,16 @@ Set-Content -Path (Join-Path $pkgDir 'package.json') -Value $manifest -NoNewline
 Copy-Item (Join-Path $repoRoot 'packaging/unity/upm/README.md') $pkgDir
 Copy-Item (Join-Path $repoRoot 'LICENSE') (Join-Path $pkgDir 'LICENSE.md')
 
+# Assemblies the Unity editor already references for every compilation; bundling a
+# copy is an instant CS1703 ("multiple assemblies with equivalent identity") in any
+# consuming project. Unity's own Microsoft.CSharp satisfies the closure at runtime.
+$unityProvided = @('Microsoft.CSharp')
+
 # Bundle every assembly except the collector project's own output. Lattice pdbs ride
 # along for usable stack traces; dependency pdbs don't exist in the NuGet lib folders.
 Get-ChildItem $binDir -File |
     Where-Object { $_.Name -notlike 'Lattice.Bundle.*' -and $_.Extension -in '.dll', '.pdb' } |
+    Where-Object { $_.BaseName -notin $unityProvided } |
     Copy-Item -Destination $runtimeDir
 
 # --- Unity .meta generation -------------------------------------------------------

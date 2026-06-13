@@ -51,7 +51,7 @@ into a model's context and it can write working content.
 |---|---|
 | .NET / NuGet | `dotnet add package GameLattice` — or pick individual `GameLattice.*` packages |
 | `lattice` CLI | `dotnet tool install -g GameLattice.Tooling` |
-| Unity 2021.2+ | OpenUPM `com.gamelattice.lattice`, git URL `https://github.com/Toxic-Cookie/game-lattice.git#upm`, or the `.tgz` from a [release](https://github.com/Toxic-Cookie/game-lattice/releases) — see [`packaging/unity/upm/README.md`](https://github.com/Toxic-Cookie/game-lattice/blob/main/packaging/unity/upm/README.md) |
+| Unity 2021.2+ | OpenUPM `com.gamelattice.lattice`, git URL `https://github.com/Toxic-Cookie/game-lattice.git#upm`, or the `.tgz` from a [release](https://github.com/Toxic-Cookie/game-lattice/releases) — see [`packaging/unity/upm/README.md`](https://github.com/Toxic-Cookie/game-lattice/blob/main/packaging/unity/upm/README.md). New to the framework? Start with the [interactive Unity playground](https://github.com/Toxic-Cookie/game-lattice-unity-example) |
 | Godot 4 .NET | NuGet (preferred), or the `game-lattice-addon-*.zip` from a release / [Asset Store](https://store.godotengine.org/) — see [`packaging/godot/README.md`](https://github.com/Toxic-Cookie/game-lattice/blob/main/packaging/godot/README.md). New to the framework? Start with the [interactive Godot playground](https://github.com/Toxic-Cookie/game-lattice-godot-example) |
 
 Every merge to `main` cuts a [GitHub release](https://github.com/Toxic-Cookie/game-lattice/releases)
@@ -125,6 +125,7 @@ The demo shell exposes the whole machine: `agent`, `senses`, `bt`, `utility`, `n
 | Doc | Audience |
 |---|---|
 | [`game-lattice-godot-example`](https://github.com/Toxic-Cookie/game-lattice-godot-example) | Newcomers — nine interactive, hands-on lessons over a live session in Godot 4 .NET |
+| [`game-lattice-unity-example`](https://github.com/Toxic-Cookie/game-lattice-unity-example) | Newcomers — the same nine-lesson playground, hosted in Unity 6 |
 | [`docs/llm-guide.md`](https://github.com/Toxic-Cookie/game-lattice/blob/main/docs/llm-guide.md) | Content authors (human or LLM) — the condensed authoring guide |
 | [`docs/manifest.md`](https://github.com/Toxic-Cookie/game-lattice/blob/main/docs/manifest.md) | Generated dictionary of every def and primitive vocabulary |
 | [`docs/architecture.md`](https://github.com/Toxic-Cookie/game-lattice/blob/main/docs/architecture.md) | Framework developers — layers, hosting seams, extension walkthroughs |
