@@ -233,6 +233,81 @@ function htncompound(def: JsonObject): Graph {
 export const adapters: Record<string, Adapter> = { dialogue, btree, fsmbrain, htncompound };
 export const graphKinds = Object.keys(adapters);
 
+// --- GOAP domain (a whole-corpus view, not a single def) --------------------
+
+/** Kinds whose graph spans every def of the kind rather than one def. */
+export const domainKinds = ["goapaction", "goapgoal"];
+export const allGraphKinds = [...graphKinds, ...domainKinds];
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const predicateText = (obj: any): string =>
+  obj && typeof obj === "object" ? Object.entries(obj).map(([k, v]) => `${k}=${v}`).join(" ∧ ") : "";
+
+/**
+ * The GOAP action graph (ch03 / F.E.A.R.): actions chain when one action's
+ * effect satisfies another's precondition, and reach a goal when an effect
+ * matches its desired state. Built from every goapaction + goapgoal so
+ * cross-file links resolve; the opened def is highlighted.
+ */
+export function goapDomain(actions: JsonObject[], goals: JsonObject[], focus: string): Graph {
+  const nodes: RawNode[] = [];
+  const edges: Edge[] = [];
+
+  for (const a of actions) {
+    const id = String(a.id);
+    const pre = (a as any).preconditions ?? {};
+    const eff = (a as any).effects ?? {};
+    nodes.push({
+      id,
+      data: {
+        tag: "action",
+        tagColor: GREEN,
+        title: id,
+        subtitle: `cost ${(a as any).cost ?? "1"}`,
+        line: Object.keys(pre).length ? `needs ${predicateText(pre)}` : "(no preconditions)",
+        meta: Object.entries(eff).map(([k, v]) => `⇒ ${k}=${v}`),
+        start: id === focus,
+      },
+    });
+  }
+  for (const g of goals) {
+    const id = String(g.id);
+    const want = (g as any).desired ?? {};
+    nodes.push({
+      id,
+      data: {
+        tag: "goal",
+        tagColor: GOLD,
+        title: id,
+        line: `want ${predicateText(want)}`,
+        meta: (g as any).priority ? [`pri ${(g as any).priority}`] : [],
+        terminal: true,
+        start: id === focus,
+      },
+    });
+  }
+
+  const matches = (eff: any, target: any): string[] =>
+    Object.keys(target ?? {}).filter((k) => k in (eff ?? {}) && eff[k] === target[k]);
+
+  for (const a of actions) {
+    const eff = (a as any).effects ?? {};
+    for (const b of actions) {
+      if (a === b) continue;
+      const shared = matches(eff, (b as any).preconditions);
+      if (shared.length) edges.push(edge(String(a.id), String(b.id), shared.join(", "), ACCENT));
+    }
+    for (const g of goals) {
+      const shared = matches(eff, (g as any).desired);
+      if (shared.length) edges.push(edge(String(a.id), String(g.id), shared.join(", "), GOLD));
+    }
+  }
+
+  const roots = actions.filter((a) => Object.keys((a as any).preconditions ?? {}).length === 0).map((a) => String(a.id));
+  return finish(nodes, edges, roots.length ? roots : actions.slice(0, 1).map((a) => String(a.id)));
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 // --- editing (keyed-node kinds only) ----------------------------------------
 
 export interface EditableOps {

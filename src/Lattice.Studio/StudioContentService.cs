@@ -178,6 +178,35 @@ public sealed class StudioContentService
         return new SaveResult("written", true, Validate());
     }
 
+    /// <summary>The raw JSON of every def of a kind (across all files) — for whole-domain views like the GOAP graph.</summary>
+    public JsonArray DefsOfKind(string kind)
+    {
+        var arr = new JsonArray();
+        if (!Context.Types.TryGetClrType(kind, out var clr))
+        {
+            return arr;
+        }
+
+        var docs = new Dictionary<string, ContentDocument>(StringComparer.Ordinal);
+        foreach (var def in Load().AllDefs
+                     .Where(d => d.GetType() == clr && d.SourceFile is not null)
+                     .OrderBy(d => d.Id, StringComparer.Ordinal))
+        {
+            if (!docs.TryGetValue(def.SourceFile!, out var doc))
+            {
+                doc = ContentDocument.Load(Path.Combine(ContentDir, def.SourceFile!));
+                docs[def.SourceFile!] = doc;
+            }
+
+            if (doc.GetDef(def.Id) is { } obj)
+            {
+                arr.Add(obj);
+            }
+        }
+
+        return arr;
+    }
+
     public string Serialize(object value) => JsonSerializer.Serialize(value, Web);
 
     private static string? StringProp(JsonObject obj, string name)

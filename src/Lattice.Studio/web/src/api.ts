@@ -97,6 +97,7 @@ export const api = {
   live: () => getJson<LiveStatus>("/api/live"),
   schemas: () => getJson<SchemaBundle>("/api/schemas"),
   catalog: () => getJson<Catalog>("/api/catalog"),
+  defsOfKind: (kind: string) => getJson<JsonObject[]>(`/api/content/kind/${encodeURIComponent(kind)}`),
   def: (id: string) => getJson<DefPayload>(`/api/content/def/${encodeURIComponent(id)}`),
   save: async (id: string, def: JsonObject): Promise<SaveResult> => {
     const res = await fetch(`/api/content/def/${encodeURIComponent(id)}`, {

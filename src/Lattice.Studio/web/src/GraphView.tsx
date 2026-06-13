@@ -13,7 +13,7 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { api, type JsonObject, type SaveResult } from "./api.ts";
-import { adapters, editable, type EdgeData, type GraphNodeData } from "./graph.ts";
+import { adapters, domainKinds, editable, goapDomain, type EdgeData, type GraphNodeData } from "./graph.ts";
 
 const nodeTypes = { card: GraphCard };
 
@@ -48,13 +48,29 @@ export function GraphView({ id, onClose, onSaved }: Props) {
 
   // Recompute the canvas whenever the def changes (structural edit or first load).
   useEffect(() => {
+    if (!kind) return;
+    // Whole-domain kinds (GOAP) span every def of the kind, not just this one.
+    if (domainKinds.includes(kind)) {
+      let cancelled = false;
+      Promise.all([api.defsOfKind("goapaction"), api.defsOfKind("goapgoal")])
+        .then(([acts, goals]) => {
+          if (cancelled) return;
+          const g = goapDomain(acts, goals, id);
+          setNodes(g.nodes);
+          setEdges(g.edges);
+        })
+        .catch((e) => setError(String(e)));
+      return () => {
+        cancelled = true;
+      };
+    }
     const adapter = adapters[kind];
     if (def && adapter) {
       const g = adapter(def);
       setNodes(g.nodes);
       setEdges(g.edges);
     }
-  }, [def, kind, setNodes, setEdges]);
+  }, [def, kind, id, setNodes, setEdges]);
 
   const mutate = (next: JsonObject) => {
     setDef(next);

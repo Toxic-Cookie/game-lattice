@@ -180,7 +180,12 @@ pick a different existing file. Overrides persist in `studio.config.json` beside
     (`[ { … } ]`), so editing a dialogue node no longer churns sibling `conditions`/`effects`.
     Verified: UI `+ node` + Save writes a minimal diff and validates; add-node+option round-trips
     minimally; 108 defs still no-op; multi-element arrays stay multiline; 278 tests green.
-  - [ ] GOAP precondition/effect views [stretch].
+  - **M8.4c — GOAP action graph** *(done)*: a whole-domain view (not single-def) — `GET /api/content/kind/{kind}`
+    returns all defs of a kind; `goapDomain(actions, goals, focus)` builds the F.E.A.R. action graph:
+    action nodes (cost, `needs` preconditions, `⇒` effects), goal nodes (desired state + priority), edges
+    where an action's effect satisfies another action's precondition or a goal's desired predicate (labeled
+    with the shared predicate). Spans all files so cross-file links resolve; the opened def is highlighted.
+    Read-only (the form edits predicates). Verified on `action_open_fire` (11 actions + 2 goals).
 - **M8.5 — Engine hot-reload preview [stretch]** *(done)*
   - [x] `LiveSession`: Studio hosts a persistent, engine-equivalent content session — the same
         `DirectoryContentSource(watch)` + `HotReloadManager` + pump a running host uses. Any disk change

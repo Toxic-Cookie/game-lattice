@@ -43,6 +43,10 @@ api.MapGet("/validate", (StudioContentService s) =>
 // The live, engine-equivalent content session: what a running host would see.
 api.MapGet("/live", (LiveSession l) => Results.Json(l.Status()));
 
+// All raw defs of a kind (for whole-domain views like the GOAP action graph).
+api.MapGet("/content/kind/{kind}", (string kind, StudioContentService s) =>
+    Results.Text(s.DefsOfKind(kind).ToJsonString(), "application/json"));
+
 // One def's raw JSON (for the form editor) and a minimal-diff save back to its file (M8.2).
 api.MapGet("/content/def/{id}", (string id, StudioContentService s) =>
 {
