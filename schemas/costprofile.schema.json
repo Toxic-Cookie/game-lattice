@@ -25,7 +25,8 @@
       "type": "object",
       "additionalProperties": {
         "type": "string"
-      }
+      },
+      "description": "Action def ID \u2192 cost formula override."
     }
   },
   "required": [

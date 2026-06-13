@@ -206,6 +206,7 @@ function Field(p: FieldProps) {
   const field = (control: ReactNode) => (
     <div className="field">
       {label}
+      {schema?.description && <span className="fieldhint">{schema.description}</span>}
       {control}
     </div>
   );

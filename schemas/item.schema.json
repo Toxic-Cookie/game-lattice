@@ -25,7 +25,8 @@
       "type": "string"
     },
     "slot": {
-      "type": "string"
+      "type": "string",
+      "description": "Slot def ID this item equips into; null = not equippable."
     },
     "stackSize": {
       "type": "number"
@@ -37,21 +38,24 @@
       }
     },
     "basePrice": {
-      "type": "number"
+      "type": "number",
+      "description": "Base price used by shop price formulas (the BasePrice identifier)."
     },
     "consumeOnUse": {
       "type": "boolean"
     },
     "useActions": {
       "type": "array",
-      "items": {}
+      "items": {},
+      "description": "Effect primitives executed on use (source = user, target = use target)."
     },
     "equipEffects": {
       "type": "array",
       "items": {
         "type": "object",
         "properties": {}
-      }
+      },
+      "description": "Modifier primitives active while equipped (PeriodicEffect not allowed here)."
     }
   },
   "required": [

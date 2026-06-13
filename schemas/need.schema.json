@@ -22,13 +22,16 @@
       "x-lattice-ref": "need"
     },
     "key": {
-      "type": "string"
+      "type": "string",
+      "description": "Formula identifier (convention: PascalCase key, e.g. \u0022Thirst\u0022; the def ID goes in structural fields)."
     },
     "initial": {
-      "type": "number"
+      "type": "number",
+      "description": "Starting value, 0\u20131."
     },
     "decayPerSecond": {
-      "type": "number"
+      "type": "number",
+      "description": "Value lost per simulated second."
     }
   },
   "required": [

@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Reflection;
 using System.Text;
 using System.Xml.Linq;
 
@@ -15,18 +16,24 @@ public static class XmlDocs
     private static readonly ConcurrentDictionary<string, XDocument?> Cache = new(StringComparer.Ordinal);
 
     /// <summary>The cleaned, single-paragraph summary for a type, or null when undocumented.</summary>
-    public static string? Summary(Type type)
+    public static string? Summary(Type type) => Lookup(type.Assembly, "T:" + type.FullName);
+
+    /// <summary>The cleaned summary for a property (read from its declaring type's assembly), or null.</summary>
+    public static string? Summary(PropertyInfo property)
+        => property.DeclaringType is { } declaring
+            ? Lookup(declaring.Assembly, $"P:{declaring.FullName}.{property.Name}")
+            : null;
+
+    private static string? Lookup(Assembly assembly, string memberName)
     {
-        if (string.IsNullOrEmpty(type.Assembly.Location))
+        if (string.IsNullOrEmpty(assembly.Location))
         {
             return null;
         }
 
-        var xmlPath = Path.ChangeExtension(type.Assembly.Location, ".xml");
-        var doc = Cache.GetOrAdd(xmlPath, p => File.Exists(p) ? XDocument.Load(p) : null);
-
+        var doc = Cache.GetOrAdd(Path.ChangeExtension(assembly.Location, ".xml"), p => File.Exists(p) ? XDocument.Load(p) : null);
         var summary = doc?.Root?.Element("members")?.Elements("member")
-            .FirstOrDefault(m => (string?)m.Attribute("name") == "T:" + type.FullName)
+            .FirstOrDefault(m => (string?)m.Attribute("name") == memberName)
             ?.Element("summary");
 
         return summary is null ? null : Clean(summary);

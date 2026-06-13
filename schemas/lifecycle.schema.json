@@ -26,7 +26,8 @@
     },
     "globalFlags": {
       "type": "object",
-      "additionalProperties": {}
+      "additionalProperties": {},
+      "description": "Initial global blackboard flags (bool/number/string values)."
     },
     "spawns": {
       "type": "array",

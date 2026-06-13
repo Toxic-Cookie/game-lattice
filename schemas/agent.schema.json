@@ -26,96 +26,115 @@
       "items": {
         "type": "string",
         "x-lattice-ref": "entity"
-      }
+      },
+      "description": "Entity template IDs this profile attaches to."
     },
     "brain": {
-      "type": "string"
+      "type": "string",
+      "description": "Brain tier: \u0022fsm\u0022 or \u0022schedules\u0022 (M4a), \u0022bt\u0022 (M4b), \u0022goap\u0022 (M4c)."
     },
     "fsmBrain": {
       "type": "string",
-      "x-lattice-ref": "fsmbrain"
+      "x-lattice-ref": "fsmbrain",
+      "description": "FSM brain def (brain = \u0022fsm\u0022)."
     },
     "schedules": {
       "type": "array",
       "items": {
         "type": "string",
         "x-lattice-ref": "schedule"
-      }
+      },
+      "description": "Schedule def IDs in priority order, highest first (brain = \u0022schedules\u0022)."
     },
     "behaviorTree": {
       "type": "string",
-      "x-lattice-ref": "btree"
+      "x-lattice-ref": "btree",
+      "description": "Behavior tree def (brain = \u0022bt\u0022)."
     },
     "thinkInterval": {
-      "type": "number"
+      "type": "number",
+      "description": "Seconds between brain ticks; 0 = think every simulation tick (ch06 \u00A76.9 tick-rate decoupling)."
     },
     "needs": {
       "type": "array",
       "items": {
         "type": "string",
         "x-lattice-ref": "need"
-      }
+      },
+      "description": "Need def IDs this agent tracks (decayed per tick; drive the utility selector)."
     },
     "activities": {
       "type": "array",
       "items": {
         "type": "string",
         "x-lattice-ref": "activity"
-      }
+      },
+      "description": "Activity def IDs the PerformActivity task chooses among."
     },
     "goals": {
       "type": "array",
       "items": {
         "type": "string",
         "x-lattice-ref": "goapgoal"
-      }
+      },
+      "description": "GOAP goal def IDs (brain = \u0022goap\u0022)."
     },
     "actions": {
       "type": "array",
       "items": {
         "type": "string",
         "x-lattice-ref": "goapaction"
-      }
+      },
+      "description": "GOAP action def IDs \u2014 the F.E.A.R. action-subset pattern (brain = \u0022goap\u0022)."
     },
     "costProfile": {
       "type": "string",
-      "x-lattice-ref": "costprofile"
+      "x-lattice-ref": "costprofile",
+      "description": "Cost profile def ID overriding action costs (personality as data)."
     },
     "initialBeliefs": {
       "type": "object",
-      "additionalProperties": {}
+      "additionalProperties": {},
+      "description": "Beliefs seeded at spawn (e.g. {\u0022weapon_loaded\u0022: true})."
     },
     "goalHysteresis": {
-      "type": "number"
+      "type": "number",
+      "description": "A new goal must beat the active one\u0027s priority by this margin (ch07 \u00A77.4 oscillation guard)."
     },
     "replanCooldown": {
-      "type": "number"
+      "type": "number",
+      "description": "Minimum seconds between replans (ch07 anti-pattern 1)."
     },
     "rootTask": {
       "type": "string",
-      "x-lattice-ref": "htncompound|goapaction"
+      "x-lattice-ref": "htncompound|goapaction",
+      "description": "Root HTN task ID, compound or primitive (brain = \u0022htn\u0022)."
     },
     "htnInterrupt": {
       "type": "array",
       "items": {
         "type": "string"
-      }
+      },
+      "description": "Condition names whose appearance forces an HTN re-decomposition."
     },
     "passport": {
-      "type": "string"
+      "type": "string",
+      "description": "Group-compatibility tag for collective recycling (HZD Part 4)."
     },
     "metaSensors": {
       "type": "array",
       "items": {
         "type": "string",
         "x-lattice-ref": "metasensor"
-      }
+      },
+      "description": "Meta-sensor def IDs watching player behavior patterns on behalf of this agent."
     },
     "flagConditions": {
       "type": "object",
       "additionalProperties": {
         "type": "string"
-      }
+      },
+      "description": "Condition name \u2192 global flag key: truthy flags set the bit each update (\u0022IS_NIGHT\u0022: \u0022is_night\u0022)."
     },
     "sensors": {
       "type": "array",
@@ -139,13 +158,15 @@
     },
     "conditions": {
       "type": "string",
-      "x-lattice-ref": "conditions"
+      "x-lattice-ref": "conditions",
+      "description": "Condition catalog def ID."
     },
     "hostileTags": {
       "type": "array",
       "items": {
         "type": "string"
-      }
+      },
+      "description": "Tags that mark entities as threats to this agent."
     },
     "walkSpeed": {
       "type": "number"
@@ -154,7 +175,8 @@
       "type": "number"
     },
     "alertDecaySeconds": {
-      "type": "number"
+      "type": "number",
+      "description": "Seconds without threat before Alert decays back to Idle."
     },
     "patrolPoints": {
       "type": "array",
@@ -163,7 +185,8 @@
         "items": {
           "type": "number"
         }
-      }
+      },
+      "description": "Patrol route waypoints ([x,y,z] each) for the patrol_point move target."
     }
   },
   "required": [

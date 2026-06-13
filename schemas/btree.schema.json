@@ -21,7 +21,9 @@
       "description": "Parent def ID (same kind); objects deep-merge, scalars override, arrays replace or take {\u0022$append\u0022/\u0022$remove\u0022} patches.",
       "x-lattice-ref": "btree"
     },
-    "root": {}
+    "root": {
+      "description": "The root node object."
+    }
   },
   "required": [
     "id",

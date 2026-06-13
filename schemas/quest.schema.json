@@ -63,7 +63,8 @@
     },
     "onComplete": {
       "type": "array",
-      "items": {}
+      "items": {},
+      "description": "Effects run when the whole quest completes (target = player)."
     }
   },
   "required": [

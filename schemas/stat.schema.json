@@ -22,25 +22,31 @@
       "x-lattice-ref": "stat"
     },
     "key": {
-      "type": "string"
+      "type": "string",
+      "description": "Formula identifier for this stat. Must be unique across stats."
     },
     "name": {
       "type": "string"
     },
     "min": {
-      "type": "string"
+      "type": "string",
+      "description": "Lower clamp formula (evaluated against the owning entity). Null = unclamped."
     },
     "max": {
-      "type": "string"
+      "type": "string",
+      "description": "Upper clamp formula. Null = unclamped."
     },
     "default": {
-      "type": "string"
+      "type": "string",
+      "description": "Default base value: a formula, or the keywords \u0022min\u0022 / \u0022max\u0022."
     },
     "formula": {
-      "type": "string"
+      "type": "string",
+      "description": "Derived stat: computed from this formula instead of a stored base value."
     },
     "vital": {
-      "type": "boolean"
+      "type": "boolean",
+      "description": "When true, an entity whose current value reaches the stat\u0027s minimum dies."
     }
   },
   "required": [

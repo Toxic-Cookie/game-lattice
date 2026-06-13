@@ -22,7 +22,8 @@
       "x-lattice-ref": "time"
     },
     "minutesPerGameDay": {
-      "type": "number"
+      "type": "number",
+      "description": "Real minutes per full game day (e.g. 20 = a day every 20 wall-clock minutes at 1\u00D7 tick rate)."
     },
     "daysPerSeason": {
       "type": "number"
@@ -32,10 +33,12 @@
       "items": {
         "type": "string",
         "x-lattice-ref": "season"
-      }
+      },
+      "description": "Season def IDs in calendar order."
     },
     "startHour": {
-      "type": "number"
+      "type": "number",
+      "description": "Starting hour of day 1 (0\u201324)."
     }
   },
   "required": [

@@ -25,10 +25,12 @@
       "type": "object",
       "additionalProperties": {
         "type": "number"
-      }
+      },
+      "description": "Need def ID \u2192 value restored when the activity completes."
     },
     "cost": {
-      "type": "string"
+      "type": "string",
+      "description": "Cost formula (relative effort; needs/stats/flags in scope). Floored at 0.05 when scoring."
     },
     "conditions": {
       "type": "array",
@@ -59,7 +61,8 @@
         "required": [
           "type"
         ]
-      }
+      },
+      "description": "Condition primitives gating candidacy (subject = the agent)."
     },
     "tasks": {
       "type": "array",
@@ -88,7 +91,8 @@
         "required": [
           "task"
         ]
-      }
+      },
+      "description": "Ordered task payloads executed when this activity is chosen."
     }
   },
   "required": [

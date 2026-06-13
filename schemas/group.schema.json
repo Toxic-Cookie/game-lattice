@@ -26,28 +26,34 @@
       "items": {
         "type": "string",
         "x-lattice-ref": "role"
-      }
+      },
+      "description": "Role def IDs in fill-priority order (first roles fill first)."
     },
     "staleness": {
       "type": "object",
       "additionalProperties": {
         "type": "number"
-      }
+      },
+      "description": "Per-key staleness thresholds in seconds for member reads (latency is a feature \u2014 HZD Part 5)."
     },
     "alertDecaySeconds": {
-      "type": "number"
+      "type": "number",
+      "description": "Seconds without fresh threat knowledge before the alert level steps down one stage."
     },
     "maxMembers": {
-      "type": "number"
+      "type": "number",
+      "description": "Member capacity (recycling refuses full groups)."
     },
     "minMembers": {
-      "type": "number"
+      "type": "number",
+      "description": "Below this, surviving members become candidates for passport recycling."
     },
     "passports": {
       "type": "array",
       "items": {
         "type": "string"
-      }
+      },
+      "description": "Passports this group accepts when the collective recycles strays."
     }
   },
   "required": [

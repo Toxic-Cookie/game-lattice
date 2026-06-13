@@ -25,10 +25,12 @@
       "type": "string"
     },
     "duration": {
-      "type": "number"
+      "type": "number",
+      "description": "Seconds the effect lasts; 0 or negative = permanent until removed."
     },
     "stacking": {
-      "type": "string"
+      "type": "string",
+      "description": "\u0022refresh\u0022 (reset duration), \u0022stack\u0022 (add stacks up to maxStacks), or \u0022ignore\u0022."
     },
     "maxStacks": {
       "type": "number"

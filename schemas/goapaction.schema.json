@@ -23,24 +23,32 @@
     },
     "preconditions": {
       "type": "object",
-      "additionalProperties": {}
+      "additionalProperties": {},
+      "description": "Predicate map that must match the agent\u0027s state for this action to be applicable."
     },
     "effects": {
       "type": "object",
-      "additionalProperties": {}
+      "additionalProperties": {},
+      "description": "Predicate map this action establishes (applied to beliefs on completion)."
     },
     "cost": {
-      "type": "string"
+      "type": "string",
+      "description": "Cost formula (agent needs/stats/conditions/flags in scope). Evaluated once per plan request."
     },
-    "moveTo": {},
+    "moveTo": {
+      "description": "Where to go first, if anywhere: a MoveTo target spec (\u0022enemy\u0022, \u0022spawn\u0022, [x,y,z], ...)."
+    },
     "speed": {
-      "type": "string"
+      "type": "string",
+      "description": "Movement speed: \u0022walk\u0022 (default) or \u0022run\u0022."
     },
     "animation": {
-      "type": "string"
+      "type": "string",
+      "description": "Animation played after arrival, if any."
     },
     "animationBlocking": {
-      "type": "boolean"
+      "type": "boolean",
+      "description": "Non-interruptible animations block replanning while they play (ch05 \u00A75.6)."
     },
     "runEffects": {
       "type": "array",
@@ -71,7 +79,8 @@
         "required": [
           "type"
         ]
-      }
+      },
+      "description": "RPG effect primitives run on completion (source = agent; target = perceived enemy when known)."
     }
   },
   "required": [

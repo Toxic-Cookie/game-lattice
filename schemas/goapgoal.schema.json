@@ -23,16 +23,19 @@
     },
     "desired": {
       "type": "object",
-      "additionalProperties": {}
+      "additionalProperties": {},
+      "description": "Predicate map describing success."
     },
     "priority": {
-      "type": "string"
+      "type": "string",
+      "description": "Priority formula; 0 (or less) = irrelevant right now."
     },
     "replanRequired": {
       "type": "array",
       "items": {
         "type": "string"
-      }
+      },
+      "description": "Catalog condition names whose *appearance* invalidates the current plan."
     }
   },
   "required": [

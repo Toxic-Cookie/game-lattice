@@ -48,7 +48,7 @@ public static class SchemaGenerator
                 continue; // already declared
             }
 
-            properties[jsonName] = SchemaFor(prop.PropertyType, prop);
+            properties[jsonName] = Described(SchemaFor(prop.PropertyType, prop), prop);
         }
 
         var schema = new JsonObject
@@ -180,11 +180,22 @@ public static class SchemaGenerator
         {
             if (nestedProp.CanWrite)
             {
-                nested[JsonNamingPolicy.CamelCase.ConvertName(nestedProp.Name)] = SchemaFor(nestedProp.PropertyType, nestedProp);
+                nested[JsonNamingPolicy.CamelCase.ConvertName(nestedProp.Name)] = Described(SchemaFor(nestedProp.PropertyType, nestedProp), nestedProp);
             }
         }
 
         return new JsonObject { ["type"] = "object", ["properties"] = nested };
+    }
+
+    /// <summary>Attach a property's XML <c>&lt;summary&gt;</c> as the schema node's description (what this field means).</summary>
+    private static JsonObject Described(JsonObject node, PropertyInfo property)
+    {
+        if (!node.ContainsKey("description") && XmlDocs.Summary(property) is { Length: > 0 } doc)
+        {
+            node["description"] = doc;
+        }
+
+        return node;
     }
 
     /// <summary>A primitive payload: required discriminator with the registered names enumerated.</summary>

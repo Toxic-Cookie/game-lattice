@@ -22,25 +22,29 @@
       "x-lattice-ref": "schedule"
     },
     "priority": {
-      "type": "number"
+      "type": "number",
+      "description": "Selection priority; higher wins among selectable schedules."
     },
     "metaStates": {
       "type": "array",
       "items": {
         "type": "string"
-      }
+      },
+      "description": "Meta states (\u0022Idle\u0022, \u0022Alert\u0022) in which this schedule is selectable; empty = any."
     },
     "require": {
       "type": "array",
       "items": {
         "type": "string"
-      }
+      },
+      "description": "Condition names that must all be set to select this schedule."
     },
     "interrupt": {
       "type": "array",
       "items": {
         "type": "string"
-      }
+      },
+      "description": "Condition names whose appearance invalidates the running schedule."
     },
     "tasks": {
       "type": "array",
@@ -69,7 +73,8 @@
         "required": [
           "task"
         ]
-      }
+      },
+      "description": "Ordered task payloads ({\u0022task\u0022:\u0022MoveTo\u0022,...})."
     }
   },
   "required": [

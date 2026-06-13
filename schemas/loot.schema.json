@@ -22,7 +22,8 @@
       "x-lattice-ref": "loot"
     },
     "rolls": {
-      "type": "number"
+      "type": "number",
+      "description": "How many independent picks one Roll() performs."
     },
     "entries": {
       "type": "array",

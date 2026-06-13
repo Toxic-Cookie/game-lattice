@@ -351,6 +351,12 @@ tbody tr.selected:hover {
   font-size: 10px;
   font-style: italic;
 }
+.fieldhint {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+  margin: -1px 0 2px;
+}
 .editor-footer {
   display: flex;
   align-items: center;
@@ -769,7 +775,8 @@ tbody tr.selected:hover {
 .kindrow:not(.active) .kinddesc {
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
   -webkit-box-orient: vertical;
 }
 .kindfooter {

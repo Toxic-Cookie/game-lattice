@@ -26,13 +26,16 @@
     },
     "currency": {
       "type": "string",
-      "x-lattice-ref": "item"
+      "x-lattice-ref": "item",
+      "description": "Currency item ID exchanged in trades."
     },
     "buyPriceFormula": {
-      "type": "string"
+      "type": "string",
+      "description": "Price the customer pays when buying from the shop."
     },
     "sellPriceFormula": {
-      "type": "string"
+      "type": "string",
+      "description": "Price the customer receives when selling to the shop."
     },
     "stock": {
       "type": "array",
@@ -49,7 +52,8 @@
       }
     },
     "restockOn": {
-      "type": "string"
+      "type": "string",
+      "description": "Event topic that resets stock to this def (e.g. \u0022Time.DayStarted\u0022, live in M5)."
     },
     "openWhen": {
       "type": "array",
@@ -80,7 +84,8 @@
         "required": [
           "type"
         ]
-      }
+      },
+      "description": "Condition primitives (subject = the customer) gating trade \u2014 shop hours live here."
     }
   },
   "required": [

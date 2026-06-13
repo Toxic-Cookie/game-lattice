@@ -26,14 +26,16 @@
       "items": {
         "type": "string",
         "x-lattice-ref": "agent"
-      }
+      },
+      "description": "Agent profile IDs using these costs."
     },
     "costs": {
       "type": "object",
       "additionalProperties": {
         "type": "object",
         "additionalProperties": {}
-      }
+      },
+      "description": "cell tag \u2192 (behavior state or \u0022default\u0022) \u2192 cost multiplier or \u0022impassable\u0022."
     }
   },
   "required": [

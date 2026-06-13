@@ -25,7 +25,8 @@
       "type": "string"
     },
     "entity": {
-      "type": "string"
+      "type": "string",
+      "description": "The entity template this object\u0027s behavior binds to."
     },
     "maxUsers": {
       "type": "number"
@@ -53,22 +54,26 @@
       "type": "array",
       "items": {
         "type": "number"
-      }
+      },
+      "description": "AI: where an agent should stand, relative to the object ([x,y,z], M4)."
     },
     "animation": {
-      "type": "string"
+      "type": "string",
+      "description": "AI: animation played while using the object (M4)."
     },
     "preconditions": {
       "type": "object",
       "additionalProperties": {
         "type": "boolean"
-      }
+      },
+      "description": "AI: world-state predicates required to plan a use of this object (M4)."
     },
     "aiEffects": {
       "type": "object",
       "additionalProperties": {
         "type": "boolean"
-      }
+      },
+      "description": "AI: world-state predicates that using this object establishes (M4)."
     }
   },
   "required": [

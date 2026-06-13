@@ -90,6 +90,7 @@ public static class ManifestGenerator
                 .Select(t => new
                 {
                     kind = t.Key,
+                    description = XmlDocs.Summary(t.Value),
                     entries = registry.AllDefs
                         .Where(d => d.GetType() == t.Value)
                         .OrderBy(d => d.Id, StringComparer.Ordinal)
@@ -133,6 +134,12 @@ public static class ManifestGenerator
 
             sb.AppendLine($"### `{typeName}` — {defs.Count}");
             sb.AppendLine();
+            if (XmlDocs.Summary(clrType) is { Length: > 0 } kindDoc)
+            {
+                sb.AppendLine(kindDoc);
+                sb.AppendLine();
+            }
+
             foreach (var def in defs)
             {
                 var inherits = def.Inherits is null ? "" : $" (inherits `{def.Inherits}`)";

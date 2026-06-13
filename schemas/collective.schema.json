@@ -22,7 +22,8 @@
       "x-lattice-ref": "collective"
     },
     "budget": {
-      "type": "number"
+      "type": "number",
+      "description": "Maximum live agents this collective tolerates; the farthest-from-player are despawned first."
     },
     "sites": {
       "type": "array",

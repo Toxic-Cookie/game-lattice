@@ -153,6 +153,9 @@ pick a different existing file. Overrides persist in `studio.config.json` beside
   - [x] Informative kind picker: each def type's XML `<summary>` is emitted into its schema
         `description` (via `GenerateDocumentationFile` + `XmlDocs`), and the New dialog is a searchable
         browser showing every kind's title, description ("what it is and does"), and existing count.
+  - [x] Same XML-summary treatment extended to **field-level** docs (property `<summary>` → schema
+        property `description`, shown as a hint under each editor field — 205/277 properties) and the
+        **LLM manifest** (kind descriptions under each section, in markdown and `--json`).
   - Acceptance met: new item routed to `items.json`, appended with a clean diff (prior def gains a
     comma), `lattice validate` passes (109 defs); clone copies a full def under a new id; duplicate-id
     and unknown-type rejected; CLI validate still byte-identical; 278 tests green.

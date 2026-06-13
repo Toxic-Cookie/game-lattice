@@ -25,7 +25,8 @@
       "type": "array",
       "items": {
         "type": "number"
-      }
+      },
+      "description": "World position of the cell (0,0) corner."
     },
     "cellSize": {
       "type": "number"
@@ -34,7 +35,8 @@
       "type": "array",
       "items": {
         "type": "string"
-      }
+      },
+      "description": "Row strings, north to south; row index = Z, column = X."
     },
     "legend": {
       "type": "object",
@@ -54,7 +56,8 @@
             }
           }
         }
-      }
+      },
+      "description": "Character \u2192 cell descriptor. \u0027.\u0027 defaults to walkable cost 1; \u0027#\u0027 to blocked."
     }
   },
   "required": [

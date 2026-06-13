@@ -22,19 +22,22 @@
       "x-lattice-ref": "entity"
     },
     "lootTable": {
-      "type": "string"
+      "type": "string",
+      "description": "Loot table rolled when this entity dies."
     },
     "equipment": {
       "type": "array",
       "items": {
         "type": "string"
-      }
+      },
+      "description": "Item IDs equipped at spawn."
     },
     "items": {
       "type": "object",
       "additionalProperties": {
         "type": "number"
-      }
+      },
+      "description": "Starting bag contents: item ID \u2192 count."
     },
     "name": {
       "type": "string"

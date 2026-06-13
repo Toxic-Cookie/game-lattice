@@ -25,19 +25,22 @@
       "type": "object",
       "additionalProperties": {
         "type": "string"
-      }
+      },
+      "description": "Def ID \u2192 replacement def ID while this season is active."
     },
     "weatherBias": {
       "type": "object",
       "additionalProperties": {
         "type": "number"
-      }
+      },
+      "description": "Weather state ID \u2192 weight multiplier applied to Markov transitions."
     },
     "prefabHints": {
       "type": "object",
       "additionalProperties": {
         "type": "string"
-      }
+      },
+      "description": "Engine-side content-swap hints (opaque to the simulation)."
     }
   },
   "required": [

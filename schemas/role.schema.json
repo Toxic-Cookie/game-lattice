@@ -22,13 +22,16 @@
       "x-lattice-ref": "role"
     },
     "slots": {
-      "type": "number"
+      "type": "number",
+      "description": "How many members may hold this role at once."
     },
     "condition": {
-      "type": "string"
+      "type": "string",
+      "description": "Manual condition set on assignees (must exist in their catalog), e.g. \u0022ROLE_WATCHER\u0022."
     },
     "ringRadius": {
-      "type": "number"
+      "type": "number",
+      "description": "When set, assignees get a \u0022post_position\u0022 belief on a ring of this radius around the group centroid, evenly spaced by slot index \u2014 structure from slots, not scripts."
     }
   },
   "required": [

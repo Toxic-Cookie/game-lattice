@@ -22,19 +22,24 @@
       "x-lattice-ref": "metasensor"
     },
     "watch": {
-      "type": "string"
+      "type": "string",
+      "description": "Event topic to watch (e.g. \u0022Player.Poked\u0022, \u0022Dialogue.PlayerLookedAway\u0022)."
     },
     "window": {
-      "type": "number"
+      "type": "number",
+      "description": "Sliding window in seconds."
     },
     "threshold": {
-      "type": "number"
+      "type": "number",
+      "description": "Occurrences within the window required to trip."
     },
     "setCondition": {
-      "type": "string"
+      "type": "string",
+      "description": "Condition name set on the agent while tripped (cleared when the window drains)."
     },
     "agentKey": {
-      "type": "string"
+      "type": "string",
+      "description": "Payload key naming the affected agent\u0027s instance ID."
     }
   },
   "required": [

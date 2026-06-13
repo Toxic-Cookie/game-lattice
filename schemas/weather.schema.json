@@ -25,7 +25,8 @@
       "type": "object",
       "additionalProperties": {
         "type": "number"
-      }
+      },
+      "description": "Target weather ID \u2192 weight. Missing/empty = stays here."
     },
     "minHours": {
       "type": "number"
@@ -35,7 +36,8 @@
     },
     "flags": {
       "type": "object",
-      "additionalProperties": {}
+      "additionalProperties": {},
+      "description": "Global blackboard entries held while active and removed on exit (bool/number/string)."
     },
     "onEnter": {
       "type": "array",
@@ -50,7 +52,8 @@
             "items": {}
           }
         }
-      }
+      },
+      "description": "Effect primitives run when this weather begins, per entity tag."
     },
     "onExit": {
       "type": "array",
@@ -65,7 +68,8 @@
             "items": {}
           }
         }
-      }
+      },
+      "description": "Effect primitives run when this weather ends, per entity tag."
     }
   },
   "required": [
