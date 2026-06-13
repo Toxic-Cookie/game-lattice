@@ -114,10 +114,15 @@ pick a different existing file. Overrides persist in `studio.config.json` beside
         immediate autocomplete/validation while Studio is built (free stopgap; does not unlock ref
         pickers — VS Code ignores the `x-lattice-*` keywords).
   - [x] Extract `ToolingContext`; refactor the three CLI commands onto it (byte-identical output).
-- **M8.1 — Backend + read-only browser [core]**
-  - [ ] Scaffold `Lattice.Studio` (API + Vite SPA + Photino shell); register in `game-lattice.slnx`.
-  - [ ] `/api/schemas`, `/api/catalog`, `/api/content`; master browser table (read-only).
-  - Acceptance: `/api/validate` output matches `lattice validate content/ --json` on identical input.
+- **M8.1 — Backend + read-only browser [core]** *(done)*
+  - [x] Scaffold `Lattice.Studio` (ASP.NET minimal API + Vite/React/TS SPA); registered in
+        `game-lattice.slnx`. *(Photino native-window shell deferred — the browser-launch fallback the
+        plan allows is in place; a real launch defaults the content dir relative to the working dir.)*
+  - [x] `/api/schemas`, `/api/catalog`, `/api/content`, `/api/validate`; read-only master browser
+        (kind facets + counts, search, file filter, validation badge) over all 108 defs.
+  - [x] Shared `ContentValidation` extracted into `Lattice.Tooling` so CLI and Studio run one pipeline.
+  - Acceptance met: `/api/validate` is byte-identical to `lattice validate content/ --json`; full
+    solution builds clean; 278 tests green.
 - **M8.2 — Form editing, one kind end-to-end [core]**
   - [ ] Schema-driven form for a data kind (e.g. `item`): load → edit → live validate → diff → save.
   - Acceptance: saving an unchanged def yields an empty `git diff`; a one-field change diffs one line.
