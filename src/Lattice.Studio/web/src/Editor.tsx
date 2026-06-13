@@ -1,11 +1,16 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { api, type Json, type JsonObject, type JsonSchema, type SaveResult } from "./api.ts";
+import { api, type Json, type JsonObject, type JsonSchema, type PrimitiveDoc, type SaveResult } from "./api.ts";
+import { RefPicker, type RefOption } from "./RefPicker.tsx";
+import { UnionArray, UnionPayload, type UnionKind } from "./UnionField.tsx";
 
 interface Props {
   id: string;
   schemas: Record<string, JsonSchema>;
+  optionsByKind: Record<string, RefOption[]>;
+  unions: Record<UnionKind, PrimitiveDoc[]>;
   onClose: () => void;
   onSaved: () => void;
+  onGoTo: (id: string) => void;
 }
 
 const PRIMITIVE = new Set(["string", "number", "integer", "boolean"]);
@@ -15,11 +20,12 @@ function typeOf(schema: JsonSchema | undefined): string | undefined {
   return Array.isArray(schema.type) ? schema.type.find((t) => t !== "null") : schema.type;
 }
 
-export function Editor({ id, schemas, onClose, onSaved }: Props) {
+export function Editor({ id, schemas, optionsByKind, unions, onClose, onSaved, onGoTo }: Props) {
   const [original, setOriginal] = useState<JsonObject | null>(null);
   const [draft, setDraft] = useState<JsonObject | null>(null);
   const [kind, setKind] = useState<string>("");
   const [file, setFile] = useState<string>("");
+  const [parent, setParent] = useState<JsonObject | null>(null);
   const [result, setResult] = useState<SaveResult | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +33,7 @@ export function Editor({ id, schemas, onClose, onSaved }: Props) {
   useEffect(() => {
     setResult(null);
     setError(null);
+    setParent(null);
     api
       .def(id)
       .then((p) => {
@@ -34,6 +41,10 @@ export function Editor({ id, schemas, onClose, onSaved }: Props) {
         setDraft(structuredClone(p.def));
         setKind(p.kind);
         setFile(p.sourceFile);
+        const inherits = p.def["inherits"];
+        if (typeof inherits === "string") {
+          api.def(inherits).then((par) => setParent(par.def)).catch(() => {});
+        }
       })
       .catch((e) => setError(String(e)));
   }, [id]);
@@ -44,6 +55,11 @@ export function Editor({ id, schemas, onClose, onSaved }: Props) {
     if (!original || !draft) return [];
     return Object.keys(draft).filter((k) => JSON.stringify(draft[k]) !== JSON.stringify(original[k]));
   }, [original, draft]);
+
+  const inheritedKeys = useMemo(() => {
+    if (!parent || !draft) return [];
+    return Object.keys(parent).filter((k) => !(k in draft) && k !== "id" && k !== "type" && k !== "description");
+  }, [parent, draft]);
 
   if (error) return <Panel onClose={onClose} title={id}><div className="fatal">{error}</div></Panel>;
   if (!draft) return <Panel onClose={onClose} title={id}><div className="loading">Loading…</div></Panel>;
@@ -78,10 +94,39 @@ export function Editor({ id, schemas, onClose, onSaved }: Props) {
             schema={schema?.properties?.[key]}
             readOnly={key === "id" || key === "type"}
             changed={changedKeys.includes(key)}
+            optionsByKind={optionsByKind}
+            unions={unions}
+            onGoTo={onGoTo}
             onChange={(v) => set(key, v)}
           />
         ))}
       </div>
+
+      {inheritedKeys.length > 0 && parent && (
+        <details className="inherited">
+          <summary>
+            inherited from <code>{draft["inherits"] as string}</code>
+            <button
+              type="button"
+              className="goto"
+              title="go to parent"
+              onClick={(e) => {
+                e.preventDefault();
+                onGoTo(draft["inherits"] as string);
+              }}
+            >
+              ↗
+            </button>
+            <span className="muted"> · {inheritedKeys.length} field(s)</span>
+          </summary>
+          {inheritedKeys.map((k) => (
+            <div className="field" key={k}>
+              <label>{k}</label>
+              <pre className="ro json">{JSON.stringify(parent[k], null, 2)}</pre>
+            </div>
+          ))}
+        </details>
+      )}
 
       <div className="editor-footer">
         <div className="changesummary">
@@ -96,9 +141,7 @@ export function Editor({ id, schemas, onClose, onSaved }: Props) {
         <div className={`saveresult ${result.validation?.ok ? "ok" : "bad"}`}>
           {result.status === "written" ? "Saved." : "No change written."}{" "}
           {result.validation &&
-            (result.validation.ok
-              ? "Content valid ✓"
-              : `${result.validation.errors.length} validation error(s):`)}
+            (result.validation.ok ? "Content valid ✓" : `${result.validation.errors.length} validation error(s):`)}
           {result.validation && !result.validation.ok && (
             <ul>
               {result.validation.errors.map((e, i) => (
@@ -112,105 +155,155 @@ export function Editor({ id, schemas, onClose, onSaved }: Props) {
   );
 }
 
-function Field({
-  name,
-  value,
-  schema,
-  readOnly,
-  changed,
-  onChange,
-}: {
+interface FieldProps {
   name: string;
   value: Json;
   schema: JsonSchema | undefined;
   readOnly: boolean;
   changed: boolean;
+  optionsByKind: Record<string, RefOption[]>;
+  unions: Record<UnionKind, PrimitiveDoc[]>;
+  onGoTo: (id: string) => void;
   onChange: (v: Json) => void;
-}) {
+}
+
+function Field(p: FieldProps) {
+  const { name, value, schema, readOnly, changed, optionsByKind, unions, onGoTo, onChange } = p;
   const t = typeOf(schema);
   const ref = schema?.["x-lattice-ref"];
+  const union = schema?.["x-lattice-union"] as UnionKind | undefined;
+  const itemUnion = schema?.items?.["x-lattice-union"] as UnionKind | undefined;
+  const itemRef = schema?.items?.["x-lattice-ref"];
+  const itemType = typeOf(schema?.items);
+
   const label = (
     <label>
       {name}
       {ref && <span className="reftag" title={`reference to a ${ref} def`}>→ {ref}</span>}
+      {(union || itemUnion) && <span className="reftag" title={`${union ?? itemUnion} primitive`}>{union ?? itemUnion}</span>}
       {changed && <span className="changedot" title="changed" />}
     </label>
   );
 
-  if (readOnly) {
-    return (
-      <div className="field">
-        {label}
-        <input className="ro" value={String(value)} readOnly />
-      </div>
+  const field = (control: ReactNode) => (
+    <div className="field">
+      {label}
+      {control}
+    </div>
+  );
+
+  if (readOnly) return field(<input className="ro" value={String(value)} readOnly />);
+
+  if (ref && t === "string") {
+    return field(
+      <RefPicker value={(value as string) ?? ""} refKind={ref} optionsByKind={optionsByKind} onChange={onChange} onGoTo={onGoTo} />,
+    );
+  }
+
+  if (union && (t === "object" || t === undefined)) {
+    const obj = value && typeof value === "object" && !Array.isArray(value) ? (value as JsonObject) : {};
+    return field(
+      <UnionPayload value={obj} kind={union} primitives={unions[union]} optionsByKind={optionsByKind} onChange={onChange} onGoTo={onGoTo} />,
+    );
+  }
+
+  if (t === "array" && itemUnion) {
+    const arr = (Array.isArray(value) ? value : []) as JsonObject[];
+    return field(
+      <UnionArray value={arr} kind={itemUnion} primitives={unions[itemUnion]} optionsByKind={optionsByKind} onChange={onChange} onGoTo={onGoTo} />,
+    );
+  }
+
+  if (t === "array" && itemRef && itemType === "string") {
+    const arr = (Array.isArray(value) ? value : []) as string[];
+    return field(
+      <div className="refarray">
+        {arr.map((v, i) => (
+          <div className="refrow" key={i}>
+            <RefPicker
+              value={v}
+              refKind={itemRef}
+              optionsByKind={optionsByKind}
+              onChange={(nv) => onChange(arr.map((x, j) => (j === i ? nv : x)))}
+              onGoTo={onGoTo}
+            />
+            <button type="button" className="removeitem" onClick={() => onChange(arr.filter((_, j) => j !== i))}>
+              ✕
+            </button>
+          </div>
+        ))}
+        <button type="button" className="additem" onClick={() => onChange([...arr, ""])}>
+          + add {itemRef}
+        </button>
+      </div>,
     );
   }
 
   if (t === "boolean") {
-    return (
-      <div className="field">
-        {label}
-        <input type="checkbox" checked={value === true} onChange={(e) => onChange(e.target.checked)} />
-      </div>
-    );
+    return field(<input type="checkbox" checked={value === true} onChange={(e) => onChange(e.target.checked)} />);
   }
 
   if (t === "number" || t === "integer") {
-    return (
-      <div className="field">
-        {label}
-        <input
-          type="number"
-          value={value === null || value === undefined ? "" : Number(value)}
-          onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
-        />
-      </div>
+    return field(
+      <input
+        type="number"
+        value={value === null || value === undefined ? "" : Number(value)}
+        onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
+      />,
     );
   }
 
   if (t === "string") {
     const long = name === "description" || name === "formula";
-    return (
-      <div className="field">
-        {label}
-        {long ? (
-          <textarea value={(value as string) ?? ""} onChange={(e) => onChange(e.target.value)} rows={2} />
-        ) : (
-          <input value={(value as string) ?? ""} onChange={(e) => onChange(e.target.value)} />
-        )}
-      </div>
+    return field(
+      long ? (
+        <textarea value={(value as string) ?? ""} onChange={(e) => onChange(e.target.value)} rows={2} />
+      ) : (
+        <input value={(value as string) ?? ""} onChange={(e) => onChange(e.target.value)} />
+      ),
     );
   }
 
-  // array of primitives → editable comma-separated tokens
-  if (t === "array" && PRIMITIVE.has(typeOf(schema?.items) ?? "")) {
-    const itemType = typeOf(schema?.items);
+  if (t === "array" && PRIMITIVE.has(itemType ?? "")) {
     const arr = Array.isArray(value) ? value : [];
-    return (
-      <div className="field">
-        {label}
-        <input
-          value={arr.join(", ")}
-          placeholder="comma, separated"
-          onChange={(e) => {
-            const parts = e.target.value
-              .split(",")
-              .map((s) => s.trim())
-              .filter((s) => s.length > 0);
-            onChange(itemType === "number" || itemType === "integer" ? parts.map(Number) : parts);
-          }}
-        />
-      </div>
+    return field(
+      <input
+        value={arr.join(", ")}
+        placeholder="comma, separated"
+        onChange={(e) => {
+          const parts = e.target.value.split(",").map((s) => s.trim()).filter(Boolean);
+          onChange(itemType === "number" || itemType === "integer" ? parts.map(Number) : parts);
+        }}
+      />,
     );
   }
 
-  // objects, arrays of objects, unions: read-only in M8.2 (structured editing arrives in M8.3/M8.4)
+  // Anything else (nested objects, arrays of concrete objects): editable raw JSON, validated on save.
+  return field(<RawJson value={value} onChange={onChange} />);
+}
+
+function RawJson({ value, onChange }: { value: Json; onChange: (v: Json) => void }) {
+  const [text, setText] = useState(() => JSON.stringify(value, null, 2));
+  const [bad, setBad] = useState(false);
   return (
-    <div className="field">
-      {label}
-      <pre className="ro json">{JSON.stringify(value, null, 2)}</pre>
-      <span className="hint">structured field — edited in a later phase</span>
-    </div>
+    <>
+      <textarea
+        className={`rawjson ${bad ? "invalid" : ""}`}
+        value={text}
+        spellCheck={false}
+        rows={Math.min(14, text.split("\n").length + 1)}
+        onChange={(e) => {
+          setText(e.target.value);
+          try {
+            onChange(JSON.parse(e.target.value) as Json);
+            setBad(false);
+          } catch {
+            setBad(true);
+          }
+        }}
+      />
+      {bad && <span className="hint bad">invalid JSON — not applied</span>}
+    </>
   );
 }
 

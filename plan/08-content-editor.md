@@ -133,11 +133,20 @@ pick a different existing file. Overrides persist in `studio.config.json` beside
   - Acceptance met: all 108 defs round-trip as no-ops (empty `git diff`); single-field edits produce a
     one-line diff localized to that def (verified on `item_gold`, `item_iron_sword`, `entity_wolf`);
     278 tests green.
-- **M8.3 — Full data-kind editing [core]**
-  - [ ] `x-lattice-ref` pickers, `x-lattice-union` builders, inherits-aware forms across all data kinds.
-  - [ ] Create / clone-from-blueprint + file-placement routing.
-  - Acceptance: create a new item via UI → `lattice validate content/` passes; a dangling ref surfaces
-        the same error inline as the CLI emits.
+- **M8.3a — Editing widgets [core]** *(done)*
+  - [x] `x-lattice-ref` picker (searchable combobox from the live index, multi-kind, go-to-def,
+        dangling indicator) — single fields and ref arrays.
+  - [x] `x-lattice-union` builder (primitive-type dropdown, arg fields parsed from the catalog
+        signature with ref-picker integration, documented example, raw-JSON escape) — single payloads
+        and union arrays. Plus a raw-JSON editor for other nested object/array fields.
+  - [x] Inherits-aware display: parent picker + collapsible "inherited from parent" section.
+  - [x] Writer upgraded: compact single-line rendering for all-primitive objects (tasks/effects),
+        so union-array edits also produce minimal diffs; correct nested indentation.
+  - Acceptance met: union edit (`schedule_patrol` Wait) → one-line diff; dangling ref save surfaces the
+    CLI's exact `Dangling reference` error inline; all 108 defs still round-trip as no-ops; 278 green.
+- **M8.3b — Authoring new defs [core]**
+  - [ ] Create / clone-from-blueprint + file-placement routing (`POST /api/content/def`).
+  - Acceptance: create a new item via UI → `lattice validate content/` passes.
 - **M8.4 — Node-graph canvas [core]**
   - [ ] React Flow + adapter, starting with `dialogue`, then `btree`/`fsmbrain`.
   - [ ] GOAP/HTN graph views [stretch].

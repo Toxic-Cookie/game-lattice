@@ -49,6 +49,25 @@ export interface SchemaBundle {
   combined: JsonSchema;
 }
 
+// /api/catalog — every def by kind plus the documented primitive vocabularies.
+export interface PrimitiveDoc {
+  type: string;
+  description: string;
+  args: string;
+  example: string;
+}
+export interface CatalogKind {
+  kind: string;
+  entries: { id: string; description: string | null; inherits: string | null }[];
+}
+export interface Catalog {
+  defs: CatalogKind[];
+  effects: PrimitiveDoc[];
+  conditions: PrimitiveDoc[];
+  tasks: PrimitiveDoc[];
+  steering: PrimitiveDoc[];
+}
+
 export interface SaveResult {
   status: "written" | "unchanged" | "not_found" | "error";
   written: boolean;
@@ -66,6 +85,7 @@ export const api = {
   content: () => getJson<ContentIndex>("/api/content"),
   validate: () => getJson<ValidationResult>("/api/validate"),
   schemas: () => getJson<SchemaBundle>("/api/schemas"),
+  catalog: () => getJson<Catalog>("/api/catalog"),
   def: (id: string) => getJson<DefPayload>(`/api/content/def/${encodeURIComponent(id)}`),
   save: async (id: string, def: JsonObject): Promise<SaveResult> => {
     const res = await fetch(`/api/content/def/${encodeURIComponent(id)}`, {

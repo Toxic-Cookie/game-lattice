@@ -161,6 +161,9 @@ public sealed class ContentDocument
     private static byte[] SpliceChangedValues(byte[] oldText, JsonObject oldDef, JsonObject newDef)
     {
         var spans = TopLevelValueSpans(oldText);
+        // Top-level property values sit one indent level in; render changed
+        // object/array values there so multi-line replacements stay aligned.
+        var propLevel = Math.Max(1, DetectPropertyIndent(oldText) / 2);
         // Apply right-to-left so earlier offsets stay valid.
         var edits = new List<(int Start, int Len, byte[] Replacement)>();
         foreach (var (key, value) in newDef)
@@ -172,7 +175,7 @@ public sealed class ContentDocument
 
             if (!JsonNode.DeepEquals(oldDef[key], value))
             {
-                edits.Add((span.Start, span.Len, Utf8.GetBytes(RenderValue(value, 0))));
+                edits.Add((span.Start, span.Len, Utf8.GetBytes(RenderValue(value, propLevel))));
             }
         }
 
@@ -276,6 +279,14 @@ public sealed class ContentDocument
                 if (obj.Count == 0)
                 {
                     return "{}";
+                }
+
+                // Convention: objects whose values are all primitives render on one
+                // line (tasks, effects, modifiers); objects with nested structure
+                // expand (entity stats). Matches the hand-authored content style.
+                if (obj.All(kv => IsPrimitive(kv.Value)))
+                {
+                    return "{ " + string.Join(", ", obj.Select(kv => $"{JsonSerializer.Serialize(kv.Key)}: {RenderValue(kv.Value, indent)}")) + " }";
                 }
 
                 var ipad = new string(' ', (indent + 1) * 2);

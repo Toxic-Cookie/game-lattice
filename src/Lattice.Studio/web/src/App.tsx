@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { api, type ContentIndex, type JsonSchema, type ValidationResult } from "./api.ts";
+import { api, type Catalog, type ContentIndex, type JsonSchema, type ValidationResult } from "./api.ts";
 import { Editor } from "./Editor.tsx";
+import type { RefOption } from "./RefPicker.tsx";
 
 export function App() {
   const [index, setIndex] = useState<ContentIndex | null>(null);
   const [validation, setValidation] = useState<ValidationResult | null>(null);
   const [schemas, setSchemas] = useState<Record<string, JsonSchema>>({});
+  const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [query, setQuery] = useState("");
@@ -21,9 +23,22 @@ export function App() {
   useEffect(() => {
     refresh();
     api.schemas().then((b) => setSchemas(b.kinds)).catch(() => {});
+    api.catalog().then(setCatalog).catch(() => {});
     const hash = decodeURIComponent(location.hash.replace(/^#/, ""));
     if (hash) setSelected(hash);
   }, [refresh]);
+
+  // Ref pickers resolve ids from the live index; union builders from the catalog.
+  const optionsByKind = useMemo(() => {
+    const m: Record<string, RefOption[]> = {};
+    for (const d of index?.defs ?? []) (m[d.kind] ??= []).push({ id: d.id, description: d.description, kind: d.kind });
+    return m;
+  }, [index]);
+
+  const unions = useMemo(
+    () => ({ effect: catalog?.effects ?? [], condition: catalog?.conditions ?? [], task: catalog?.tasks ?? [] }),
+    [catalog],
+  );
 
   // Keep the URL hash in sync so a def is deep-linkable/shareable.
   const select = useCallback((id: string | null) => {
@@ -156,8 +171,11 @@ export function App() {
           <Editor
             id={selected}
             schemas={schemas}
+            optionsByKind={optionsByKind}
+            unions={unions}
             onClose={() => select(null)}
             onSaved={refresh}
+            onGoTo={select}
           />
         )}
       </div>
