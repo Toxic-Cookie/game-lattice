@@ -170,6 +170,15 @@ pick a different existing file. Overrides persist in `studio.config.json` beside
         with a real desktop window; resolve the default `--content` path against the repo root, not cwd.
   - [ ] Virtualize the browser table once the corpus outgrows a plain render.
 
+> **Separate enhancement (out of scope for this roadmap): doc-comment quality pass.** Now that the def
+> types' XML `<summary>` comments are surfaced to *content authors* (editor field hints, kind browser,
+> JSON schemas, manifest), they should read as end-user documentation, not developer/design notes.
+> Two follow-ups, to be done as their own effort: (1) **document the remaining ~72/277 properties** that
+> have no `<summary>`; (2) **rewrite the comments for an author audience** — strip the internal milestone/
+> chapter/case-study references (`plan/0X §Y`, `chNN`, "F.E.A.R. rat problem", "HZD Part 4", etc.) that
+> mean nothing to someone authoring content. Consider splitting design rationale into `<remarks>` (kept
+> for devs) and a clean author-facing `<summary>` (surfaced by tooling).
+
 ---
 
 ## 5. Verification
