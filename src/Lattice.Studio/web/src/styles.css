@@ -876,6 +876,31 @@ tbody tr.selected:hover {
 .graph-title code {
   color: var(--accent);
 }
+.graph-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.graphhint {
+  color: var(--muted);
+  font-size: 11px;
+}
+.dirtydot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d2a23b;
+  display: inline-block;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.graph-errors {
+  background: #2a1718;
+  border-bottom: 1px solid #4b2422;
+  color: var(--bad);
+  font-size: 12px;
+  padding: 6px 16px;
+}
 .graph-canvas {
   flex: 1;
   min-height: 0;

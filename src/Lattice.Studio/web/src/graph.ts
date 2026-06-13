@@ -72,14 +72,23 @@ function finish(raw: RawNode[], edges: Edge[], roots: string[]): Graph {
   return { nodes, edges };
 }
 
-function edge(source: string, target: string, label: string, color = EDGE, dashed = false, animated = false): Edge {
+// Edit metadata an editable adapter attaches to an edge so a graph rewire/delete
+// can be mapped back to the exact place in the def JSON.
+export interface EdgeData {
+  kind: "option" | "next" | "transition";
+  key: string;
+  index?: number;
+}
+
+function edge(source: string, target: string, label: string, color = EDGE, dashed = false, animated = false, data?: EdgeData): Edge<EdgeData> {
   return {
-    id: `${source}->${target}:${label}`,
+    id: data ? `${data.kind}:${data.key}:${data.index ?? "n"}` : `${source}->${target}:${label}`,
     source,
     target,
     label: label || undefined,
     labelShowBg: !!label,
     animated,
+    data,
     style: dashed ? { stroke: color, strokeDasharray: "5 4" } : { stroke: color },
     markerEnd: { type: MarkerType.ArrowClosed, color },
   };
@@ -137,10 +146,11 @@ function dialogue(def: JsonObject): Graph {
     if (terminal) meta.push("end");
     nodes.push({ id: k, data: { title: k, subtitle: n.speaker, line: n.line, meta, start: k === start, terminal } });
 
-    (n.options ?? []).forEach((o: any) => {
-      if (o.next) edges.push(edge(k, o.next, o.text || "(option)", (o.conditions?.length ?? 0) > 0 ? GOLD : ACCENT, (o.conditions?.length ?? 0) > 0));
+    (n.options ?? []).forEach((o: any, i: number) => {
+      const gated = (o.conditions?.length ?? 0) > 0;
+      if (o.next) edges.push(edge(k, o.next, o.text || "(option)", gated ? GOLD : ACCENT, gated, false, { kind: "option", key: k, index: i }));
     });
-    if (n.next) edges.push(edge(k, n.next, "continue", "#6f7891", false, true));
+    if (n.next) edges.push(edge(k, n.next, "continue", "#6f7891", false, true, { kind: "next", key: k }));
   }
   return finish(nodes, edges, start ? [start] : []);
 }
@@ -191,8 +201,8 @@ function fsmbrain(def: JsonObject): Graph {
   for (const k of keys) {
     const s = states[k];
     nodes.push({ id: k, data: { tag: "state", tagColor: ACCENT, title: k, subtitle: s.steering?.type, start: k === initial } });
-    (s.transitions ?? []).forEach((t: any) => {
-      if (t.to) edges.push(edge(k, t.to, whenText(t.when) || "→", ACCENT));
+    (s.transitions ?? []).forEach((t: any, i: number) => {
+      if (t.to) edges.push(edge(k, t.to, whenText(t.when) || "→", ACCENT, false, false, { kind: "transition", key: k, index: i }));
     });
   }
   return finish(nodes, edges, initial ? [initial] : []);
@@ -222,3 +232,119 @@ function htncompound(def: JsonObject): Graph {
 
 export const adapters: Record<string, Adapter> = { dialogue, btree, fsmbrain, htncompound };
 export const graphKinds = Object.keys(adapters);
+
+// --- editing (keyed-node kinds only) ----------------------------------------
+
+export interface EditableOps {
+  /** Add an option/transition from source to target. */
+  connect(def: JsonObject, source: string, target: string): JsonObject;
+  /** Retarget an existing edge to a new node. */
+  reconnect(def: JsonObject, data: EdgeData, target: string): JsonObject;
+  /** Remove the option/transition the edge represents. */
+  removeEdge(def: JsonObject, data: EdgeData): JsonObject;
+  /** Add a fresh node; returns the new def (the node gets a generated key). */
+  addNode(def: JsonObject): JsonObject;
+  /** Delete a node and scrub references to it. */
+  removeNode(def: JsonObject, id: string): JsonObject;
+}
+
+const clone = (def: JsonObject): JsonObject => structuredClone(def);
+
+function uniqueKey(obj: Record<string, unknown>, prefix: string): string {
+  for (let i = 1; ; i++) {
+    const key = `${prefix}_${i}`;
+    if (!(key in obj)) return key;
+  }
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export const editable: Record<string, EditableOps> = {
+  dialogue: {
+    connect(def, source, target) {
+      const d = clone(def);
+      const nodes = ((d as any).nodes ??= {});
+      const n = (nodes[source] ??= {});
+      (n.options ??= []).push({ text: "", next: target });
+      return d;
+    },
+    reconnect(def, data, target) {
+      const d = clone(def);
+      const n = (d as any).nodes?.[data.key];
+      if (!n) return d;
+      if (data.kind === "next") n.next = target;
+      else if (n.options?.[data.index!]) n.options[data.index!].next = target;
+      return d;
+    },
+    removeEdge(def, data) {
+      const d = clone(def);
+      const n = (d as any).nodes?.[data.key];
+      if (!n) return d;
+      if (data.kind === "next") delete n.next;
+      else n.options?.splice(data.index!, 1);
+      return d;
+    },
+    addNode(def) {
+      const d = clone(def);
+      const nodes = ((d as any).nodes ??= {});
+      const key = uniqueKey(nodes, "node");
+      nodes[key] = { speaker: "", line: "" };
+      if (!(d as any).start) (d as any).start = key;
+      return d;
+    },
+    removeNode(def, id) {
+      const d = clone(def);
+      const nodes = (d as any).nodes ?? {};
+      delete nodes[id];
+      for (const k of Object.keys(nodes)) {
+        const n = nodes[k];
+        if (n.next === id) delete n.next;
+        if (n.options) n.options = n.options.filter((o: any) => o.next !== id);
+      }
+      if ((d as any).start === id) (d as any).start = Object.keys(nodes)[0];
+      return d;
+    },
+  },
+  fsmbrain: {
+    connect(def, source, target) {
+      const d = clone(def);
+      const states = ((d as any).states ??= {});
+      const s = (states[source] ??= {});
+      (s.transitions ??= []).push({ to: target, when: [] });
+      return d;
+    },
+    reconnect(def, data, target) {
+      const d = clone(def);
+      const s = (d as any).states?.[data.key];
+      if (s?.transitions?.[data.index!]) s.transitions[data.index!].to = target;
+      return d;
+    },
+    removeEdge(def, data) {
+      const d = clone(def);
+      const s = (d as any).states?.[data.key];
+      if (s?.transitions) s.transitions.splice(data.index!, 1);
+      return d;
+    },
+    addNode(def) {
+      const d = clone(def);
+      const states = ((d as any).states ??= {});
+      const key = uniqueKey(states, "state");
+      states[key] = { steering: { type: "Idle" }, transitions: [] };
+      if (!(d as any).initial) (d as any).initial = key;
+      return d;
+    },
+    removeNode(def, id) {
+      const d = clone(def);
+      const states = (d as any).states ?? {};
+      delete states[id];
+      for (const k of Object.keys(states)) {
+        const s = states[k];
+        if (s.transitions) s.transitions = s.transitions.filter((t: any) => t.to !== id);
+      }
+      if ((d as any).initial === id) (d as any).initial = Object.keys(states)[0];
+      return d;
+    },
+  },
+};
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+export const editableKinds = Object.keys(editable);

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { api, type Json, type JsonObject, type JsonSchema, type PrimitiveDoc, type SaveResult } from "./api.ts";
 import { RefPicker, type RefOption } from "./RefPicker.tsx";
 import { UnionArray, UnionPayload, type UnionKind } from "./UnionField.tsx";
@@ -34,7 +34,7 @@ export function Editor({ id, schemas, optionsByKind, unions, onClose, onSaved, o
   const [error, setError] = useState<string | null>(null);
   const [showGraph, setShowGraph] = useState(false);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     setResult(null);
     setError(null);
     setParent(null);
@@ -52,7 +52,9 @@ export function Editor({ id, schemas, optionsByKind, unions, onClose, onSaved, o
         if (autoGraph && graphKinds.includes(p.kind)) setShowGraph(true);
       })
       .catch((e) => setError(String(e)));
-  }, [id]);
+  }, [id, autoGraph]);
+
+  useEffect(() => load(), [load]);
 
   const schema = schemas[kind];
 
@@ -103,7 +105,16 @@ export function Editor({ id, schemas, optionsByKind, unions, onClose, onSaved, o
 
   return (
     <>
-    {showGraph && <GraphView id={id} onClose={() => setShowGraph(false)} />}
+    {showGraph && (
+      <GraphView
+        id={id}
+        onClose={() => setShowGraph(false)}
+        onSaved={() => {
+          load();
+          onSaved();
+        }}
+      />
+    )}
     <Panel
       onClose={onClose}
       title={id}

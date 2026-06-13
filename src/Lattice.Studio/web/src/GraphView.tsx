@@ -1,20 +1,40 @@
-import { useEffect, useMemo, useState } from "react";
-import ReactFlow, { Background, Controls, Handle, MiniMap, Position, type NodeProps } from "reactflow";
+import { useEffect, useState } from "react";
+import ReactFlow, {
+  Background,
+  Controls,
+  Handle,
+  MiniMap,
+  Position,
+  useEdgesState,
+  useNodesState,
+  type Connection,
+  type Edge,
+  type NodeProps,
+} from "reactflow";
 import "reactflow/dist/style.css";
-import { api, type JsonObject } from "./api.ts";
-import { adapters, type GraphNodeData } from "./graph.ts";
+import { api, type JsonObject, type SaveResult } from "./api.ts";
+import { adapters, editable, type EdgeData, type GraphNodeData } from "./graph.ts";
 
 const nodeTypes = { card: GraphCard };
 
 interface Props {
   id: string;
   onClose: () => void;
+  onSaved: () => void;
 }
 
-export function GraphView({ id, onClose }: Props) {
+export function GraphView({ id, onClose, onSaved }: Props) {
   const [def, setDef] = useState<JsonObject | null>(null);
   const [kind, setKind] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [result, setResult] = useState<SaveResult | null>(null);
+
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+
+  const ops = editable[kind];
 
   useEffect(() => {
     api
@@ -26,28 +46,98 @@ export function GraphView({ id, onClose }: Props) {
       .catch((e) => setError(String(e)));
   }, [id]);
 
-  const graph = useMemo(() => {
+  // Recompute the canvas whenever the def changes (structural edit or first load).
+  useEffect(() => {
     const adapter = adapters[kind];
-    return def && adapter ? adapter(def) : { nodes: [], edges: [] };
-  }, [def, kind]);
+    if (def && adapter) {
+      const g = adapter(def);
+      setNodes(g.nodes);
+      setEdges(g.edges);
+    }
+  }, [def, kind, setNodes, setEdges]);
+
+  const mutate = (next: JsonObject) => {
+    setDef(next);
+    setDirty(true);
+    setResult(null);
+  };
+
+  const onConnect = (c: Connection) => {
+    if (ops && def && c.source && c.target) mutate(ops.connect(def, c.source, c.target));
+  };
+  const onEdgeUpdate = (oldEdge: Edge, c: Connection) => {
+    const data = oldEdge.data as EdgeData | undefined;
+    if (ops && def && data && c.target) mutate(ops.reconnect(def, data, c.target));
+  };
+  const onEdgesDelete = (deleted: Edge[]) => {
+    if (!ops || !def) return;
+    mutate(deleted.reduce((d, e) => (e.data ? ops.removeEdge(d, e.data as EdgeData) : d), def));
+  };
+  const onNodesDelete = (deleted: { id: string }[]) => {
+    if (!ops || !def) return;
+    mutate(deleted.reduce((d, n) => ops.removeNode(d, n.id), def));
+  };
+
+  const save = async () => {
+    if (!def) return;
+    setSaving(true);
+    try {
+      const r = await api.save(id, def);
+      setResult(r);
+      setDirty(false);
+      onSaved();
+    } catch (e) {
+      setError(String(e instanceof Error ? e.message : e));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="graph-overlay">
       <header className="graph-head">
         <div className="graph-title">
           <span className="kindtag">{kind}</span> <code>{id}</code>
-          <span className="muted"> · {graph.nodes.length} nodes</span>
+          <span className="muted"> · {nodes.length} nodes</span>
+          {ops && dirty && <span className="dirtydot" title="unsaved changes" />}
         </div>
-        <button className="close" onClick={onClose} title="Close graph">✕</button>
+        <div className="graph-actions">
+          {ops && (
+            <>
+              <span className="graphhint">drag a node's ● to link · drag a link end to rewire · select + Del to remove</span>
+              <button className="additem" onClick={() => def && mutate(ops.addNode(def))}>+ node</button>
+              <button className="save" disabled={!dirty || saving} onClick={save}>
+                {saving ? "Saving…" : "Save"}
+              </button>
+            </>
+          )}
+          <button className="close" onClick={onClose} title="Close graph">✕</button>
+        </div>
       </header>
+
+      {result && !result.validation?.ok && (
+        <div className="graph-errors">
+          {result.validation?.errors.length} validation error(s): {result.validation?.errors[0]}
+        </div>
+      )}
+
       <div className="graph-canvas">
         {error ? (
           <div className="fatal">{error}</div>
         ) : (
           <ReactFlow
-            nodes={graph.nodes}
-            edges={graph.edges}
+            nodes={nodes}
+            edges={edges}
             nodeTypes={nodeTypes}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onEdgeUpdate={ops ? onEdgeUpdate : undefined}
+            onEdgesDelete={ops ? onEdgesDelete : undefined}
+            onNodesDelete={ops ? onNodesDelete : undefined}
+            nodesConnectable={!!ops}
+            edgesUpdatable={!!ops}
+            deleteKeyCode={ops ? ["Backspace", "Delete"] : null}
             fitView
             minZoom={0.15}
             proOptions={{ hideAttribution: true }}

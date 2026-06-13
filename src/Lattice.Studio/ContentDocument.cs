@@ -365,6 +365,18 @@ public sealed class ContentDocument
                     return "[" + string.Join(", ", array.Select(e => e!.ToJsonString())) + "]";
                 }
 
+                // A short array of compact (all-primitive) objects stays on one
+                // line — [ { ... }, { ... } ] — matching single-condition/effect
+                // arrays in the content. Longer ones expand.
+                if (array.All(e => e is JsonObject o && o.All(kv => IsPrimitive(kv.Value))))
+                {
+                    var inline = "[ " + string.Join(", ", array.Select(e => RenderValue(e, 0))) + " ]";
+                    if (inline.Length <= 72)
+                    {
+                        return inline;
+                    }
+                }
+
                 var pad = new string(' ', (indent + 1) * 2);
                 var closePad = new string(' ', indent * 2);
                 return "[\n" + string.Join(",\n", array.Select(e => pad + RenderValue(e, indent + 1))) + "\n" + closePad + "]";

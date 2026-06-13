@@ -171,7 +171,15 @@ pick a different existing file. Overrides persist in `studio.config.json` beside
     - `htncompound` — compound → ordered methods (precondition + order) → cross-def subtask refs.
     Shared condition summarizer (e.g. `any(THREAT_KNOWN, CAN_SEE_ENEMY)`). Verified on `tree_guard`,
     `bt_patron`, `fsmbrain_rat`, `htn_forage`.
-  - [ ] M8.4b — Graph editing: edit node fields, add/remove/rewire, write back via the existing PUT.
+  - **M8.4b — Graph editing (dialogue/fsm)** *(done)*: `graph.ts` gains an `editable` ops registry
+    (connect / reconnect / removeEdge / addNode / removeNode → new def JSON, scrubbing dangling refs).
+    The canvas is stateful: drag a node's source dot to another node to add an option/transition,
+    drag a link end to rewire, select + Delete to remove, `+ node` to add; a dirty-tracked **Save**
+    PUTs and shows validation. The editor reloads its draft after a graph save (no stale overwrite).
+    btree/htn stay read-only. Writer refined: a short array of compact objects stays inline
+    (`[ { … } ]`), so editing a dialogue node no longer churns sibling `conditions`/`effects`.
+    Verified: UI `+ node` + Save writes a minimal diff and validates; add-node+option round-trips
+    minimally; 108 defs still no-op; multi-element arrays stay multiline; 278 tests green.
   - [ ] GOAP precondition/effect views [stretch].
 - **M8.5 — Engine hot-reload preview [stretch]**
   - [ ] Verify the Godot/Unity samples pick up `Content.Reloaded` on Studio saves; add an in-Studio
