@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/status.schema.json",
   "title": "StatusEffectDef",
+  "description": "Data-driven status effect (plan/02 \u00A72): a duration, a stacking policy, and a list of logic primitives (modifiers, periodic effects, tags).",
   "type": "object",
   "properties": {
     "id": {

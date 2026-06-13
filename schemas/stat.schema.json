@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/stat.schema.json",
   "title": "StatDef",
+  "description": "A stat declared in data (plan/02 \u00A71). The Key is the identifier formulas use (Str, HP); the def id (stat_str) is what other defs reference. Convention: IDs in structural fields, keys in formula strings.",
   "type": "object",
   "properties": {
     "id": {

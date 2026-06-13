@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/slot.schema.json",
   "title": "SlotDef",
+  "description": "An equipment slot, declared in data so slot sets are moddable (plan/02 \u00A74).",
   "type": "object",
   "properties": {
     "id": {

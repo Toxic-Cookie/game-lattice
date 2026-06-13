@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/schedule.schema.json",
   "title": "ScheduleDef",
+  "description": "A Half-Life schedule (ch02 \u00A72.5): a condition-gated macro-behavior. Selection requires all Require conditions; any Interrupt condition invalidates it mid-run. The invalidation feedback loop is the reactivity \u2014 no event handlers.",
   "type": "object",
   "properties": {
     "id": {

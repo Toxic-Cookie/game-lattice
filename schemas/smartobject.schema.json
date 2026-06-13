@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/smartobject.schema.json",
   "title": "SmartObjectDef",
+  "description": "Smart object (plan/03 \u00A75): self-describing interactions bound to an entity template. Player-facing verbs carry conditions \u002B effects; the AI-facing fields (approach, animation, world-state pre/effects) are consumed by the M4 planners.",
   "type": "object",
   "properties": {
     "id": {

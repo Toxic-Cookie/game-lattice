@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/weather.schema.json",
   "title": "WeatherStateDef",
+  "description": "One weather state (plan/05 \u00A73): Markov transitions with weights, a duration range, global flags held while active (formulas and sensors read them \u2014 sense_auditory_mult is how rain degrades hearing), and tag-scoped effect primitives at the boundaries.",
   "type": "object",
   "properties": {
     "id": {

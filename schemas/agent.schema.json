@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/agent.schema.json",
   "title": "AgentProfileDef",
+  "description": "An agent profile is the whole personality of an NPC type (plan/04 \u00A711): brain tier, sensor calibration, behavior content, movement. Tiered brains are the governing rule (the F.E.A.R. rat problem, ch07 \u00A77.1): \u0022fsm\u0022 for simple agents, \u0022schedules\u0022 for deliberative ones; M4b\u2013M4d add \u0022bt\u0022, \u0022goap\u0022, and \u0022htn\u0022.",
   "type": "object",
   "properties": {
     "id": {

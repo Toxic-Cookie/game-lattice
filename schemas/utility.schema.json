@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/utility.schema.json",
   "title": "UtilityEvaluatorDef",
+  "description": "A reusable scoring function (ch05 \u00A75.4): weighted factors, each a formula over the agent\u0027s needs (by key), stats, beliefs, and global flags, clamped to 0\u20131. The score is the weighted average, so it is itself 0\u20131. Used standalone through the UtilityAtLeast condition (threshold gates \u2014 the HZD attack-interest pattern) and as goal-priority input in M4c/M4d.",
   "type": "object",
   "properties": {
     "id": {

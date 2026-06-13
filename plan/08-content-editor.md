@@ -150,6 +150,9 @@ pick a different existing file. Overrides persist in `studio.config.json` beside
         (from `Def.SourceFile`), guards duplicate id / unknown type, and re-validates.
   - [x] UI: toolbar **+ New** dialog (kind, id, file with client-computed majority suggestion +
         datalist of existing files) and a **clone** action in the editor header.
+  - [x] Informative kind picker: each def type's XML `<summary>` is emitted into its schema
+        `description` (via `GenerateDocumentationFile` + `XmlDocs`), and the New dialog is a searchable
+        browser showing every kind's title, description ("what it is and does"), and existing count.
   - Acceptance met: new item routed to `items.json`, appended with a clean diff (prior def gains a
     comma), `lattice validate` passes (109 defs); clone copies a full def under a new id; duplicate-id
     and unknown-type rejected; CLI validate still byte-identical; 278 tests green.

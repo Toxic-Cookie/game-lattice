@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/costprofile.schema.json",
   "title": "CostProfileDef",
+  "description": "Personality as data (ch03 \u00A73.7, F.E.A.R.\u0027s per-archetype database): a profile-level map of action def ID \u2192 replacement cost formula. A cowardly and an aggressive soldier share the same action set and differ only in this file.",
   "type": "object",
   "properties": {
     "id": {

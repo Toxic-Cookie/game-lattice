@@ -28,6 +28,7 @@ export function App() {
     api.catalog().then(setCatalog).catch(() => {});
     const hash = decodeURIComponent(location.hash.replace(/^#/, ""));
     if (hash) setSelected(hash);
+    if (new URLSearchParams(location.search).has("new")) setCreating(true);
   }, [refresh]);
 
   // Ref pickers resolve ids from the live index; union builders from the catalog.
@@ -187,7 +188,7 @@ export function App() {
 
       {creating && (
         <NewDefDialog
-          kinds={Object.keys(schemas).sort()}
+          schemas={schemas}
           index={index}
           onClose={() => setCreating(false)}
           onCreated={(id) => {

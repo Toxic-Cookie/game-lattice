@@ -693,6 +693,96 @@ tbody tr.selected:hover {
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
   overflow: hidden;
 }
+.modal.wide {
+  width: 620px;
+  display: flex;
+  flex-direction: column;
+  max-height: 86vh;
+}
+.modal.wide .modal-body {
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Kind browser */
+.kindfilter {
+  width: 100%;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  padding: 8px 11px;
+}
+.kindfilter:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.kindlist {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  max-height: 320px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #0c0e13;
+}
+.kindrow {
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.kindrow:hover {
+  background: var(--panel);
+}
+.kindrow.active {
+  background: #16203a;
+  border-color: var(--accent);
+}
+.kindrow-head {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+.kindrow-head code {
+  color: var(--accent);
+  font-size: 12px;
+}
+.kindtitle {
+  color: var(--text);
+  font-size: 12px;
+}
+.kindcount {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 11px;
+}
+.kinddesc {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+  margin-top: 3px;
+}
+.kindrow:not(.active) .kinddesc {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.kindfooter {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.kindhint {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+  padding: 8px;
+}
 .modal-head {
   display: flex;
   align-items: center;

@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/navgrid.schema.json",
   "title": "NavGridDef",
+  "description": "A walkable grid declared as rows of legend characters (plan/05 \u00A75). The lowest-sorted navgrid ID is the active grid.",
   "type": "object",
   "properties": {
     "id": {

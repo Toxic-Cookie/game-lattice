@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/dayphases.schema.json",
   "title": "DayPhaseDef",
+  "description": "Day-phase trigger layer (plan/05 \u00A72): named phases over hour ranges. The active phase sets global flags (is_night, ...) and publishes Time.PhaseChanged; the light curve is data hosts may sample for visuals.",
   "type": "object",
   "properties": {
     "id": {

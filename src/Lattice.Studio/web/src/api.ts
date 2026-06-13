@@ -36,6 +36,7 @@ export interface DefPayload {
 export interface JsonSchema {
   type?: string | string[];
   const?: Json;
+  title?: string;
   description?: string;
   properties?: Record<string, JsonSchema>;
   items?: JsonSchema;

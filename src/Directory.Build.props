@@ -7,6 +7,13 @@
        namespaces remain Lattice.*. -->
   <PropertyGroup>
     <IsPackable>true</IsPackable>
+    <!-- Emit XML docs: ships IntelliSense with the NuGet packages and lets the
+         tooling surface each def kind's <summary> in schemas/editor (plan/08).
+         CS1591 (missing doc on a public member) is not enforced. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- CS1591/CS1573/CS1572: missing or partial member/param docs — not enforced.
+         Malformed-XML warnings (CS1570) stay on to catch real comment errors. -->
+    <NoWarn>$(NoWarn);CS1591;CS1573;CS1572</NoWarn>
     <PackageId>Game$(MSBuildProjectName)</PackageId>
     <Authors>Toxic_Cookie</Authors>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>

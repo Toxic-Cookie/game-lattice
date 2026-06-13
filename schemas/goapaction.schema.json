@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/goapaction.schema.json",
   "title": "GoapActionDef",
+  "description": "One plannable GOAP action (ch03, F.E.A.R. case study): symbolic preconditions and effects over the agent\u0027s predicate state (catalog condition names and belief keys; scalar values, missing booleans read as false), a cost formula (personality lives in cost \u2014 see CostProfileDef), and the execution binding the 3-state layer realizes (GoTo \u2192 Animate \u2192 effects).",
   "type": "object",
   "properties": {
     "id": {

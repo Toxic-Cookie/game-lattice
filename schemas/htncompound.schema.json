@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/htncompound.schema.json",
   "title": "HtnCompoundDef",
+  "description": "An HTN compound task (ch04, HZD case study): ordered methods, each a precondition-gated recipe of subtasks. Subtasks reference either another compound or a GoapActionDef \u2014 HTN primitives ARE GOAP actions, so both planners share one action vocabulary and one execution layer. Designers/LLMs author the methods; that\u0027s the control-vs-emergence dial (ch01 \u00A71.6).",
   "type": "object",
   "properties": {
     "id": {

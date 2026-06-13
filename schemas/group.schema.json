@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/group.schema.json",
   "title": "GroupDef",
+  "description": "A group archetype (HZD Part 2): which roles exist (in fill-priority order), how stale shared knowledge may get, and how alert decays. The runtime group agent is non-physical \u2014 a member list, a scoped blackboard, an alert level, and role assignments.",
   "type": "object",
   "properties": {
     "id": {

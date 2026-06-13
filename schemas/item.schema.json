@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/item.schema.json",
   "title": "ItemDef",
+  "description": "A data-defined item (plan/02 \u00A74): tags, optional equipment slot, use-actions (effect primitives), and equip effects (modifier primitives active while worn). Currency is just an item with the \u0022currency\u0022 tag.",
   "type": "object",
   "properties": {
     "id": {

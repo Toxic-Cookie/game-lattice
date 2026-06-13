@@ -56,10 +56,18 @@ public static class SchemaGenerator
             ["$schema"] = "https://json-schema.org/draft/2020-12/schema",
             ["$id"] = $"https://lattice.dev/schemas/{typeName}.schema.json",
             ["title"] = defType.Name,
-            ["type"] = "object",
-            ["properties"] = properties,
-            ["required"] = new JsonArray("id", "type"),
         };
+
+        // The def type's own <summary> becomes the kind description — what this
+        // kind is and means — surfaced in the editor's new-def browser (plan/08).
+        if (XmlDocs.Summary(defType) is { Length: > 0 } kindDoc)
+        {
+            schema["description"] = kindDoc;
+        }
+
+        schema["type"] = "object";
+        schema["properties"] = properties;
+        schema["required"] = new JsonArray("id", "type");
 
         return schema.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
     }
