@@ -97,4 +97,14 @@ export const api = {
     if (!res.ok) throw new Error(body.error ?? `${res.status} ${res.statusText}`);
     return body;
   },
+  create: async (def: JsonObject, file?: string): Promise<SaveResult> => {
+    const res = await fetch("/api/content/def", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ def, file }),
+    });
+    const body = (await res.json()) as SaveResult & { error?: string };
+    if (!res.ok) throw new Error(body.error ?? `${res.status} ${res.statusText}`);
+    return body;
+  },
 };

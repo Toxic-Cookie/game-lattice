@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Lattice.Ai;
 using Lattice.Core.Content;
 using Lattice.Core.Formulas;
@@ -17,7 +18,11 @@ namespace Lattice.Tooling;
 /// <param name="Errors">Blocking problems (dangling refs, bad formulas, parse failures, Yarn errors).</param>
 /// <param name="Warnings">Non-blocking advisories.</param>
 public sealed record ValidationResult(
-    bool Ok, int DefsLoaded, int FileCount, IReadOnlyList<string> Errors, IReadOnlyList<string> Warnings);
+    bool Ok,
+    [property: JsonPropertyName("defs")] int DefsLoaded,
+    [property: JsonPropertyName("files")] int FileCount,
+    IReadOnlyList<string> Errors,
+    IReadOnlyList<string> Warnings);
 
 /// <summary>
 /// The full content validation pipeline (parse -> def load -> link pass ->

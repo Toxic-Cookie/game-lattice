@@ -68,6 +68,28 @@ api.MapPut("/content/def/{id}", async (string id, HttpRequest req, StudioContent
         _ => Results.Text(s.Serialize(result), "application/json"),
     };
 });
+api.MapPost("/content/def", async (HttpRequest req, StudioContentService s) =>
+{
+    JsonObject? body;
+    try
+    {
+        body = (await JsonNode.ParseAsync(req.Body))?.AsObject();
+    }
+    catch (JsonException ex)
+    {
+        return Results.BadRequest(new { error = $"invalid JSON body: {ex.Message}" });
+    }
+
+    if (body?["def"] is not JsonObject def)
+    {
+        return Results.BadRequest(new { error = "expected { def, file? }" });
+    }
+
+    var result = s.CreateDef(def, (body["file"] as JsonValue)?.GetValue<string>());
+    return result.Status == "error"
+        ? Results.BadRequest(new { error = result.Error })
+        : Results.Text(s.Serialize(result), "application/json");
+});
 
 // Serve the built SPA from wwwroot when present (absent until `npm run build`).
 var wwwroot = Path.Combine(app.Environment.ContentRootPath, "wwwroot");

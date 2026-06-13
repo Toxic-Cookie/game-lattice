@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, type Catalog, type ContentIndex, type JsonSchema, type ValidationResult } from "./api.ts";
 import { Editor } from "./Editor.tsx";
+import { NewDefDialog } from "./NewDefDialog.tsx";
 import type { RefOption } from "./RefPicker.tsx";
 
 export function App() {
@@ -14,6 +15,7 @@ export function App() {
   const [kind, setKind] = useState<string | null>(null);
   const [file, setFile] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
   const refresh = useCallback(() => {
     api.content().then(setIndex).catch((e) => setError(String(e)));
@@ -122,6 +124,9 @@ export function App() {
             <span className="resultcount">
               {rows.length} of {index.count}
             </span>
+            <button className="newdef" onClick={() => setCreating(true)}>
+              + New
+            </button>
           </div>
 
           <div className="tablewrap">
@@ -179,6 +184,19 @@ export function App() {
           />
         )}
       </div>
+
+      {creating && (
+        <NewDefDialog
+          kinds={Object.keys(schemas).sort()}
+          index={index}
+          onClose={() => setCreating(false)}
+          onCreated={(id) => {
+            setCreating(false);
+            refresh();
+            select(id);
+          }}
+        />
+      )}
     </div>
   );
 }

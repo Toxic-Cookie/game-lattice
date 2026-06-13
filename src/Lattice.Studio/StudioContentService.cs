@@ -143,9 +143,60 @@ public sealed class StudioContentService
         return new SaveResult(written ? "written" : "unchanged", written, Validate());
     }
 
+    /// <summary>Create a new def: route it to a file (or use the requested one), append, then re-validate.</summary>
+    public SaveResult CreateDef(JsonObject def, string? file)
+    {
+        if (StringProp(def, "id") is not { Length: > 0 } id)
+        {
+            return new SaveResult("error", false, null, "The def needs a non-empty string 'id'.");
+        }
+
+        if (StringProp(def, "type") is not { Length: > 0 } type || !Context.Types.TryGetClrType(type, out _))
+        {
+            return new SaveResult("error", false, null, "The def needs a known 'type'.");
+        }
+
+        var registry = Load();
+        if (registry.Contains(id))
+        {
+            return new SaveResult("error", false, null, $"A def with id '{id}' already exists.");
+        }
+
+        var rel = string.IsNullOrWhiteSpace(file) ? RouteFile(type, registry) : file!;
+        var path = Path.Combine(ContentDir, rel);
+        if (File.Exists(path))
+        {
+            var doc = ContentDocument.Load(path);
+            doc.Save(path, doc.AppendDef(def));
+        }
+        else
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllBytes(path, ContentDocument.NewFile(def));
+        }
+
+        return new SaveResult("written", true, Validate());
+    }
+
     public string Serialize(object value) => JsonSerializer.Serialize(value, Web);
 
+    private static string? StringProp(JsonObject obj, string name)
+        => obj.TryGetPropertyValue(name, out var node) && node is JsonValue v && v.TryGetValue<string>(out var s) ? s : null;
+
     private string KindOf(Def def) => _kindByType.TryGetValue(def.GetType(), out var k) ? k : def.GetType().Name;
+
+    /// <summary>The file most existing defs of this kind already live in (majority wins); a sensible default otherwise.</summary>
+    private string RouteFile(string type, DefRegistry registry)
+    {
+        Context.Types.TryGetClrType(type, out var clr);
+        var byFile = registry.AllDefs
+            .Where(d => d.GetType() == clr && d.SourceFile is not null)
+            .GroupBy(d => d.SourceFile!)
+            .OrderByDescending(g => g.Count())
+            .ThenBy(g => g.Key, StringComparer.Ordinal)
+            .FirstOrDefault();
+        return byFile?.Key ?? $"{type}.json";
+    }
 
     private (Def? Def, string Path) FindByFile(string id)
     {

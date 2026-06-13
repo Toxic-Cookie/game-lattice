@@ -66,6 +66,19 @@ export function Editor({ id, schemas, optionsByKind, unions, onClose, onSaved, o
 
   const set = (key: string, value: Json) => setDraft({ ...draft, [key]: value });
 
+  const clone = async () => {
+    const newId = window.prompt("New def id", `${id}_copy`)?.trim();
+    if (!newId) return;
+    setError(null);
+    try {
+      await api.create({ ...draft, id: newId }, file);
+      onSaved();
+      onGoTo(newId);
+    } catch (e) {
+      setError(String(e instanceof Error ? e.message : e));
+    }
+  };
+
   const save = async () => {
     setSaving(true);
     setError(null);
@@ -84,7 +97,12 @@ export function Editor({ id, schemas, optionsByKind, unions, onClose, onSaved, o
   };
 
   return (
-    <Panel onClose={onClose} title={id} subtitle={`${kind} · ${file}`}>
+    <Panel
+      onClose={onClose}
+      title={id}
+      subtitle={`${kind} · ${file}`}
+      actions={<button className="clone" onClick={clone} title="clone this def">⎘ clone</button>}
+    >
       <div className="fields">
         {Object.keys(draft).map((key) => (
           <Field
@@ -311,11 +329,13 @@ function Panel({
   title,
   subtitle,
   onClose,
+  actions,
   children,
 }: {
   title: string;
   subtitle?: string;
   onClose: () => void;
+  actions?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -325,9 +345,12 @@ function Panel({
           <div className="editor-title">{title}</div>
           {subtitle && <div className="editor-sub">{subtitle}</div>}
         </div>
-        <button className="close" onClick={onClose} title="Close">
-          ✕
-        </button>
+        <div className="editor-actions">
+          {actions}
+          <button className="close" onClick={onClose} title="Close">
+            ✕
+          </button>
+        </div>
       </header>
       <div className="editor-body">{children}</div>
     </aside>

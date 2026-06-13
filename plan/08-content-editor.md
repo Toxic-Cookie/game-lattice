@@ -144,9 +144,15 @@ pick a different existing file. Overrides persist in `studio.config.json` beside
         so union-array edits also produce minimal diffs; correct nested indentation.
   - Acceptance met: union edit (`schedule_patrol` Wait) → one-line diff; dangling ref save surfaces the
     CLI's exact `Dangling reference` error inline; all 108 defs still round-trip as no-ops; 278 green.
-- **M8.3b — Authoring new defs [core]**
-  - [ ] Create / clone-from-blueprint + file-placement routing (`POST /api/content/def`).
-  - Acceptance: create a new item via UI → `lattice validate content/` passes.
+- **M8.3b — Authoring new defs [core]** *(done)*
+  - [x] `POST /api/content/def` + `ContentDocument.AppendDef` (surgical append into a bare-array file;
+        renderer fallback for other shapes) and `NewFile`. `CreateDef` routes by majority file per kind
+        (from `Def.SourceFile`), guards duplicate id / unknown type, and re-validates.
+  - [x] UI: toolbar **+ New** dialog (kind, id, file with client-computed majority suggestion +
+        datalist of existing files) and a **clone** action in the editor header.
+  - Acceptance met: new item routed to `items.json`, appended with a clean diff (prior def gains a
+    comma), `lattice validate` passes (109 defs); clone copies a full def under a new id; duplicate-id
+    and unknown-type rejected; CLI validate still byte-identical; 278 tests green.
 - **M8.4 — Node-graph canvas [core]**
   - [ ] React Flow + adapter, starting with `dialogue`, then `btree`/`fsmbrain`.
   - [ ] GOAP/HTN graph views [stretch].

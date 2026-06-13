@@ -77,6 +77,37 @@ public sealed class ContentDocument
         return WriteOutcome.Written;
     }
 
+    /// <summary>
+    /// Append a new def to this file, preserving existing defs byte-for-byte
+    /// when the root is a bare array (the common content shape). Other root
+    /// shapes (single object, <c>{"defs": [...]}</c>) are rewritten via the
+    /// style renderer, which is rare and acceptable.
+    /// </summary>
+    public byte[] AppendDef(JsonObject newDef)
+    {
+        var reader = new Utf8JsonReader(_bytes);
+        if (reader.Read() && reader.TokenType == JsonTokenType.StartArray)
+        {
+            return AppendToBareArray(newDef);
+        }
+
+        // Fallback: collect existing defs across the wrapper/single-object forms
+        // and re-render the whole file.
+        var node = JsonNode.Parse(_bytes)!;
+        var defs = node switch
+        {
+            JsonArray arr => arr.Select(n => n!.AsObject()).ToList(),
+            JsonObject obj when obj["defs"] is JsonArray d => d.Select(n => n!.AsObject()).ToList(),
+            JsonObject obj => [obj],
+            _ => [],
+        };
+        defs.Add(newDef);
+        return Utf8.GetBytes(RenderFile(defs));
+    }
+
+    /// <summary>A fresh content file holding a single def (the create-new-file path).</summary>
+    public static byte[] NewFile(JsonObject def) => Utf8.GetBytes(RenderFile([def]));
+
     public void Save(string path, byte[] body)
     {
         using var stream = File.Create(path);
@@ -87,6 +118,68 @@ public sealed class ContentDocument
 
         stream.Write(body);
     }
+
+    private byte[] AppendToBareArray(JsonObject newDef)
+    {
+        var reader = new Utf8JsonReader(_bytes);
+        reader.Read(); // root '['
+
+        var lastEnd = -1;
+        var elementIndent = -1;
+        while (reader.Read())
+        {
+            if (reader.TokenType == JsonTokenType.EndArray)
+            {
+                break;
+            }
+
+            if (elementIndent < 0)
+            {
+                elementIndent = ColumnOf((int)reader.TokenStartIndex);
+            }
+
+            if (reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)
+            {
+                reader.Skip();
+                lastEnd = (int)reader.TokenStartIndex + 1;
+            }
+            else
+            {
+                lastEnd = (int)reader.TokenStartIndex + reader.ValueSpan.Length + (reader.TokenType == JsonTokenType.String ? 2 : 0);
+            }
+        }
+
+        if (lastEnd < 0)
+        {
+            // empty array: just rewrite via the renderer
+            return Utf8.GetBytes(RenderFile([newDef]));
+        }
+
+        var indent = elementIndent < 0 ? 2 : elementIndent;
+        var insertion = Utf8.GetBytes("," + "\n" + new string(' ', indent) + RenderDef(newDef, indent + 2));
+        return Concat(_bytes.AsSpan(0, lastEnd), insertion, _bytes.AsSpan(lastEnd));
+    }
+
+    /// <summary>Indent (leading spaces) of the line containing the byte at <paramref name="offset"/>.</summary>
+    private int ColumnOf(int offset)
+    {
+        var lineStart = offset;
+        while (lineStart > 0 && _bytes[lineStart - 1] != (byte)'\n')
+        {
+            lineStart--;
+        }
+
+        var spaces = 0;
+        while (lineStart + spaces < offset && _bytes[lineStart + spaces] == (byte)' ')
+        {
+            spaces++;
+        }
+
+        return spaces;
+    }
+
+    private static string RenderFile(IReadOnlyList<JsonObject> defs)
+        => "[\n" + string.Join(",\n", defs.Select(d => "  " + RenderDef(d, 4))) + "\n]\n";
 
     // --- locating the def object ------------------------------------------------
 
