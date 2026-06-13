@@ -3,6 +3,7 @@ import { api, type Json, type JsonObject, type JsonSchema, type PrimitiveDoc, ty
 import { RefPicker, type RefOption } from "./RefPicker.tsx";
 import { UnionArray, UnionPayload, type UnionKind } from "./UnionField.tsx";
 import { GraphView } from "./GraphView.tsx";
+import { graphKinds } from "./graph.ts";
 
 interface Props {
   id: string;
@@ -48,7 +49,7 @@ export function Editor({ id, schemas, optionsByKind, unions, onClose, onSaved, o
         if (typeof inherits === "string") {
           api.def(inherits).then((par) => setParent(par.def)).catch(() => {});
         }
-        if (autoGraph && p.kind === "dialogue") setShowGraph(true);
+        if (autoGraph && graphKinds.includes(p.kind)) setShowGraph(true);
       })
       .catch((e) => setError(String(e)));
   }, [id]);
@@ -109,8 +110,8 @@ export function Editor({ id, schemas, optionsByKind, unions, onClose, onSaved, o
       subtitle={`${kind} · ${file}`}
       actions={
         <>
-          {kind === "dialogue" && (
-            <button className="graphbtn" onClick={() => setShowGraph(true)} title="view dialogue graph">
+          {graphKinds.includes(kind) && (
+            <button className="graphbtn" onClick={() => setShowGraph(true)} title="view graph">
               ⊞ graph
             </button>
           )}

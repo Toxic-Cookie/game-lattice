@@ -160,14 +160,19 @@ pick a different existing file. Overrides persist in `studio.config.json` beside
     comma), `lattice validate` passes (109 defs); clone copies a full def under a new id; duplicate-id
     and unknown-type rejected; CLI validate still byte-identical; 278 tests green.
 - **M8.4 — Node-graph canvas [core]**
-  - **M8.4a — Dialogue graph (read-only)** *(done)*: React Flow canvas overlay (opened from a `⊞ graph`
-    button in the editor for `dialogue` kinds). `dialogueGraph.ts` maps the def to nodes (speaker/line,
-    start badge, option/effect counts, terminal marker) and edges (option→`next` labeled with the
-    option text, dashed/gold when gated by conditions; `next` continues), laid out by BFS depth from
-    `start`. Pan/zoom, minimap, controls. Verified on `tree_guard`.
-  - [ ] M8.4b — Graph editing: edit line/speaker, add/remove/rewire options and nodes, write back to
-    the `nodes` object (saved via the existing PUT).
-  - [ ] Then `btree`/`fsmbrain`; GOAP/HTN graph views [stretch].
+  - **M8.4a — Read-only graphs (4 kinds)** *(done)*: React Flow canvas overlay (opened from a
+    `⊞ graph` button in the editor for any graph kind). `graph.ts` holds a generic node card + a
+    per-kind adapter registry, all laid out by BFS depth:
+    - `dialogue` — nodes (speaker/line, start, option/effect counts, terminal); option→`next` edges
+      labeled with option text, dashed/gold when gated; `next` continues.
+    - `btree` — the `root` tree: composite/decorator/task/subtree/condition nodes (color-coded tags),
+      `ConditionGate.when` shown, task arg summaries, numbered child edges.
+    - `fsmbrain` — states (steering type) + transition edges labeled with the condition summary.
+    - `htncompound` — compound → ordered methods (precondition + order) → cross-def subtask refs.
+    Shared condition summarizer (e.g. `any(THREAT_KNOWN, CAN_SEE_ENEMY)`). Verified on `tree_guard`,
+    `bt_patron`, `fsmbrain_rat`, `htn_forage`.
+  - [ ] M8.4b — Graph editing: edit node fields, add/remove/rewire, write back via the existing PUT.
+  - [ ] GOAP precondition/effect views [stretch].
 - **M8.5 — Engine hot-reload preview [stretch]**
   - [ ] Verify the Godot/Unity samples pick up `Content.Reloaded` on Studio saves; add an in-Studio
         "validation mirrors the running engine" affordance.

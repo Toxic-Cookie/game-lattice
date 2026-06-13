@@ -884,26 +884,26 @@ tbody tr.selected:hover {
   display: none;
 }
 
-/* Dialogue node card */
-.dnode {
-  width: 230px;
+/* Generic graph node card (dialogue / btree / fsm / htn) */
+.gnode {
+  width: 234px;
   background: var(--panel-2);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 9px 11px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
-.dnode.start {
+.gnode.start {
   border-color: var(--ok);
 }
-.dnode.terminal {
+.gnode.terminal {
   border-style: dashed;
 }
-.dnode-head {
+.gnode-head {
   display: flex;
   align-items: baseline;
   gap: 6px;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 .startbadge {
   background: var(--ok);
@@ -914,20 +914,32 @@ tbody tr.selected:hover {
   padding: 0 4px;
   text-transform: uppercase;
 }
-.dnode-key {
-  font-family: "Cascadia Code", "Consolas", ui-monospace, monospace;
-  font-size: 11px;
-  color: var(--muted);
+.gtag {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 0 4px;
 }
-.dnode-speaker {
+.gnode-title {
+  font-family: "Cascadia Code", "Consolas", ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gnode-sub {
   margin-left: auto;
   color: var(--accent);
   font-size: 11px;
   font-weight: 600;
 }
-.dnode-line {
-  color: var(--text);
-  font-size: 12px;
+.gnode-line {
+  color: var(--muted);
+  font-size: 11px;
   line-height: 1.35;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -935,18 +947,15 @@ tbody tr.selected:hover {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.dnode-foot {
+.gnode-meta {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 7px;
   color: var(--muted);
   font-size: 10px;
 }
-.endtag {
-  color: #6f7891;
-  font-style: italic;
-}
-.dnode .react-flow__handle {
+.gnode .react-flow__handle {
   background: var(--accent);
   border: 0;
   width: 7px;
