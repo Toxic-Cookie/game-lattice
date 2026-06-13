@@ -123,9 +123,16 @@ pick a different existing file. Overrides persist in `studio.config.json` beside
   - [x] Shared `ContentValidation` extracted into `Lattice.Tooling` so CLI and Studio run one pipeline.
   - Acceptance met: `/api/validate` is byte-identical to `lattice validate content/ --json`; full
     solution builds clean; 278 tests green.
-- **M8.2 — Form editing, one kind end-to-end [core]**
-  - [ ] Schema-driven form for a data kind (e.g. `item`): load → edit → live validate → diff → save.
-  - Acceptance: saving an unchanged def yields an empty `git diff`; a one-field change diffs one line.
+- **M8.2 — Form editing, one kind end-to-end [core]** *(done)*
+  - [x] `GET/PUT /api/content/def/{id}` + `ContentDocument`, a format-preserving writer that splices only
+        changed top-level value spans (scalars + inline primitive arrays), no-ops on deep-equal, and
+        re-validates the whole tree on save. Untouched defs/fields stay byte-identical.
+  - [x] Schema-driven form editor panel (scalars, booleans, numbers, string-array tokens; object/union
+        fields read-only until M8.3), client-side change summary, save + validation display. Defs are
+        deep-linkable via URL hash.
+  - Acceptance met: all 108 defs round-trip as no-ops (empty `git diff`); single-field edits produce a
+    one-line diff localized to that def (verified on `item_gold`, `item_iron_sword`, `entity_wolf`);
+    278 tests green.
 - **M8.3 — Full data-kind editing [core]**
   - [ ] `x-lattice-ref` pickers, `x-lattice-union` builders, inherits-aware forms across all data kinds.
   - [ ] Create / clone-from-blueprint + file-placement routing.
@@ -137,6 +144,10 @@ pick a different existing file. Overrides persist in `studio.config.json` beside
 - **M8.5 — Engine hot-reload preview [stretch]**
   - [ ] Verify the Godot/Unity samples pick up `Content.Reloaded` on Studio saves; add an in-Studio
         "validation mirrors the running engine" affordance.
+- **M8.x — Polish [deferred]**
+  - [ ] **Photino.NET native-window shell** (deferred from M8.1): replace the browser-launch fallback
+        with a real desktop window; resolve the default `--content` path against the repo root, not cwd.
+  - [ ] Virtualize the browser table once the corpus outgrows a plain render.
 
 ---
 

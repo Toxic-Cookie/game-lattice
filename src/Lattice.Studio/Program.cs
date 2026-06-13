@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Lattice.Studio;
 
 // Lattice.Studio — the visual content editor's local host (plan/08, M8.1).
@@ -33,6 +35,38 @@ api.MapGet("/validate", (StudioContentService s) =>
 {
     var r = s.Validate();
     return Results.Json(new { ok = r.Ok, defs = r.DefsLoaded, files = r.FileCount, errors = r.Errors, warnings = r.Warnings });
+});
+
+// One def's raw JSON (for the form editor) and a minimal-diff save back to its file (M8.2).
+api.MapGet("/content/def/{id}", (string id, StudioContentService s) =>
+{
+    var payload = s.GetDef(id);
+    return payload is null ? Results.NotFound() : Results.Text(s.Serialize(payload), "application/json");
+});
+api.MapPut("/content/def/{id}", async (string id, HttpRequest req, StudioContentService s) =>
+{
+    JsonObject? def;
+    try
+    {
+        def = (await JsonNode.ParseAsync(req.Body))?.AsObject();
+    }
+    catch (JsonException ex)
+    {
+        return Results.BadRequest(new { error = $"invalid JSON body: {ex.Message}" });
+    }
+
+    if (def is null)
+    {
+        return Results.BadRequest(new { error = "expected a def object" });
+    }
+
+    var result = s.SaveDef(id, def);
+    return result.Status switch
+    {
+        "not_found" => Results.NotFound(),
+        "error" => Results.BadRequest(new { error = result.Error }),
+        _ => Results.Text(s.Serialize(result), "application/json"),
+    };
 });
 
 // Serve the built SPA from wwwroot when present (absent until `npm run build`).

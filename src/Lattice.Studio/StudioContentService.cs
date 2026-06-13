@@ -95,7 +95,63 @@ public sealed class StudioContentService
     /// <summary>Run the full validation pipeline — identical to <c>lattice validate</c>.</summary>
     public ValidationResult Validate() => ContentValidation.Run(Context, ContentDir);
 
+    /// <summary>The raw JSON object for one def, plus its kind and origin file (for the form editor).</summary>
+    public DefPayload? GetDef(string id)
+    {
+        var (def, path) = FindByFile(id);
+        if (def is null)
+        {
+            return null;
+        }
+
+        var obj = ContentDocument.Load(path).GetDef(id);
+        return obj is null ? null : new DefPayload(KindOf(def), def.SourceFile!, obj);
+    }
+
+    /// <summary>Apply an edited def to its source file (minimal-diff), then re-validate the whole tree.</summary>
+    public SaveResult SaveDef(string id, JsonObject newDef)
+    {
+        var (def, path) = FindByFile(id);
+        if (def is null)
+        {
+            return new SaveResult("not_found", false, null);
+        }
+
+        if (newDef["id"]?.GetValue<string>() != id)
+        {
+            return new SaveResult("error", false, null, "The def 'id' cannot be changed.");
+        }
+
+        if (newDef["type"]?.GetValue<string>() != KindOf(def))
+        {
+            return new SaveResult("error", false, null, "The def 'type' cannot be changed.");
+        }
+
+        var doc = ContentDocument.Load(path);
+        var outcome = doc.ReplaceDef(id, newDef, out var bytes);
+        if (outcome == ContentDocument.WriteOutcome.NotFound)
+        {
+            return new SaveResult("not_found", false, null);
+        }
+
+        var written = outcome == ContentDocument.WriteOutcome.Written;
+        if (written)
+        {
+            doc.Save(path, bytes);
+        }
+
+        return new SaveResult(written ? "written" : "unchanged", written, Validate());
+    }
+
     public string Serialize(object value) => JsonSerializer.Serialize(value, Web);
+
+    private string KindOf(Def def) => _kindByType.TryGetValue(def.GetType(), out var k) ? k : def.GetType().Name;
+
+    private (Def? Def, string Path) FindByFile(string id)
+    {
+        var def = Load().AllDefs.FirstOrDefault(d => d.Id == id);
+        return def?.SourceFile is null ? (null, "") : (def, Path.Combine(ContentDir, def.SourceFile));
+    }
 
     private DefRegistry Load()
     {
@@ -105,6 +161,12 @@ public sealed class StudioContentService
         return registry;
     }
 }
+
+/// <summary>A def's raw JSON plus the metadata the form editor needs.</summary>
+public sealed record DefPayload(string Kind, string SourceFile, JsonObject Def);
+
+/// <summary>Outcome of a save: status is "written" | "unchanged" | "not_found" | "error".</summary>
+public sealed record SaveResult(string Status, bool Written, ValidationResult? Validation, string? Error = null);
 
 /// <summary>One row in the master browser.</summary>
 public sealed record DefIndexEntry(string Id, string Kind, string? Description, string? Inherits, string? SourceFile);

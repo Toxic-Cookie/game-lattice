@@ -1,18 +1,34 @@
-import { useEffect, useMemo, useState } from "react";
-import { api, type ContentIndex, type ValidationResult } from "./api.ts";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { api, type ContentIndex, type JsonSchema, type ValidationResult } from "./api.ts";
+import { Editor } from "./Editor.tsx";
 
 export function App() {
   const [index, setIndex] = useState<ContentIndex | null>(null);
   const [validation, setValidation] = useState<ValidationResult | null>(null);
+  const [schemas, setSchemas] = useState<Record<string, JsonSchema>>({});
   const [error, setError] = useState<string | null>(null);
 
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState<string | null>(null);
   const [file, setFile] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
 
-  useEffect(() => {
+  const refresh = useCallback(() => {
     api.content().then(setIndex).catch((e) => setError(String(e)));
     api.validate().then(setValidation).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    refresh();
+    api.schemas().then((b) => setSchemas(b.kinds)).catch(() => {});
+    const hash = decodeURIComponent(location.hash.replace(/^#/, ""));
+    if (hash) setSelected(hash);
+  }, [refresh]);
+
+  // Keep the URL hash in sync so a def is deep-linkable/shareable.
+  const select = useCallback((id: string | null) => {
+    setSelected(id);
+    location.hash = id ? `#${encodeURIComponent(id)}` : "";
   }, []);
 
   const kindCounts = useMemo(() => {
@@ -106,7 +122,11 @@ export function App() {
               </thead>
               <tbody>
                 {rows.map((d) => (
-                  <tr key={d.id}>
+                  <tr
+                    key={d.id}
+                    className={`row ${selected === d.id ? "selected" : ""}`}
+                    onClick={() => select(d.id)}
+                  >
                     <td className="c-kind">
                       <span className="kindtag">{d.kind}</span>
                     </td>
@@ -131,6 +151,15 @@ export function App() {
             </table>
           </div>
         </main>
+
+        {selected && (
+          <Editor
+            id={selected}
+            schemas={schemas}
+            onClose={() => select(null)}
+            onSaved={refresh}
+          />
+        )}
       </div>
     </div>
   );
