@@ -1,14 +1,10 @@
 using Lattice.Ai;
-using Lattice.Ai.Tasks;
-using Lattice.Ai.Utility;
 using Lattice.Core.Content;
 using Lattice.Core.Formulas;
 using Lattice.Core.Hosting.Standalone;
 using Lattice.Core.Simulation;
 using Lattice.Narrative;
 using Lattice.Rpg;
-using Lattice.Rpg.Conditions;
-using Lattice.Rpg.Effects;
 using Lattice.Tooling;
 using Lattice.World;
 using Yarn.Compiler;
@@ -52,26 +48,19 @@ if (args[0] == "validate")
         return 2;
     }
 
+    var context = ToolingContext.Create();
     using var source = new DirectoryContentSource(args[1], watch: false);
     var registry = new DefRegistry();
-    var loader = new ContentLoader(LatticeWorld.AddDefTypes(LatticeAi.CreateDefTypes()));
+    var loader = new ContentLoader(context.Types);
     var report = loader.LoadAll(source, registry);
 
     // formula pre-flight uses a throwaway RNG: TryParse never rolls dice
     var formulas = new NCalcFormulaEngine(new LatticeRandom(0));
-    var effects = BuiltinEffects.CreateDefault();
-    effects.Register(new StartQuestEffect());
-    var conditions = ConditionRegistry.CreateDefault();
-    conditions.Register(new AgentConditionEvaluator());
-    conditions.Register(new AgentMetaCondition());
-    conditions.Register(new BeliefEqualsCondition());
-    conditions.Register(new UtilityAtLeastCondition());
-    conditions.Register(new NeedBelowCondition());
     registry.Validate(report, formulas);
-    new RpgContentValidator(effects, conditions).Validate(registry, report, formulas);
-    new NarrativeContentValidator(effects, conditions).Validate(registry, report, formulas);
-    new AiContentValidator(conditions, TaskRegistry.CreateDefault(), effects).Validate(registry, report, formulas);
-    new WorldContentValidator(effects).Validate(registry, report, formulas);
+    new RpgContentValidator(context.Effects, context.Conditions).Validate(registry, report, formulas);
+    new NarrativeContentValidator(context.Effects, context.Conditions).Validate(registry, report, formulas);
+    new AiContentValidator(context.Conditions, context.Tasks, context.Effects).Validate(registry, report, formulas);
+    new WorldContentValidator(context.Effects).Validate(registry, report, formulas);
 
     // Yarn scripts compile-check (same function library the runtime registers)
     var yarnFiles = source.EnumerateFiles("*.yarn").Select(f => f.AbsolutePath).ToArray();
@@ -127,10 +116,10 @@ if (args[0] == "manifest")
         return 2;
     }
 
+    var context = ToolingContext.Create();
     using var source = new DirectoryContentSource(args[1], watch: false);
     var registry = new DefRegistry();
-    var types = LatticeWorld.AddDefTypes(LatticeAi.CreateDefTypes());
-    var report = new ContentLoader(types).LoadAll(source, registry);
+    var report = new ContentLoader(context.Types).LoadAll(source, registry);
     if (!report.Ok)
     {
         foreach (var error in report.Errors)
@@ -141,19 +130,10 @@ if (args[0] == "manifest")
         return 1;
     }
 
-    var effects = BuiltinEffects.CreateDefault();
-    effects.Register(new StartQuestEffect());
-    var conditions = ConditionRegistry.CreateDefault();
-    conditions.Register(new AgentConditionEvaluator());
-    conditions.Register(new AgentMetaCondition());
-    conditions.Register(new BeliefEqualsCondition());
-    conditions.Register(new UtilityAtLeastCondition());
-    conditions.Register(new NeedBelowCondition());
-
     var json = args.Contains("--json");
     var output = json
-        ? ManifestGenerator.GenerateJson(registry, types, effects, conditions, TaskRegistry.CreateDefault())
-        : ManifestGenerator.GenerateMarkdown(registry, types, effects, conditions, TaskRegistry.CreateDefault());
+        ? ManifestGenerator.GenerateJson(registry, context.Types, context.Effects, context.Conditions, context.Tasks)
+        : ManifestGenerator.GenerateMarkdown(registry, context.Types, context.Effects, context.Conditions, context.Tasks);
 
     var outIndex = Array.IndexOf(args, "-o");
     if (outIndex >= 0 && outIndex + 1 < args.Length)
@@ -187,23 +167,16 @@ if (args[0] == "schemas")
     var outputDir = args[outIndex + 1];
     Directory.CreateDirectory(outputDir);
 
-    var schemaEffects = BuiltinEffects.CreateDefault();
-    schemaEffects.Register(new StartQuestEffect());
-    var schemaConditions = ConditionRegistry.CreateDefault();
-    schemaConditions.Register(new AgentConditionEvaluator());
-    schemaConditions.Register(new AgentMetaCondition());
-    schemaConditions.Register(new BeliefEqualsCondition());
-    schemaConditions.Register(new UtilityAtLeastCondition());
-    schemaConditions.Register(new NeedBelowCondition());
+    var context = ToolingContext.Create();
     SchemaGenerator.UnionVocabularies = new Dictionary<string, string[]>(StringComparer.Ordinal)
     {
-        ["effect"] = schemaEffects.All.Select(e => e.Type).ToArray(),
-        ["condition"] = schemaConditions.All.Select(c => c.Type).ToArray(),
-        ["task"] = TaskRegistry.CreateDefault().All.Select(t => t.Type).ToArray(),
+        ["effect"] = context.Effects.All.Select(e => e.Type).ToArray(),
+        ["condition"] = context.Conditions.All.Select(c => c.Type).ToArray(),
+        ["task"] = context.Tasks.All.Select(t => t.Type).ToArray(),
     };
 
     var count = 0;
-    var kinds = LatticeWorld.AddDefTypes(LatticeAi.CreateDefTypes()).All.ToList();
+    var kinds = context.Types.All.ToList();
     foreach (var (typeName, clrType) in kinds)
     {
         var schema = SchemaGenerator.GenerateSchemaJson(typeName, clrType);

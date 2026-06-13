@@ -113,6 +113,7 @@ Two cross-cutting changes to the concept doc's phase ordering (senior-dev review
 | **M5** | World: time, day/night, weather, seasons, grid navigation | `05` | M1 (nav needed by M4a for non-trivial demos — see note in `05`) |
 | **M6** | LLM & modding: manifest exporter, schema generator CLI, validation CLI, blueprint inheritance, UI binding | `06` | M1+ (assembles per-phase metadata) |
 | **M7** | Demos (Tavern, Dungeon, Quest-Giver), LLM authoring guide, polish | `07` | everything |
+| **M8** | Content editor (Lattice.Studio): schema-driven forms + node graphs over the M6 tooling | `08` | M1, M6 (+ all def-kind milestones) |
 
 Sequencing note: M5's time system and grid navigation are small and unblock M4 demos; in practice schedule M5-time right after M1 and M5-nav alongside M4a.
 
@@ -159,3 +160,4 @@ Sequencing note: M5's time system and grid navigation are small and unblock M4 d
 | `05-world-simulation.md` | M5 time, weather, seasons, navigation |
 | `06-llm-modding.md` | M6 manifest, schemas, validation, blueprints, UI binding |
 | `07-demos-and-polish.md` | M7 demo scenes, LLM docs, debug tooling assembly |
+| `08-content-editor.md` | M8 Lattice.Studio visual content editor (forms + node graphs) |
