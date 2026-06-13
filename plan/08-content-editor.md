@@ -160,8 +160,14 @@ pick a different existing file. Overrides persist in `studio.config.json` beside
     comma), `lattice validate` passes (109 defs); clone copies a full def under a new id; duplicate-id
     and unknown-type rejected; CLI validate still byte-identical; 278 tests green.
 - **M8.4 — Node-graph canvas [core]**
-  - [ ] React Flow + adapter, starting with `dialogue`, then `btree`/`fsmbrain`.
-  - [ ] GOAP/HTN graph views [stretch].
+  - **M8.4a — Dialogue graph (read-only)** *(done)*: React Flow canvas overlay (opened from a `⊞ graph`
+    button in the editor for `dialogue` kinds). `dialogueGraph.ts` maps the def to nodes (speaker/line,
+    start badge, option/effect counts, terminal marker) and edges (option→`next` labeled with the
+    option text, dashed/gold when gated by conditions; `next` continues), laid out by BFS depth from
+    `start`. Pan/zoom, minimap, controls. Verified on `tree_guard`.
+  - [ ] M8.4b — Graph editing: edit line/speaker, add/remove/rewire options and nodes, write back to
+    the `nodes` object (saved via the existing PUT).
+  - [ ] Then `btree`/`fsmbrain`; GOAP/HTN graph views [stretch].
 - **M8.5 — Engine hot-reload preview [stretch]**
   - [ ] Verify the Godot/Unity samples pick up `Content.Reloaded` on Studio saves; add an in-Studio
         "validation mirrors the running engine" affordance.

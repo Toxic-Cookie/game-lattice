@@ -842,6 +842,117 @@ tbody tr.selected:hover {
   color: var(--text);
 }
 
+.graphbtn {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  padding: 4px 9px;
+}
+.graphbtn:hover {
+  border-color: var(--accent);
+}
+
+/* Dialogue graph overlay */
+.graph-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+.graph-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+.graph-title code {
+  color: var(--accent);
+}
+.graph-canvas {
+  flex: 1;
+  min-height: 0;
+}
+.react-flow__attribution {
+  display: none;
+}
+
+/* Dialogue node card */
+.dnode {
+  width: 230px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 11px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+.dnode.start {
+  border-color: var(--ok);
+}
+.dnode.terminal {
+  border-style: dashed;
+}
+.dnode-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+.startbadge {
+  background: var(--ok);
+  color: #05210d;
+  font-size: 9px;
+  font-weight: 700;
+  border-radius: 3px;
+  padding: 0 4px;
+  text-transform: uppercase;
+}
+.dnode-key {
+  font-family: "Cascadia Code", "Consolas", ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+.dnode-speaker {
+  margin-left: auto;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+}
+.dnode-line {
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.dnode-foot {
+  display: flex;
+  gap: 8px;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.endtag {
+  color: #6f7891;
+  font-style: italic;
+}
+.dnode .react-flow__handle {
+  background: var(--accent);
+  border: 0;
+  width: 7px;
+  height: 7px;
+}
+
 /* Inherited section */
 .inherited {
   margin-top: 16px;

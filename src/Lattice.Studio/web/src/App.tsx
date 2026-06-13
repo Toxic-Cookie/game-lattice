@@ -182,6 +182,7 @@ export function App() {
             onClose={() => select(null)}
             onSaved={refresh}
             onGoTo={select}
+            autoGraph={new URLSearchParams(location.search).has("graph")}
           />
         )}
       </div>

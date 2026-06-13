@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { api, type Json, type JsonObject, type JsonSchema, type PrimitiveDoc, type SaveResult } from "./api.ts";
 import { RefPicker, type RefOption } from "./RefPicker.tsx";
 import { UnionArray, UnionPayload, type UnionKind } from "./UnionField.tsx";
+import { GraphView } from "./GraphView.tsx";
 
 interface Props {
   id: string;
@@ -11,6 +12,7 @@ interface Props {
   onClose: () => void;
   onSaved: () => void;
   onGoTo: (id: string) => void;
+  autoGraph?: boolean;
 }
 
 const PRIMITIVE = new Set(["string", "number", "integer", "boolean"]);
@@ -20,7 +22,7 @@ function typeOf(schema: JsonSchema | undefined): string | undefined {
   return Array.isArray(schema.type) ? schema.type.find((t) => t !== "null") : schema.type;
 }
 
-export function Editor({ id, schemas, optionsByKind, unions, onClose, onSaved, onGoTo }: Props) {
+export function Editor({ id, schemas, optionsByKind, unions, onClose, onSaved, onGoTo, autoGraph }: Props) {
   const [original, setOriginal] = useState<JsonObject | null>(null);
   const [draft, setDraft] = useState<JsonObject | null>(null);
   const [kind, setKind] = useState<string>("");
@@ -29,6 +31,7 @@ export function Editor({ id, schemas, optionsByKind, unions, onClose, onSaved, o
   const [result, setResult] = useState<SaveResult | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showGraph, setShowGraph] = useState(false);
 
   useEffect(() => {
     setResult(null);
@@ -45,6 +48,7 @@ export function Editor({ id, schemas, optionsByKind, unions, onClose, onSaved, o
         if (typeof inherits === "string") {
           api.def(inherits).then((par) => setParent(par.def)).catch(() => {});
         }
+        if (autoGraph && p.kind === "dialogue") setShowGraph(true);
       })
       .catch((e) => setError(String(e)));
   }, [id]);
@@ -97,11 +101,22 @@ export function Editor({ id, schemas, optionsByKind, unions, onClose, onSaved, o
   };
 
   return (
+    <>
+    {showGraph && <GraphView id={id} onClose={() => setShowGraph(false)} />}
     <Panel
       onClose={onClose}
       title={id}
       subtitle={`${kind} · ${file}`}
-      actions={<button className="clone" onClick={clone} title="clone this def">⎘ clone</button>}
+      actions={
+        <>
+          {kind === "dialogue" && (
+            <button className="graphbtn" onClick={() => setShowGraph(true)} title="view dialogue graph">
+              ⊞ graph
+            </button>
+          )}
+          <button className="clone" onClick={clone} title="clone this def">⎘ clone</button>
+        </>
+      }
     >
       <div className="fields">
         {Object.keys(draft).map((key) => (
@@ -170,6 +185,7 @@ export function Editor({ id, schemas, optionsByKind, unions, onClose, onSaved, o
         </div>
       )}
     </Panel>
+    </>
   );
 }
 
