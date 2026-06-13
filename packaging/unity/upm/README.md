@@ -6,6 +6,10 @@ support).
 
 Full documentation: <https://github.com/Toxic-Cookie/game-lattice>
 
+New to the framework? Start with the
+[interactive Unity playground](https://github.com/Toxic-Cookie/game-lattice-unity-example) —
+nine hands-on lessons over a live session.
+
 ## Install
 
 - **OpenUPM**: `openupm add com.gamelattice.lattice`
@@ -21,7 +25,9 @@ Full documentation: <https://github.com/Toxic-Cookie/game-lattice>
 `Lattice.Narrative`, `Lattice.Ai`, `Lattice.World`) plus their full dependency
 closure, because Unity has no NuGet restore: NCalc, Parlot, YarnSpinner (+ Antlr4,
 Google.Protobuf, CsvHelper), System.Text.Json and its support assemblies, and a few
-`Microsoft.Extensions.*` abstractions.
+`Microsoft.Extensions.*` abstractions. Assemblies Unity itself references for every
+compilation (`Microsoft.CSharp`) are deliberately *not* bundled — a copy would
+collide with Unity's own (CS1703); Unity's satisfies the closure at runtime.
 
 ## Known conflicts
 
