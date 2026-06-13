@@ -1,0 +1,26 @@
+{
+  "name": "com.gamelattice.lattice",
+  "displayName": "Game Lattice",
+  "version": "0.1.3",
+  "unity": "2021.2",
+  "description": "Engine-agnostic, JSON-driven RPG framework: def registry, event bus, formulas with dice, deterministic RNG, RPG systems, Yarn dialogue and quests, five-tier AI (FSM to GOAP/HTN), world clock/weather/pathfinding. Pure netstandard2.1 managed plugins.",
+  "keywords": [
+    "rpg",
+    "framework",
+    "ai",
+    "goap",
+    "htn",
+    "behavior-tree",
+    "dialogue",
+    "quest",
+    "simulation"
+  ],
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Toxic_Cookie",
+    "url": "https://github.com/Toxic-Cookie"
+  },
+  "documentationUrl": "https://github.com/Toxic-Cookie/game-lattice",
+  "changelogUrl": "https://github.com/Toxic-Cookie/game-lattice/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/Toxic-Cookie/game-lattice/blob/main/LICENSE"
+}
