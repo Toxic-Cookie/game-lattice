@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Lattice.Studio</RootNamespace>
+    <!-- Local authoring app, not a shipped library/tool: never packed. -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Pulls in ToolingContext, SchemaGenerator, ManifestGenerator, ContentValidation
+         (and transitively every Lattice.* library) — the editor's whole backend. -->
+    <ProjectReference Include="..\Lattice.Tooling\Lattice.Tooling.csproj" />
+  </ItemGroup>
+
+  <!-- The built React SPA lives in wwwroot (gitignored build artifact). The web/
+       sources are committed; `npm run build` (or publish) populates wwwroot. -->
+  <ItemGroup>
+    <Content Remove="web\**" />
+    <None Include="web\**" Exclude="web\node_modules\**;web\dist\**" />
+  </ItemGroup>
+
+  <!-- On publish, build the SPA so a published Studio is self-contained. Plain
+       `dotnet build`/`dotnet test` never touch Node (keeps core CI Node-free). -->
+  <Target Name="BuildStudioSpa" BeforeTargets="Publish" Condition="'$(SkipSpaBuild)' != 'true'">
+    <Exec Command="npm ci" WorkingDirectory="web" />
+    <Exec Command="npm run build" WorkingDirectory="web" />
+  </Target>
+
+</Project>

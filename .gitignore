@@ -27,6 +27,14 @@ packages/
 # Godot
 samples/Lattice.Godot/.godot/
 
+# Lattice.Studio SPA (sources under web/ are tracked; build artifacts are not)
+node_modules/
+src/Lattice.Studio/wwwroot/
+src/Lattice.Studio/web/dist/
+
+# Local verification artifacts
+screenshots/
+
 # OS
 Thumbs.db
 .DS_Store
