@@ -19,12 +19,15 @@ var port = int.TryParse(GetOption(args, "--port"), out var p) ? p : 5210;
 var open = !args.Contains("--no-open");
 
 var service = new StudioContentService(contentDir);
+var live = new LiveSession(service.ContentDir, service.Context.Types);
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls($"http://127.0.0.1:{port}");
 builder.Services.AddSingleton(service);
+builder.Services.AddSingleton(live);
 
 var app = builder.Build();
+app.Lifetime.ApplicationStopping.Register(live.Dispose);
 
 // Read-only API (M8.1): every endpoint a thin projection of the shared tooling.
 var api = app.MapGroup("/api");
@@ -36,6 +39,9 @@ api.MapGet("/validate", (StudioContentService s) =>
     var r = s.Validate();
     return Results.Json(new { ok = r.Ok, defs = r.DefsLoaded, files = r.FileCount, errors = r.Errors, warnings = r.Warnings });
 });
+
+// The live, engine-equivalent content session: what a running host would see.
+api.MapGet("/live", (LiveSession l) => Results.Json(l.Status()));
 
 // One def's raw JSON (for the form editor) and a minimal-diff save back to its file (M8.2).
 api.MapGet("/content/def/{id}", (string id, StudioContentService s) =>

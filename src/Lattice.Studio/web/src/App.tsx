@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { api, type Catalog, type ContentIndex, type JsonSchema, type ValidationResult } from "./api.ts";
+import { api, type Catalog, type ContentIndex, type JsonSchema, type LiveStatus, type ValidationResult } from "./api.ts";
 import { Editor } from "./Editor.tsx";
 import { NewDefDialog } from "./NewDefDialog.tsx";
 import type { RefOption } from "./RefPicker.tsx";
@@ -9,6 +9,7 @@ export function App() {
   const [validation, setValidation] = useState<ValidationResult | null>(null);
   const [schemas, setSchemas] = useState<Record<string, JsonSchema>>({});
   const [catalog, setCatalog] = useState<Catalog | null>(null);
+  const [live, setLive] = useState<LiveStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [query, setQuery] = useState("");
@@ -30,6 +31,14 @@ export function App() {
     if (hash) setSelected(hash);
     if (new URLSearchParams(location.search).has("new")) setCreating(true);
   }, [refresh]);
+
+  // Poll the live, engine-equivalent content session.
+  useEffect(() => {
+    const tick = () => api.live().then(setLive).catch(() => {});
+    tick();
+    const t = setInterval(tick, 1500);
+    return () => clearInterval(t);
+  }, []);
 
   // Ref pickers resolve ids from the live index; union builders from the catalog.
   const optionsByKind = useMemo(() => {
@@ -87,6 +96,26 @@ export function App() {
               {validation.ok
                 ? "✓ valid"
                 : `✕ ${validation.errors.length} error${validation.errors.length === 1 ? "" : "s"}`}
+            </span>
+          )}
+          {live && (
+            <span
+              className={`pill live ${live.healthy ? "" : "bad"}`}
+              title={
+                `Live, engine-equivalent content session — what a running engine sees.\n` +
+                `${live.reloads} reload(s).` +
+                (live.lastReloaded.length
+                  ? ` last: ${live.lastReloaded.slice(0, 5).join(", ")}${live.lastReloaded.length > 5 ? "…" : ""}`
+                  : "") +
+                (live.log[0] ? `\n${live.log[0].level}: ${live.log[0].message}` : "")
+              }
+            >
+              <span
+                className={`livedot ${live.healthy ? "" : "bad"} ${
+                  live.lastReloadUtc && Date.now() - new Date(live.lastReloadUtc).getTime() < 3500 ? "pulse" : ""
+                }`}
+              />
+              live · {live.defs}
             </span>
           )}
         </div>

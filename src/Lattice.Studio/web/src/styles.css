@@ -83,6 +83,32 @@ code {
   color: var(--bad);
   border-color: #4b2422;
 }
+.pill.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: default;
+}
+.livedot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ok);
+}
+.livedot.bad {
+  background: var(--bad);
+}
+.livedot.pulse {
+  animation: livepulse 1.4s ease-out;
+}
+@keyframes livepulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(63, 185, 80, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 0 7px rgba(63, 185, 80, 0);
+  }
+}
 
 /* Body layout */
 .body {

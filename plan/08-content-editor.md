@@ -181,9 +181,17 @@ pick a different existing file. Overrides persist in `studio.config.json` beside
     Verified: UI `+ node` + Save writes a minimal diff and validates; add-node+option round-trips
     minimally; 108 defs still no-op; multi-element arrays stay multiline; 278 tests green.
   - [ ] GOAP precondition/effect views [stretch].
-- **M8.5 — Engine hot-reload preview [stretch]**
-  - [ ] Verify the Godot/Unity samples pick up `Content.Reloaded` on Studio saves; add an in-Studio
-        "validation mirrors the running engine" affordance.
+- **M8.5 — Engine hot-reload preview [stretch]** *(done)*
+  - [x] `LiveSession`: Studio hosts a persistent, engine-equivalent content session — the same
+        `DirectoryContentSource(watch)` + `HotReloadManager` + pump a running host uses. Any disk change
+        (a Studio save, a hand edit, an LLM) is reloaded exactly as the engine would: per-file, debounced,
+        with broken edits rejected (old defs kept) and the post-reload link pass. `GET /api/live` exposes
+        `{defs, reloads, lastReloadUtc, lastReloaded, healthy, log}`; health = the last working pump cycle
+        logged no error (so a rejected edit goes red and fixing/deleting it recovers).
+  - [x] A top-bar **live** pill polls it: green/amber dot + live def count, pulses on reload, tooltip with
+        the recent reload log — the "validation mirrors the running engine" affordance.
+  - Verified: a save bumps `reloads` + `lastReloaded`; a broken file write flips `healthy=false` (rejected,
+    108 defs preserved) and recovers on delete; 278 tests green.
 - **M8.x — Polish [deferred]**
   - [ ] **Photino.NET native-window shell** (deferred from M8.1): replace the browser-launch fallback
         with a real desktop window; resolve the default `--content` path against the repo root, not cwd.

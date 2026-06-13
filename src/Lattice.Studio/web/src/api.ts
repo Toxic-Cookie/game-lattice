@@ -76,6 +76,15 @@ export interface SaveResult {
   error?: string;
 }
 
+export interface LiveStatus {
+  defs: number;
+  reloads: number;
+  lastReloadUtc: string | null;
+  lastReloaded: string[];
+  healthy: boolean;
+  log: { time: string; level: string; message: string }[];
+}
+
 async function getJson<T>(path: string): Promise<T> {
   const res = await fetch(path);
   if (!res.ok) throw new Error(`${path} → ${res.status} ${res.statusText}`);
@@ -85,6 +94,7 @@ async function getJson<T>(path: string): Promise<T> {
 export const api = {
   content: () => getJson<ContentIndex>("/api/content"),
   validate: () => getJson<ValidationResult>("/api/validate"),
+  live: () => getJson<LiveStatus>("/api/live"),
   schemas: () => getJson<SchemaBundle>("/api/schemas"),
   catalog: () => getJson<Catalog>("/api/catalog"),
   def: (id: string) => getJson<DefPayload>(`/api/content/def/${encodeURIComponent(id)}`),
