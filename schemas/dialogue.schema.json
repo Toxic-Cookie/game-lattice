@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/dialogue.schema.json",
   "title": "DialogueTreeDef",
+  "description": "JSON node-tree dialogue (plan/03 \u00A73) \u2014 the secondary, machine-friendly dialogue format. Yarn is the primary authoring format; both run through the same DialogueRunner. Options and effects reuse the shared condition/effect primitives.",
   "type": "object",
   "properties": {
     "id": {

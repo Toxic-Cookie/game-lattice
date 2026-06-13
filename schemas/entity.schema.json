@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/entity.schema.json",
   "title": "RpgEntityTemplateDef",
+  "description": "RPG-extended entity template, replacing the core \u0022entity\u0022 def kind: adds loot, starting items, and auto-equipped gear. Stat keys in stats are stat def IDs under the RPG convention.",
   "type": "object",
   "properties": {
     "id": {
@@ -21,19 +22,22 @@
       "x-lattice-ref": "entity"
     },
     "lootTable": {
-      "type": "string"
+      "type": "string",
+      "description": "Loot table rolled when this entity dies."
     },
     "equipment": {
       "type": "array",
       "items": {
         "type": "string"
-      }
+      },
+      "description": "Item IDs equipped at spawn."
     },
     "items": {
       "type": "object",
       "additionalProperties": {
         "type": "number"
-      }
+      },
+      "description": "Starting bag contents: item ID \u2192 count."
     },
     "name": {
       "type": "string"

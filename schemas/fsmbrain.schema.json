@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/fsmbrain.schema.json",
   "title": "FsmBrainDef",
+  "description": "Data-driven simple FSM brain \u2014 the rat tier (ch07 \u00A77.1): states pair a steering primitive with condition-gated transitions. ~10 lines of JSON per critter, zero planner overhead.",
   "type": "object",
   "properties": {
     "id": {

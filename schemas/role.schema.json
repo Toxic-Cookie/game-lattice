@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/role.schema.json",
   "title": "RoleDef",
+  "description": "A role members of a group can fill (ch04 \u00A74.6, HZD Part 2). Slot limits are the whole mechanism: the herd\u0027s core/ring structure is emergent from \u00222 watchers, everyone else grazes\u0022 \u2014 no formation code.",
   "type": "object",
   "properties": {
     "id": {
@@ -21,13 +22,16 @@
       "x-lattice-ref": "role"
     },
     "slots": {
-      "type": "number"
+      "type": "number",
+      "description": "How many members may hold this role at once."
     },
     "condition": {
-      "type": "string"
+      "type": "string",
+      "description": "Manual condition set on assignees (must exist in their catalog), e.g. \u0022ROLE_WATCHER\u0022."
     },
     "ringRadius": {
-      "type": "number"
+      "type": "number",
+      "description": "When set, assignees get a \u0022post_position\u0022 belief on a ring of this radius around the group centroid, evenly spaced by slot index \u2014 structure from slots, not scripts."
     }
   },
   "required": [

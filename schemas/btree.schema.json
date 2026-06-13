@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/btree.schema.json",
   "title": "BehaviorTreeDef",
+  "description": "A behavior tree (plan/04 \u00A75) as nested node objects. Node shapes: composites {\u0022node\u0022:\u0022Sequence\u0022|\u0022Selector\u0022,\u0022children\u0022:[...]}, decorators {\u0022node\u0022:\u0022Inverter\u0022|\u0022RepeatUntilFail\u0022,\u0022child\u0022:{...}}, {\u0022node\u0022:\u0022Cooldown\u0022,\u0022seconds\u0022:n,\u0022child\u0022:{...}}, {\u0022node\u0022:\u0022ConditionGate\u0022,\u0022when\u0022:[conditions],\u0022child\u0022:{...}}, leaves {\u0022task\u0022:...} / {\u0022condition\u0022:...} (the same primitive vocabularies as schedules \u2014 one vocabulary, three brain tiers), and {\u0022subtree\u0022:\u0022bt_other\u0022} references. Semantics: Sequences remember their running child between ticks; Selectors re-evaluate higher-priority children every tick and preempt a running lower-priority branch; ConditionGate decorators abort their running subtree when the gate fails \u2014 together the BT analog of schedule interrupt masks.",
   "type": "object",
   "properties": {
     "id": {
@@ -20,7 +21,9 @@
       "description": "Parent def ID (same kind); objects deep-merge, scalars override, arrays replace or take {\u0022$append\u0022/\u0022$remove\u0022} patches.",
       "x-lattice-ref": "btree"
     },
-    "root": {}
+    "root": {
+      "description": "The root node object."
+    }
   },
   "required": [
     "id",

@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/goapgoal.schema.json",
   "title": "GoapGoalDef",
+  "description": "A GOAP goal: the desired predicate state, a priority formula that returns 0 when irrelevant (the ch06 checklist rule), and the relevance-filtered replan triggers \u2014 only the condition names listed here force a replan while this goal is active (the F.E.A.R. Part 8 lesson: replanning on every world change is how you get the rat bug).",
   "type": "object",
   "properties": {
     "id": {
@@ -22,16 +23,19 @@
     },
     "desired": {
       "type": "object",
-      "additionalProperties": {}
+      "additionalProperties": {},
+      "description": "Predicate map describing success."
     },
     "priority": {
-      "type": "string"
+      "type": "string",
+      "description": "Priority formula; 0 (or less) = irrelevant right now."
     },
     "replanRequired": {
       "type": "array",
       "items": {
         "type": "string"
-      }
+      },
+      "description": "Catalog condition names whose *appearance* invalidates the current plan."
     }
   },
   "required": [

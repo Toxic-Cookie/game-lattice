@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/navprofile.schema.json",
   "title": "NavProfileDef",
+  "description": "Context-dependent traversal costs (HZD Part 9, scoped down): per cell tag, per behavior state, a cost multiplier or \u0022impassable\u0022. Binds to agent profiles by ID \u2014 same map, different paths by behavior state.",
   "type": "object",
   "properties": {
     "id": {
@@ -25,14 +26,16 @@
       "items": {
         "type": "string",
         "x-lattice-ref": "agent"
-      }
+      },
+      "description": "Agent profile IDs using these costs."
     },
     "costs": {
       "type": "object",
       "additionalProperties": {
         "type": "object",
         "additionalProperties": {}
-      }
+      },
+      "description": "cell tag \u2192 (behavior state or \u0022default\u0022) \u2192 cost multiplier or \u0022impassable\u0022."
     }
   },
   "required": [

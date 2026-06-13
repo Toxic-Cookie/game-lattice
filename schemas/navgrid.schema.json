@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/navgrid.schema.json",
   "title": "NavGridDef",
+  "description": "A walkable grid declared as rows of legend characters (plan/05 \u00A75). The lowest-sorted navgrid ID is the active grid.",
   "type": "object",
   "properties": {
     "id": {
@@ -24,7 +25,8 @@
       "type": "array",
       "items": {
         "type": "number"
-      }
+      },
+      "description": "World position of the cell (0,0) corner."
     },
     "cellSize": {
       "type": "number"
@@ -33,7 +35,8 @@
       "type": "array",
       "items": {
         "type": "string"
-      }
+      },
+      "description": "Row strings, north to south; row index = Z, column = X."
     },
     "legend": {
       "type": "object",
@@ -53,7 +56,8 @@
             }
           }
         }
-      }
+      },
+      "description": "Character \u2192 cell descriptor. \u0027.\u0027 defaults to walkable cost 1; \u0027#\u0027 to blocked."
     }
   },
   "required": [

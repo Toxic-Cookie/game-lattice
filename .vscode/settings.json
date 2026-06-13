@@ -1,0 +1,20 @@
+{
+  // Content authoring aid: map every content JSON file to the generated
+  // Lattice schemas so VS Code gives autocomplete, enum dropdowns, hover docs,
+  // and structural validation while hand-editing. The combined schema accepts
+  // all three file shapes (single def, array of defs, or {"defs": [...]}) and
+  // discriminates on the "type" field, so it works for mixed-kind files too.
+  //
+  // Regenerate the schemas after changing any def model:
+  //   dotnet run --project src/Lattice.Tooling -- schemas -o schemas
+  //
+  // Note: VS Code ignores the x-lattice-ref / x-lattice-union keywords, so
+  // cross-def ID fields are validated as plain strings here (no live ID
+  // picker). Lattice.Studio is what unlocks typed ref/union editing.
+  "json.schemas": [
+    {
+      "fileMatch": ["/content/**/*.json"],
+      "url": "./schemas/lattice.schema.json"
+    }
+  ]
+}

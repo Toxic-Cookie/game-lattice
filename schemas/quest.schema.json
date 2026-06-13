@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/quest.schema.json",
   "title": "QuestDef",
+  "description": "Step-based quest (plan/03 \u00A74): each step has a completion condition and completion effects; optional event-driven counters feed the global blackboard (no entity polling).",
   "type": "object",
   "properties": {
     "id": {
@@ -62,7 +63,8 @@
     },
     "onComplete": {
       "type": "array",
-      "items": {}
+      "items": {},
+      "description": "Effects run when the whole quest completes (target = player)."
     }
   },
   "required": [

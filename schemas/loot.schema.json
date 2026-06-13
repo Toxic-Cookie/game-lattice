@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/loot.schema.json",
   "title": "LootTableDef",
+  "description": "Weighted loot table (plan/02 \u00A75). Each roll picks one eligible entry by weight; entries may grant an item (amount = formula, dice allowed), recurse into another table, or grant nothing (weight-only entry).",
   "type": "object",
   "properties": {
     "id": {
@@ -21,7 +22,8 @@
       "x-lattice-ref": "loot"
     },
     "rolls": {
-      "type": "number"
+      "type": "number",
+      "description": "How many independent picks one Roll() performs."
     },
     "entries": {
       "type": "array",

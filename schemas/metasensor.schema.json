@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/metasensor.schema.json",
   "title": "MetaSensorDef",
+  "description": "A declarative detector over player-behavior events (concept Phase 4): when Watch fires Threshold times within Window seconds for an agent, SetCondition is set on that agent \u2014 and existing brains react through their normal machinery. No special code path.",
   "type": "object",
   "properties": {
     "id": {
@@ -21,19 +22,24 @@
       "x-lattice-ref": "metasensor"
     },
     "watch": {
-      "type": "string"
+      "type": "string",
+      "description": "Event topic to watch (e.g. \u0022Player.Poked\u0022, \u0022Dialogue.PlayerLookedAway\u0022)."
     },
     "window": {
-      "type": "number"
+      "type": "number",
+      "description": "Sliding window in seconds."
     },
     "threshold": {
-      "type": "number"
+      "type": "number",
+      "description": "Occurrences within the window required to trip."
     },
     "setCondition": {
-      "type": "string"
+      "type": "string",
+      "description": "Condition name set on the agent while tripped (cleared when the window drains)."
     },
     "agentKey": {
-      "type": "string"
+      "type": "string",
+      "description": "Payload key naming the affected agent\u0027s instance ID."
     }
   },
   "required": [

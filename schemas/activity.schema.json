@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/activity.schema.json",
   "title": "ActivityDef",
+  "description": "Something an agent can do about its needs: candidacy conditions, a cost formula, the needs it restores on completion, and the task list that realizes it \u2014 the same task vocabulary as schedules and BT leaves. Selector score = \u03A3 (need urgency \u00D7 satisfaction) / cost (ch05 \u00A75.4).",
   "type": "object",
   "properties": {
     "id": {
@@ -24,10 +25,12 @@
       "type": "object",
       "additionalProperties": {
         "type": "number"
-      }
+      },
+      "description": "Need def ID \u2192 value restored when the activity completes."
     },
     "cost": {
-      "type": "string"
+      "type": "string",
+      "description": "Cost formula (relative effort; needs/stats/flags in scope). Floored at 0.05 when scoring."
     },
     "conditions": {
       "type": "array",
@@ -58,7 +61,8 @@
         "required": [
           "type"
         ]
-      }
+      },
+      "description": "Condition primitives gating candidacy (subject = the agent)."
     },
     "tasks": {
       "type": "array",
@@ -87,7 +91,8 @@
         "required": [
           "task"
         ]
-      }
+      },
+      "description": "Ordered task payloads executed when this activity is chosen."
     }
   },
   "required": [

@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lattice.dev/schemas/need.schema.json",
   "title": "NeedDef",
+  "description": "A decaying motive (the Sims pattern, ch05 \u00A75.4): value 1 = satisfied, 0 = desperate; urgency = 1 \u2212 value. Decayed every tick by the agent system for agents whose profile declares the need.",
   "type": "object",
   "properties": {
     "id": {
@@ -21,13 +22,16 @@
       "x-lattice-ref": "need"
     },
     "key": {
-      "type": "string"
+      "type": "string",
+      "description": "Formula identifier (convention: PascalCase key, e.g. \u0022Thirst\u0022; the def ID goes in structural fields)."
     },
     "initial": {
-      "type": "number"
+      "type": "number",
+      "description": "Starting value, 0\u20131."
     },
     "decayPerSecond": {
-      "type": "number"
+      "type": "number",
+      "description": "Value lost per simulated second."
     }
   },
   "required": [

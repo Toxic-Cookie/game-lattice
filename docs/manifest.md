@@ -8,11 +8,15 @@ arrays replace — or patch the parent's array with `{"$append": [...], "$remove
 
 ### `activity` — 3
 
+Something an agent can do about its needs: candidacy conditions, a cost formula, the needs it restores on completion, and the task list that realizes it — the same task vocabulary as schedules and BT leaves. Selector score = Σ (need urgency × satisfaction) / cost (ch05 §5.4).
+
 - `activity_chat` — Join the table talk.
 - `activity_drink` — Walk to the bar and drink. Selector score = thirst urgency × 0.7 / 1.
 - `activity_rest` — Sit on the corner chair. Costlier, so it only wins when rest urgency is high.
 
 ### `agent` — 8
+
+An agent profile is the whole personality of an NPC type (plan/04 §11): brain tier, sensor calibration, behavior content, movement. Tiered brains are the governing rule (the F.E.A.R. rat problem, ch07 §7.1): "fsm" for simple agents, "schedules" for deliberative ones; M4b–M4d add "bt", "goap", and "htn".
 
 - `profile_beast` — Herd member (M4d): role and alerts arrive only via the group blackboard.
 - `profile_boss` — Boss-lite: HTN method selection is visible in the decomposition trace — ranged while arrows last, melee after.
@@ -25,30 +29,44 @@ arrays replace — or patch the parent's array with `{"$append": [...], "$remove
 
 ### `btree` — 2
 
+A behavior tree (plan/04 §5) as nested node objects. Node shapes: composites {"node":"Sequence"|"Selector","children":[...]}, decorators {"node":"Inverter"|"RepeatUntilFail","child":{...}}, {"node":"Cooldown","seconds":n,"child":{...}}, {"node":"ConditionGate","when":[conditions],"child":{...}}, leaves {"task":...} / {"condition":...} (the same primitive vocabularies as schedules — one vocabulary, three brain tiers), and {"subtree":"bt_other"} references. Semantics: Sequences remember their running child between ticks; Selectors re-evaluate higher-priority children every tick and preempt a running lower-priority branch; ConditionGate decorators abort their running subtree when the gate fails — together the BT analog of schedule interrupt masks.
+
 - `bt_loiter` — Reusable idle filler subtree.
 - `bt_patron` — Tavern patron: flee threats, otherwise serve needs, otherwise loiter. Gates re-check every think and abort the running subtree.
 
 ### `collective` — 1
 
+The Collective (ch04 §4.5, HZD Part 4): spawn sites that assemble groups, a global AI budget, and passport recycling for stranded agents.
+
 - `collective_plains` — Spawns and maintains the plains herds within an AI budget.
 
 ### `conditions` — 1
+
+The data-declared condition catalog: names map to bit positions in declaration order. One catalog per profile (default: conditions_default); at most 32 names (validation enforces).
 
 - `conditions_default` — Default condition catalog (max 32 names; bit = declaration order).
 
 ### `costprofile` — 1
 
+Personality as data (ch03 §3.7, F.E.A.R.'s per-archetype database): a profile-level map of action def ID → replacement cost formula. A cowardly and an aggressive soldier share the same action set and differ only in this file.
+
 - `costprofile_brave` — Retreat is a last resort for these soldiers.
 
 ### `dayphases` — 1
+
+Day-phase trigger layer (plan/05 §2): named phases over hour ranges. The active phase sets global flags (is_night, ...) and publishes Time.PhaseChanged; the light curve is data hosts may sample for visuals.
 
 - `dayphases_default`
 
 ### `dialogue` — 1
 
+JSON node-tree dialogue (plan/03 §3) — the secondary, machine-friendly dialogue format. Yarn is the primary authoring format; both run through the same DialogueRunner. Options and effects reuse the shared condition/effect primitives.
+
 - `tree_guard` — JSON dialogue-tree sample (machine-friendly format).
 
 ### `entity` — 16
+
+RPG-extended entity template, replacing the core "entity" def kind: adds loot, starting items, and auto-equipped gear. Stat keys in stats are stat def IDs under the RPG convention.
 
 - `entity_attack_node` — A tactical position; surfaces to GOAP planners via so_attack_node.
 - `entity_beast` — Herd animal (profile_beast: role-aware FSM, collective-spawned).
@@ -69,10 +87,14 @@ arrays replace — or patch the parent's array with `{"$append": [...], "$remove
 
 ### `fsmbrain` — 2
 
+Data-driven simple FSM brain — the rat tier (ch07 §7.1): states pair a steering primitive with condition-gated transitions. ~10 lines of JSON per critter, zero planner overhead.
+
 - `fsmbrain_beast` — Role-aware critter: graze or stand watch by assignment, flee on personal or group alert.
 - `fsmbrain_rat` — Wander until something threatening appears; flee until it's gone.
 
 ### `goapaction` — 11
+
+One plannable GOAP action (ch03, F.E.A.R. case study): symbolic preconditions and effects over the agent's predicate state (catalog condition names and belief keys; scalar values, missing booleans read as false), a cost formula (personality lives in cost — see CostProfileDef), and the execution binding the 3-state layer realizes (GoTo → Animate → effects).
 
 - `action_carry_home`
 - `action_charge` — Close the distance to the perceived enemy.
@@ -88,19 +110,27 @@ arrays replace — or patch the parent's array with `{"$append": [...], "$remove
 
 ### `goapgoal` — 2
 
+A GOAP goal: the desired predicate state, a priority formula that returns 0 when irrelevant (the ch06 checklist rule), and the relevance-filtered replan triggers — only the condition names listed here force a replan while this goal is active (the F.E.A.R. Part 8 lesson: replanning on every world change is how you get the rat bug).
+
 - `goal_eliminate_intruder` — Fight while an enemy is perceived. Priority 0 (irrelevant) otherwise — the ch06 checklist rule.
 - `goal_survive` — Break contact after taking damage; cost profiles decide who actually runs.
 
 ### `group` — 1
 
+A group archetype (HZD Part 2): which roles exist (in fill-priority order), how stale shared knowledge may get, and how alert decays. The runtime group agent is non-physical — a member list, a scoped blackboard, an alert level, and role assignments.
+
 - `group_herd` — Plains herd. Knowledge travels only through the blackboard, so unwitnessed kills never alert it.
 
 ### `htncompound` — 2
+
+An HTN compound task (ch04, HZD case study): ordered methods, each a precondition-gated recipe of subtasks. Subtasks reference either another compound or a GoapActionDef — HTN primitives ARE GOAP actions, so both planners share one action vocabulary and one execution layer. Designers/LLMs author the methods; that's the control-vs-emergence dial (ch01 §1.6).
 
 - `htn_boss` — Method order is the doctrine (plan/07 §2): shoot while arrows last, fall back to melee, otherwise lurk in the dark.
 - `htn_forage` — Method order is the priority: hide if threatened, otherwise run the forage routine.
 
 ### `item` — 6
+
+A data-defined item (plan/02 §4): tags, optional equipment slot, use-actions (effect primitives), and equip effects (modifier primitives active while worn). Currency is just an item with the "currency" tag.
 
 - `item_ale`
 - `item_gold`
@@ -111,12 +141,16 @@ arrays replace — or patch the parent's array with `{"$append": [...], "$remove
 
 ### `lifecycle` — 4
 
+JSON-defined initialization: which flags the world starts with and what gets spawned (plan/01 §3). startingInventory joins the schema in M2.
+
 - `lifecycle_default` — Default boot: a player and two wolves in the test scene.
 - `lifecycle_dungeon` — Demo scene 2 — The Dungeon (plan/07 §2): GOAP combat with flanking from smart-object reservation, rat-tier FSM critters, loot on kill, a poison trap, and an HTN boss.
 - `lifecycle_quest` — Demo scene 3 — The Quest-Giver (plan/07 §3): the quest_wolves chain end-to-end over the event bus, with mid-quest save/load.
 - `lifecycle_tavern` — Demo scene 1 — The Tavern (plan/07 §1): dialogue, trade, day-night schedules, needs-driven patrons, meta player awareness, weather→narrative coupling.
 
 ### `loot` — 5
+
+Weighted loot table (plan/02 §5). Each roll picks one eligible entry by weight; entries may grant an item (amount = formula, dice allowed), recurse into another table, or grant nothing (weight-only entry).
 
 - `loot_boss`
 - `loot_rare`
@@ -126,18 +160,26 @@ arrays replace — or patch the parent's array with `{"$append": [...], "$remove
 
 ### `metasensor` — 2
 
+A declarative detector over player-behavior events (concept Phase 4): when Watch fires Threshold times within Window seconds for an agent, SetCondition is set on that agent — and existing brains react through their normal machinery. No special code path.
+
 - `metasensor_lookaway` — Meta player awareness (plan/07 §1): look away from the conversation twice in half a minute and the innkeeper notices.
 - `metasensor_poke` — Poke the guard three times in five seconds and it stops being polite.
 
 ### `navgrid` — 1
 
+A walkable grid declared as rows of legend characters (plan/05 §5). The lowest-sorted navgrid ID is the active grid.
+
 - `navgrid_main` — Tavern surroundings: a wall block at world (10..13, -10..-7) and a stealth-grass patch at (-12..-7, 8..11). Row 0 = Z -16.
 
 ### `navprofile` — 1
 
+Context-dependent traversal costs (HZD Part 9, scoped down): per cell tag, per behavior state, a cost multiplier or "impassable". Binds to agent profiles by ID — same map, different paths by behavior state.
+
 - `navprofile_guard` — Guards keep off the tall grass on routine patrol but wade through when alert (HZD stealth pattern).
 
 ### `need` — 3
+
+A decaying motive (the Sims pattern, ch05 §5.4): value 1 = satisfied, 0 = desperate; urgency = 1 − value. Decayed every tick by the agent system for agents whose profile declares the need.
 
 - `need_rest` — Tiredness. Decays slowly; restored by sitting down.
 - `need_social` — Loneliness. Restored by chatting at the table.
@@ -145,14 +187,20 @@ arrays replace — or patch the parent's array with `{"$append": [...], "$remove
 
 ### `quest` — 1
 
+Step-based quest (plan/03 §4): each step has a completion condition and completion effects; optional event-driven counters feed the global blackboard (no entity polling).
+
 - `quest_wolves` — The innkeeper pays 25 gold for culling three wolves.
 
 ### `role` — 2
+
+A role members of a group can fill (ch04 §4.6, HZD Part 2). Slot limits are the whole mechanism: the herd's core/ring structure is emergent from "2 watchers, everyone else grazes" — no formation code.
 
 - `role_grazer` — Everyone else: graze near the core.
 - `role_watcher` — Sentries: 2 slots, posted on a ring around the herd centroid. The herd's shape IS this slot limit.
 
 ### `schedule` — 10
+
+A Half-Life schedule (ch02 §2.5): a condition-gated macro-behavior. Selection requires all Require conditions; any Interrupt condition invalidates it mid-run. The invalidation feedback loop is the reactivity — no event handlers.
 
 - `schedule_combat` — Enemy visible: close in and attack.
 - `schedule_innkeeper_bed` — Night routine: head to the back room and sleep until dawn.
@@ -167,26 +215,36 @@ arrays replace — or patch the parent's array with `{"$append": [...], "$remove
 
 ### `season` — 2
 
+A season (plan/05 §4): a content layer activated by the calendar. Def redirects are the v1 overlay mechanism (winter resolves loot_forest to loot_forest_winter); weather bias multiplies transition weights; prefabHints are opaque data for hosts.
+
 - `season_summer`
 - `season_winter` — The overlay season: wolves drop winter loot, rain doubles.
 
 ### `shop` — 2
+
+Shop definition (plan/02 §6): stock plus buy/sell price formulas evaluated with the item's BasePrice and the trading entity's stats in scope.
 
 - `shop_innkeeper` — The innkeeper's bar: Charisma haggles the ale price down; closed for the night (openWhen reads the is_night day-phase flag).
 - `shop_trader` — Charisma lowers buy prices and raises sell prices.
 
 ### `slot` — 2
 
+An equipment slot, declared in data so slot sets are moddable (plan/02 §4).
+
 - `slot_chest`
 - `slot_main_hand`
 
 ### `smartobject` — 3
+
+Smart object (plan/03 §5): self-describing interactions bound to an entity template. Player-facing verbs carry conditions + effects; the AI-facing fields (approach, animation, world-state pre/effects) are consumed by the M4 planners.
 
 - `so_attack_node` — GOAP-plannable tactical node; maxUsers 1 makes reservation the flanking coordinator.
 - `so_chest` — One-time gold cache; opening is gated on a world flag.
 - `so_poison_trap` — Stepping on the plate envenoms the actor — statuses, interactions, and events composing (plan/07 §2).
 
 ### `stat` — 7
+
+A stat declared in data (plan/02 §1). The Key is the identifier formulas use (Str, HP); the def id (stat_str) is what other defs reference. Convention: IDs in structural fields, keys in formula strings.
 
 - `stat_carry` — Derived from Strength.
 - `stat_cha`
@@ -198,17 +256,25 @@ arrays replace — or patch the parent's array with `{"$append": [...], "$remove
 
 ### `status` — 1
 
+Data-driven status effect (plan/02 §2): a duration, a stacking policy, and a list of logic primitives (modifiers, periodic effects, tags).
+
 - `status_poison` — Deals 2 damage per second for 6 seconds.
 
 ### `time` — 1
+
+The world clock's shape (plan/05 §1): real-time scale, calendar, start. One per world (the lowest-sorted ID wins if several load).
 
 - `time_default` — Demo clock: a game day every 12 real minutes; 2-day seasons for fast demos.
 
 ### `utility` — 1
 
+A reusable scoring function (ch05 §5.4): weighted factors, each a formula over the agent's needs (by key), stats, beliefs, and global flags, clamped to 0–1. The score is the weighted average, so it is itself 0–1. Used standalone through the UtilityAtLeast condition (threshold gates — the HZD attack-interest pattern) and as goal-priority input in M4c/M4d.
+
 - `utility_patron_motivation` — How much the patron's needs demand attention (0–1). Thirst weighs double. Gates PerformActivity in bt_patron.
 
 ### `weather` — 2
+
+One weather state (plan/05 §3): Markov transitions with weights, a duration range, global flags held while active (formulas and sensors read them — sense_auditory_mult is how rain degrades hearing), and tag-scoped effect primitives at the boundaries.
 
 - `weather_clear`
 - `weather_rain` — Rain dulls hearing and sight — stealth weather, straight from data.

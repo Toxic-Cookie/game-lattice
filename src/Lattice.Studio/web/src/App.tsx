@@ -1,0 +1,239 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { api, type Catalog, type ContentIndex, type JsonSchema, type LiveStatus, type ValidationResult } from "./api.ts";
+import { Editor } from "./Editor.tsx";
+import { NewDefDialog } from "./NewDefDialog.tsx";
+import type { RefOption } from "./RefPicker.tsx";
+
+export function App() {
+  const [index, setIndex] = useState<ContentIndex | null>(null);
+  const [validation, setValidation] = useState<ValidationResult | null>(null);
+  const [schemas, setSchemas] = useState<Record<string, JsonSchema>>({});
+  const [catalog, setCatalog] = useState<Catalog | null>(null);
+  const [live, setLive] = useState<LiveStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const [query, setQuery] = useState("");
+  const [kind, setKind] = useState<string | null>(null);
+  const [file, setFile] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+
+  const refresh = useCallback(() => {
+    api.content().then(setIndex).catch((e) => setError(String(e)));
+    api.validate().then(setValidation).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    refresh();
+    api.schemas().then((b) => setSchemas(b.kinds)).catch(() => {});
+    api.catalog().then(setCatalog).catch(() => {});
+    const hash = decodeURIComponent(location.hash.replace(/^#/, ""));
+    if (hash) setSelected(hash);
+    if (new URLSearchParams(location.search).has("new")) setCreating(true);
+  }, [refresh]);
+
+  // Poll the live, engine-equivalent content session.
+  useEffect(() => {
+    const tick = () => api.live().then(setLive).catch(() => {});
+    tick();
+    const t = setInterval(tick, 1500);
+    return () => clearInterval(t);
+  }, []);
+
+  // Ref pickers resolve ids from the live index; union builders from the catalog.
+  const optionsByKind = useMemo(() => {
+    const m: Record<string, RefOption[]> = {};
+    for (const d of index?.defs ?? []) (m[d.kind] ??= []).push({ id: d.id, description: d.description, kind: d.kind });
+    return m;
+  }, [index]);
+
+  const unions = useMemo(
+    () => ({ effect: catalog?.effects ?? [], condition: catalog?.conditions ?? [], task: catalog?.tasks ?? [] }),
+    [catalog],
+  );
+
+  // Keep the URL hash in sync so a def is deep-linkable/shareable.
+  const select = useCallback((id: string | null) => {
+    setSelected(id);
+    location.hash = id ? `#${encodeURIComponent(id)}` : "";
+  }, []);
+
+  const kindCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const d of index?.defs ?? []) counts.set(d.kind, (counts.get(d.kind) ?? 0) + 1);
+    return [...counts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [index]);
+
+  const rows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return (index?.defs ?? []).filter((d) => {
+      if (kind && d.kind !== kind) return false;
+      if (file && d.sourceFile !== file) return false;
+      if (!q) return true;
+      return (
+        d.id.toLowerCase().includes(q) ||
+        (d.description ?? "").toLowerCase().includes(q) ||
+        d.kind.toLowerCase().includes(q)
+      );
+    });
+  }, [index, query, kind, file]);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 34,
+    overscan: 12,
+  });
+
+  if (error) return <div className="fatal">Failed to load: {error}</div>;
+  if (!index) return <div className="loading">Loading content…</div>;
+
+  return (
+    <div className="app">
+      <header className="topbar">
+        <div className="brand">
+          Lattice <span>Studio</span>
+        </div>
+        <div className="stats">
+          <span className="pill">{index.count} defs</span>
+          <span className="pill">{kindCounts.length} kinds</span>
+          <span className="pill">{index.files.length} files</span>
+          {validation && (
+            <span className={`pill ${validation.ok ? "ok" : "bad"}`}>
+              {validation.ok
+                ? "✓ valid"
+                : `✕ ${validation.errors.length} error${validation.errors.length === 1 ? "" : "s"}`}
+            </span>
+          )}
+          {live && (
+            <span
+              className={`pill live ${live.healthy ? "" : "bad"}`}
+              title={
+                `Live, engine-equivalent content session — what a running engine sees.\n` +
+                `${live.reloads} reload(s).` +
+                (live.lastReloaded.length
+                  ? ` last: ${live.lastReloaded.slice(0, 5).join(", ")}${live.lastReloaded.length > 5 ? "…" : ""}`
+                  : "") +
+                (live.log[0] ? `\n${live.log[0].level}: ${live.log[0].message}` : "")
+              }
+            >
+              <span
+                className={`livedot ${live.healthy ? "" : "bad"} ${
+                  live.lastReloadUtc && Date.now() - new Date(live.lastReloadUtc).getTime() < 3500 ? "pulse" : ""
+                }`}
+              />
+              live · {live.defs}
+            </span>
+          )}
+        </div>
+      </header>
+
+      <div className="body">
+        <aside className="sidebar">
+          <button className={`kind ${kind === null ? "active" : ""}`} onClick={() => setKind(null)}>
+            <span>All kinds</span>
+            <span className="count">{index.count}</span>
+          </button>
+          {kindCounts.map(([k, n]) => (
+            <button key={k} className={`kind ${kind === k ? "active" : ""}`} onClick={() => setKind(k)}>
+              <span>{k}</span>
+              <span className="count">{n}</span>
+            </button>
+          ))}
+        </aside>
+
+        <main className="content">
+          <div className="toolbar">
+            <input
+              className="search"
+              placeholder="Search id, description, kind…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <select className="filefilter" value={file ?? ""} onChange={(e) => setFile(e.target.value || null)}>
+              <option value="">All files</option>
+              {index.files.map((f) => (
+                <option key={f} value={f}>
+                  {f}
+                </option>
+              ))}
+            </select>
+            <span className="resultcount">
+              {rows.length} of {index.count}
+            </span>
+            <button className="newdef" onClick={() => setCreating(true)}>
+              + New
+            </button>
+          </div>
+
+          <div className="tablewrap" ref={scrollRef}>
+            <div className="vrow vhead">
+              <div className="c-kind">Kind</div>
+              <div className="c-id">ID</div>
+              <div className="c-desc">Description</div>
+              <div className="c-inh">Inherits</div>
+              <div className="c-file">File</div>
+            </div>
+            {rows.length === 0 ? (
+              <div className="empty">No defs match the current filters.</div>
+            ) : (
+              <div className="vbody" style={{ height: rowVirtualizer.getTotalSize() }}>
+                {rowVirtualizer.getVirtualItems().map((vi) => {
+                  const d = rows[vi.index];
+                  return (
+                    <div
+                      key={d.id}
+                      className={`vrow row ${selected === d.id ? "selected" : ""}`}
+                      style={{ transform: `translateY(${vi.start}px)`, height: vi.size }}
+                      onClick={() => select(d.id)}
+                    >
+                      <div className="c-kind">
+                        <span className="kindtag">{d.kind}</span>
+                      </div>
+                      <div className="c-id">
+                        <code>{d.id}</code>
+                      </div>
+                      <div className="c-desc">{d.description}</div>
+                      <div className="c-inh">{d.inherits && <code className="muted">{d.inherits}</code>}</div>
+                      <div className="c-file">
+                        <span className="muted">{d.sourceFile}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </main>
+
+        {selected && (
+          <Editor
+            id={selected}
+            schemas={schemas}
+            optionsByKind={optionsByKind}
+            unions={unions}
+            onClose={() => select(null)}
+            onSaved={refresh}
+            onGoTo={select}
+            autoGraph={new URLSearchParams(location.search).has("graph")}
+          />
+        )}
+      </div>
+
+      {creating && (
+        <NewDefDialog
+          schemas={schemas}
+          index={index}
+          onClose={() => setCreating(false)}
+          onCreated={(id) => {
+            setCreating(false);
+            refresh();
+            select(id);
+          }}
+        />
+      )}
+    </div>
+  );
+}
